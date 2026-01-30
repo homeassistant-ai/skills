@@ -82,7 +82,7 @@ Use a native helper if it handles the math, aggregation, or logic. Create a temp
 
 **Wrong**: Create a template sensor with `{{ states('sensor.a') | float + states('sensor.b') | float }}` to sum two sensors.
 
-**Right**: Use a `min_max` helper with `type: sum`, or `type: last` to list both sensors. Use `type: mean` for averaging.
+**Right**: Use a `min_max` helper with `type: sum` for summing sensors, or `type: mean` for averaging.
 
 ### 2. Using templates where native conditions exist
 
