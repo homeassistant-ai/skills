@@ -1,0 +1,7 @@
+{
+  "name": "home-assistant-skills",
+  "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, and device control.",
+  "version": "0.1.0",
+  "repository": "https://github.com/homeassistant-ai/skills",
+  "license": "MIT"
+}
