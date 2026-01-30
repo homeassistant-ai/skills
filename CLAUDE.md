@@ -39,10 +39,17 @@ Constraints from CONTRIBUTING.md:
 
 ## Installation / Distribution
 
-Skills are distributed two ways from the same repo:
-- **Cross-agent (npx):** `npx skills add homeassistant-ai/skills`
-- **Claude Code plugin:** `claude plugin add homeassistant-ai/skills`
+```bash
+npx skills add homeassistant-ai/skills
+```
 
-## No Build System
+Works with 26+ AI coding agents supporting the Agent Skills standard.
 
-This is a pure content repository — no build, lint, test, or CI commands exist. Validation is manual: ensure SKILL.md files meet the format and constraints above.
+## Validation
+
+CI runs `skills-ref validate` on every PR and push to `main` that touches `skills/**`. To validate locally:
+
+```bash
+pip install skills-ref
+python -m skills_ref.cli validate skills/<skill-name>
+```
