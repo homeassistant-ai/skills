@@ -37,14 +37,6 @@ Constraints from CONTRIBUTING.md:
 - **Consistent terminology** — one term per concept throughout a skill
 - **Symptom-based triggering** — the `description` frontmatter should describe observable agent behaviors that signal the skill is needed
 
-## Installation / Distribution
-
-```bash
-npx skills add homeassistant-ai/skills
-```
-
-Works with 26+ AI coding agents supporting the Agent Skills standard.
-
 ## Validation
 
 CI runs `skills-ref validate` on every PR and push to `main` that touches `skills/**`. To validate locally:
