@@ -16,12 +16,6 @@ Use native Home Assistant syntax wherever possible. Templates bypass validation 
 
 ## When to Use This Skill
 
-Load this skill when:
-- Creating or editing automations, scripts, or scenes
-- Setting up helpers or template sensors
-- Configuring device controls or dashboard elements
-- Reviewing HA configurations for improvements
-
 Symptoms that signal this skill applies:
 - Agent writes `{{ is_state(...) }}` template conditions instead of native state conditions
 - Agent creates template sensors for math that `min_max`, `statistics`, or other helpers handle
@@ -29,6 +23,8 @@ Symptoms that signal this skill applies:
 - Agent overloads automations with Jinja2 instead of using list syntax, NOT wrappers, or attribute conditions
 
 ## Quick Reference: Native Conditions Over Templates
+
+See [Conditions](https://www.home-assistant.io/docs/scripts/conditions/) and [wait_for_trigger](https://www.home-assistant.io/docs/scripts/#wait-for-a-trigger) docs.
 
 | Instead of this template | Use this native construct |
 |---|---|
@@ -51,11 +47,11 @@ Symptoms that signal this skill applies:
 Before creating a template sensor, determine whether a built-in helper fits the job.
 
 ### Math and aggregation
-- **min_max**: Minimum, maximum, mean, median, sum, or last value across multiple sensors. Use `type: sum` with the same entity listed twice to double a value.
-- **statistics**: Statistical analysis (mean, median, standard deviation, variance, count) over a time window.
-- **derivative**: Rate of change of a sensor value over time.
-- **threshold**: Binary sensor that turns on/off when a numeric sensor crosses a threshold.
-- **utility_meter**: Tracks consumption (energy, gas, water) over configurable billing cycles.
+- **[min_max](https://www.home-assistant.io/integrations/min_max/)**: Minimum, maximum, mean, median, sum, or last value across multiple sensors. Use `type: sum` with the same entity listed twice to double a value.
+- **[statistics](https://www.home-assistant.io/integrations/statistics/)**: Statistical analysis (mean, median, standard deviation, variance, count) over a time window.
+- **[derivative](https://www.home-assistant.io/integrations/derivative/)**: Rate of change of a sensor value over time.
+- **[threshold](https://www.home-assistant.io/integrations/threshold/)**: Binary sensor that turns on/off when a numeric sensor crosses a threshold.
+- **[utility_meter](https://www.home-assistant.io/integrations/utility_meter/)**: Tracks consumption (energy, gas, water) over configurable billing cycles.
 
 ### State and input
 - **input_boolean**: On/off toggle for manual flags and modes.
@@ -70,8 +66,6 @@ Before creating a template sensor, determine whether a built-in helper fits the 
 - **timer**: Countdown timer with start/pause/cancel/finish events.
 - **schedule**: Weekly schedule with on/off time blocks.
 - **group**: Combines entities into a single entity. State reflects all-on, any-on, or similar logic depending on group type.
-
-### Decision rule
 
 Use a native helper if it handles the math, aggregation, or logic. Create a template sensor only when no built-in helper covers the requirement.
 
