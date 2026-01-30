@@ -10,19 +10,11 @@ Community-contributed [Agent Skills](https://agentskills.io) for Home Assistant 
 
 ## Installation
 
-### Cross-agent (Claude Code, Cursor, Copilot, VS Code, Gemini CLI, and others)
-
 ```bash
 npx skills add homeassistant-ai/skills
 ```
 
-This command works with 26+ AI coding agents supporting the Agent Skills standard.
-
-### Claude Code plugin
-
-```bash
-claude plugin add homeassistant-ai/skills
-```
+Works with 26+ AI coding agents supporting the Agent Skills standard: Claude Code, Cursor, Copilot, VS Code, Gemini CLI, and others.
 
 ## Contributing
 
