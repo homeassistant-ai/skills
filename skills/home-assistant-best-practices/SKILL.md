@@ -56,7 +56,6 @@ Before creating a template sensor, determine whether a built-in helper fits the 
 - **derivative**: Rate of change of a sensor value over time.
 - **threshold**: Binary sensor that turns on/off when a numeric sensor crosses a threshold.
 - **utility_meter**: Tracks consumption (energy, gas, water) over configurable billing cycles.
-- **combine**: Combines the state of multiple entities into one (cover, media player, light groups with independent control).
 
 ### State and input
 - **input_boolean**: On/off toggle for manual flags and modes.
