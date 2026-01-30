@@ -27,7 +27,7 @@ jobs:
           exit_code=0
           for skill_dir in skills/*/; do
             echo "--- Validating ${skill_dir} ---"
-            if ! skills-ref validate "$skill_dir"; then
+            if ! python -m skills_ref.cli validate "$skill_dir"; then
               exit_code=1
             fi
           done
