@@ -2,27 +2,42 @@ name: Validate Skills
 
 on:
   pull_request:
-    paths:
-      - "skills/**"
   push:
     branches: [main]
-    paths:
-      - "skills/**"
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for skill changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base=${{ github.event.pull_request.base.sha }}
+          else
+            base=${{ github.event.before }}
+          fi
+          if git diff --name-only "$base" HEAD | grep -q '^skills/'; then
+            echo "skills_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skills_changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/setup-python@v5
+        if: steps.changes.outputs.skills_changed == 'true'
         with:
           python-version: "3.12"
 
       - name: Install skills-ref
+        if: steps.changes.outputs.skills_changed == 'true'
         run: pip install skills-ref
 
       - name: Validate all skills
+        if: steps.changes.outputs.skills_changed == 'true'
         run: |
           exit_code=0
           for skill_dir in skills/*/; do
@@ -32,3 +47,7 @@ jobs:
             fi
           done
           exit $exit_code
+
+      - name: No skill changes
+        if: steps.changes.outputs.skills_changed == 'false'
+        run: echo "No changes in skills/, skipping validation."

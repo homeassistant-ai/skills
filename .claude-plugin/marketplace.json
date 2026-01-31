@@ -1,0 +1,22 @@
+{
+  "name": "home-assistant-skills",
+  "owner": {
+    "name": "homeassistant-ai",
+    "email": ""
+  },
+  "metadata": {
+    "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, and device control",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "home-assistant-skills",
+      "description": "Best practices for Home Assistant automations, helpers, scripts, and device controls",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/home-assistant-best-practices"
+      ]
+    }
+  ]
+}

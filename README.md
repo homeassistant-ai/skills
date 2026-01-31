@@ -1,20 +1,48 @@
 # Home Assistant Agent Skills
 
-Community-contributed [Agent Skills](https://agentskills.io) for Home Assistant teach AI agents domain expertise for configuring and controlling Home Assistant, following the open [Agent Skills standard](https://agentskills.io/specification).
+Community-contributed [Agent Skills](https://agentskills.io) for Home Assistant. These skills teach AI agents domain expertise for configuring and controlling Home Assistant, following the open [Agent Skills standard](https://agentskills.io/specification).
 
 ## Available Skills
 
 | Skill | Description |
 |---|---|
-| [home-assistant-best-practices](skills/home-assistant-best-practices/) | Best practices for configuring Home Assistant via MCP. Teaches native constructs and helper type selection. |
+| [home-assistant-best-practices](skills/home-assistant-best-practices/) | Native HA constructs over templates, helper selection, automation modes, Zigbee button patterns, and device control best practices. |
 
 ## Installation
+
+### Agent Skills installer
 
 ```bash
 npx skills add homeassistant-ai/skills
 ```
 
-Works with 26+ AI coding agents supporting the Agent Skills standard: Claude Code, Cursor, Copilot, VS Code, Gemini CLI, and others.
+Works with AI coding agents that support the [Agent Skills standard](https://agentskills.io): Claude Code, Cursor, Copilot, VS Code, Gemini CLI, and others. To update: `npx skills update`
+
+### Claude Code plugin
+
+```
+/plugin marketplace add homeassistant-ai/skills
+/plugin install home-assistant-skills@homeassistant-ai-skills
+```
+
+### Claude Desktop / claude.ai
+
+1. Download or clone this repository
+2. Zip the skill folder: `cd skills && zip -r home-assistant-best-practices.zip home-assistant-best-practices/`
+3. **Settings → Capabilities → Skills → Upload skill** → select the `.zip` file
+
+## Skill Contents
+
+The `home-assistant-best-practices` skill includes:
+
+| File | Purpose |
+|------|---------|
+| `SKILL.md` | Decision workflow and quick-reference routing |
+| `references/automation-patterns.md` | Native conditions, triggers, waits, automation modes |
+| `references/helper-selection.md` | Built-in helpers vs template sensors (with decision matrix) |
+| `references/template-guidelines.md` | When templates ARE the right choice |
+| `references/device-control.md` | Service calls, entity_id vs device_id, Zigbee buttons |
+| `references/examples.yaml` | Compound examples combining multiple best practices |
 
 ## Contributing
 
