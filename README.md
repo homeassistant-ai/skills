@@ -1,5 +1,8 @@
 # Home Assistant Agent Skills
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Agent Skills](https://img.shields.io/badge/Agent_Skills-agentskills.io-blue)](https://agentskills.io)
+
 Community-contributed [Agent Skills](https://agentskills.io) for Home Assistant. These skills teach AI agents domain expertise for configuring and controlling Home Assistant, following the open [Agent Skills standard](https://agentskills.io/specification).
 
 ## Available Skills
