@@ -1,69 +1,98 @@
 ---
 name: home-assistant-best-practices
 description: >
-  Best practices for Home Assistant automations, helpers, scripts, scenes, and device controls via MCP.
-  Use when: (1) Creating or editing HA automations, (2) Writing conditions or triggers, (3) Creating template sensors,
-  (4) Using wait_template or similar constructs. Symptoms that trigger this skill: agent defaults to Jinja2 templates,
-  creates template sensors for simple math, uses template conditions where native state/numeric conditions exist,
-  uses wait_template instead of wait_for_trigger, overloads automations with Jinja2.
+  Best practices for Home Assistant automations, helpers, scripts, and device controls.
+  
+  TRIGGER THIS SKILL WHEN:
+  - Creating or editing HA automations, scripts, or scenes
+  - Writing automation conditions or triggers
+  - Creating template sensors or binary sensors
+  - Using wait_template or wait_for_trigger
+  - Choosing between device triggers and state triggers
+  - Selecting automation modes (single/restart/queued/parallel)
+  - Setting up Zigbee button/remote automations (ZHA or Zigbee2MQTT)
+  - Deciding whether to use a built-in helper vs template sensor
+  
+  SYMPTOMS THAT TRIGGER THIS SKILL:
+  - Agent defaults to Jinja2 templates where native constructs exist
+  - Agent creates template sensors for simple aggregation (sum/min/max/mean)
+  - Agent uses template conditions instead of native state/numeric_state conditions
+  - Agent uses wait_template instead of wait_for_trigger
+  - Agent uses device_id instead of entity_id in triggers/actions
+  - Agent chooses wrong automation mode (e.g., single for motion lights)
 ---
 
 # Home Assistant Best Practices
 
-Use native Home Assistant syntax wherever possible. Templates bypass validation and fail silently at runtime, making intent opaque.
+**Core principle:** Use native Home Assistant constructs wherever possible. Templates bypass validation, fail silently at runtime, and make debugging opaque.
 
-## Native Conditions Over Templates
+## Decision Workflow
 
-See [Conditions](https://www.home-assistant.io/docs/scripts/conditions/) and [wait_for_trigger](https://www.home-assistant.io/docs/scripts/#wait-for-a-trigger) docs.
+Follow this sequence when creating any automation:
 
-| Instead of template | Use native construct |
-|---|---|
-| `{{ states('sensor.x') in ['a', 'b'] }}` | `condition: state` with `state: ["a", "b"]` |
-| `{{ not is_state('sensor.x', 'off') }}` | `condition: not` wrapping a state condition |
-| `{{ state_attr('alarm.x', 'changed_by') == 'Guest' }}` | `condition: state` with `attribute: changed_by` |
-| `{{ states('sensor.temp') \| float > 25 }}` | `condition: numeric_state` with `above: 25` |
-| `{{ is_state('sensor.x', 'on') and is_state('sensor.y', 'on') }}` | `condition: and` with two state conditions |
-| `wait_template: "{{ is_state('binary_sensor.motion', 'off') }}"` | `wait_for_trigger` with `trigger: state` and `to: "off"` |
+### 1. Check for native condition/trigger
+Before writing any template, check `references/automation-patterns.md` for native alternatives.
 
-**Why native constructs matter:**
-- **Validation**: HA validates native conditions at save time; templates fail only at runtime
-- **Readability**: Native YAML states intent directly; templates require Jinja2 parsing
-- **Trace debugging**: Automation traces show native condition results clearly; templates show only true/false
-- **Performance**: Native conditions execute directly; templates require compilation
+**Common substitutions:**
+- `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
+- `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
+- `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
+- `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger
 
-## Built-in Helpers
+### 2. Check for built-in helper
+Before creating a template sensor, check `references/helper-selection.md`.
 
-Before creating a template sensor, check if a built-in helper fits.
+**Common substitutions:**
+- Sum/average multiple sensors → `min_max` integration
+- Binary any-on/all-on logic → `group` helper
+- Rate of change → `derivative` integration
+- Cross threshold detection → `threshold` integration
+- Consumption tracking → `utility_meter` helper
 
-### Math and Aggregation
-- **[min_max](https://www.home-assistant.io/integrations/min_max/)**: min, max, mean, median, sum, last across sensors. Use `type: sum` with same entity twice to double a value.
-- **[statistics](https://www.home-assistant.io/integrations/statistics/)**: mean, median, standard deviation, variance, count over time window.
-- **[derivative](https://www.home-assistant.io/integrations/derivative/)**: rate of change over time.
-- **[threshold](https://www.home-assistant.io/integrations/threshold/)**: binary sensor when numeric sensor crosses threshold.
-- **[utility_meter](https://www.home-assistant.io/integrations/utility_meter/)**: consumption tracking over billing cycles.
+### 3. Select correct automation mode
+Default `single` mode is often wrong. See `references/automation-patterns.md#automation-modes`.
 
-### State and Input
-- **input_boolean**: on/off toggle for flags and modes
-- **input_number**: numeric thresholds, setpoints, parameters
-- **input_select**: dropdown for fixed options
-- **input_text**: free-text storage
-- **input_datetime**: date, time, or datetime storage
-- **input_button**: trigger-only entity firing event when pressed
+| Scenario | Mode |
+|----------|------|
+| Motion light with timeout | `restart` |
+| Sequential processing (door locks) | `queued` |
+| Independent per-entity actions | `parallel` |
+| One-shot notifications | `single` |
 
-### Organization and Timing
-- **counter**: increment/decrement/reset integer counter
-- **timer**: countdown with start/pause/cancel/finish events
-- **schedule**: weekly schedule with on/off time blocks
-- **group**: combines entities into single entity with all-on/any-on logic
+### 4. Use entity_id over device_id
+`device_id` breaks when devices are re-added. See `references/device-control.md`.
 
-## Common Mistakes
+**Exception:** Zigbee2MQTT autodiscovered device triggers are acceptable.
 
-### 1. Template sensor for simple aggregation
+### 5. For Zigbee buttons/remotes
+- **ZHA:** Use `event` trigger with `device_ieee` (persistent)
+- **Z2M:** Use `device` trigger (autodiscovered) or `mqtt` trigger
 
-**Wrong**: Template sensor with `{{ states('sensor.a') | float + states('sensor.b') | float }}` to sum sensors.
+See `references/device-control.md#zigbee-buttonremote-patterns`.
 
-**Right**: Use `min_max` helper with `type: sum` for summing, or `type: mean` for averaging.
+---
 
-### 2. Template conditions where native exists
+## Critical Anti-Patterns
 
-State membership, attribute checks, numeric comparisons, wait conditions, and AND/OR logic all have native equivalents. See the table above.
+| Anti-pattern | Use instead | Why | Reference |
+|---|---|---|---|
+| `condition: template` with `float > 25` | `condition: numeric_state` | Validated at load, not runtime | `references/automation-patterns.md#native-conditions` |
+| `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger | Event-driven, not polling; waits for *change* | `references/automation-patterns.md#wait-actions` |
+| `device_id` in triggers | `entity_id` (or `device_ieee` for ZHA) | device_id breaks on re-add | `references/device-control.md#entity-id-vs-device-id` |
+| `mode: single` for motion lights | `mode: restart` | Re-triggers must reset the timer | `references/automation-patterns.md#automation-modes` |
+| Template sensor for sum/mean | `min_max` helper | Declarative, handles unavailable states | `references/helper-selection.md#numeric-aggregation` |
+| Template binary sensor with threshold | `threshold` helper | Built-in hysteresis support | `references/helper-selection.md#threshold` |
+
+---
+
+## Reference Files
+
+Read these when you need detailed information:
+
+| File | When to read | Key sections |
+|------|--------------|--------------|
+| `references/automation-patterns.md` | Writing triggers, conditions, waits, or choosing automation modes | `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#ifthen-vs-choose`, `#trigger-ids` |
+| `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#decision-matrix` |
+| `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
+| `references/device-control.md` | Writing service calls, Zigbee button automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#zigbee-buttonremote-patterns`, `#domain-specific-patterns` |
+| `references/examples.yaml` | Need compound examples combining multiple best practices | — |

@@ -12,12 +12,13 @@ skills/
     SKILL.md              # Required
     references/           # Optional: additional docs loaded on demand
     scripts/              # Optional: utility scripts
+    assets/               # Optional: static resources (templates, data files)
 ```
 
 ### SKILL.md requirements
 
 - **YAML frontmatter** with `name` (letters, numbers, hyphens only; 64 chars max) and `description` (1024 chars max).
-- **`description`** in third person, starting with "Use when..." to describe triggering conditions and symptoms. Don't summarize the skill's workflow.
+- **`description`** in third person. Describe what the skill does and when to use it. Include keywords that help agents match tasks. Don't summarize the skill's workflow.
 - **Body** under 500 lines. Split into reference files if approaching this limit.
 - **Reference files** one level deep from SKILL.md—no nested references.
 - **Forward slashes** in all file paths.
