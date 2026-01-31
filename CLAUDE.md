@@ -28,7 +28,7 @@ Constraints from CONTRIBUTING.md:
 - Max **500 lines** per SKILL.md
 - Reference files must be **one level deep** only (e.g. `references/example.yaml`)
 - Use **forward slashes** in all file paths
-- Optional subdirectories: `references/` (additional docs), `scripts/` (utility scripts)
+- Optional subdirectories: `references/` (additional docs), `scripts/` (utility scripts), `assets/` (static resources)
 
 ## Skill Authoring Principles
 
