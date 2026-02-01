@@ -9,7 +9,7 @@ Community-contributed [Agent Skills](https://agentskills.io) for Home Assistant.
 
 | Skill | Description |
 |---|---|
-| [home-assistant-best-practices](skills/home-assistant-best-practices/) | Native HA constructs over templates, helper selection, automation modes, Zigbee button patterns, device control best practices, and safe refactoring workflows for existing config. |
+| [home-assistant-best-practices](skills/home-assistant-best-practices/) | Native HA constructs over templates, helper selection, automation modes, Zigbee button patterns, device control best practices, and safe refactoring. |
 
 ## Installation
 
