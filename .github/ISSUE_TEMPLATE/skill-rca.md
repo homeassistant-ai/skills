@@ -27,11 +27,11 @@ Write "N/A" for any section that is irrelevant.
 
 ## 2. Timeline
 
-List each action you took. For each, record what you did, what resulted, and whether it succeeded or failed.
+List each action you took. For each, record what you did, what resulted, and its status (e.g., Success, Failure).
 
-Mark the first failing step with **[GAP]**.
+Mark the first failing step with **[GAP]** in the `Status` column.
 
-| Step | Action | Result | OK? |
+| Step | Action | Result | Status |
 |------|--------|--------|-----|
 | 1 | | | |
 | 2 | | | |
