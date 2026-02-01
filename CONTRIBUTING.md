@@ -33,6 +33,12 @@ See Anthropic's [skill authoring best practices](https://docs.anthropic.com/en/d
 
 **Consistent terminology.** Choose one term for each concept and stick to it throughout the skill.
 
+## Reporting Skill Problems
+
+When a skill misleads your agent — broken dashboards, failed automations, wrong configurations — first search existing issues for the same skill and failure. If a matching issue exists, react with thumbs-up or comment with additional context. Otherwise, open a new issue with the **Skill Root Cause Analysis** template. Let the agent fill it out — it holds the full context and can trace the failure to its source in the skill.
+
+The template covers five sections: context, timeline, root cause, impact, and environment. A thorough report gives maintainers everything they need to fix the skill in one pass.
+
 ## Submitting a Skill
 
 1. Fork this repository.
