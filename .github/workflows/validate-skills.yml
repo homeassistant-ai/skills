@@ -48,6 +48,31 @@ jobs:
           done
           exit $exit_code
 
+      - name: Enforce version bump
+        if: steps.changes.outputs.skills_changed == 'true' && github.event_name == 'pull_request'
+        run: |
+          base=${{ github.event.pull_request.base.sha }}
+          exit_code=0
+          changed_skills=$(git diff --name-only "$base" HEAD -- 'skills/' | cut -d'/' -f1-2 | sort -u)
+          for skill_dir in $changed_skills; do
+            skill_md="${skill_dir}/SKILL.md"
+            if [ ! -f "$skill_md" ]; then
+              continue
+            fi
+            head_version=$(grep -A1 '^metadata:' "$skill_md" | grep 'version:' | sed 's/.*version:[[:space:]]*"\?\([^"]*\)"\?/\1/')
+            base_version=$(git show "${base}:${skill_md}" 2>/dev/null | grep -A1 '^metadata:' | grep 'version:' | sed 's/.*version:[[:space:]]*"\?\([^"]*\)"\?/\1/')
+            if [ -z "$head_version" ]; then
+              echo "FAIL: ${skill_md} is missing metadata.version"
+              exit_code=1
+            elif [ "$head_version" = "$base_version" ]; then
+              echo "FAIL: ${skill_md} content changed but metadata.version was not bumped (still ${head_version})"
+              exit_code=1
+            else
+              echo "OK: ${skill_md} version bumped ${base_version} -> ${head_version}"
+            fi
+          done
+          exit $exit_code
+
       - name: No skill changes
         if: steps.changes.outputs.skills_changed == 'false'
         run: echo "No changes in skills/, skipping validation."

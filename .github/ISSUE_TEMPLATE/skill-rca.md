@@ -23,6 +23,7 @@ Write "N/A" for any section that is irrelevant.
 ## 1. Context
 
 - **Skill name:**  <!-- e.g. home-assistant-best-practices -->
+- **Skill version:**  <!-- from the metadata.version field in SKILL.md frontmatter -->
 - **What the user originally asked you to do:**
 
 ## 2. Timeline

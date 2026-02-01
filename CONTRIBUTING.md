@@ -18,6 +18,7 @@ skills/
 ### SKILL.md requirements
 
 - **YAML frontmatter** with `name` (letters, numbers, hyphens only; 64 chars max) and `description` (1024 chars max).
+- **`metadata.version`** using [semver](https://semver.org/) (e.g. `"1.0.0"`). Bump the version in every PR that changes skill content. CI enforces this.
 - **`description`** in third person. Describe what the skill does and when to use it. Include keywords that help agents match tasks. Don't summarize the skill's workflow.
 - **Body** under 500 lines. Split into reference files if approaching this limit.
 - **Reference files** one level deep from SKILL.md—no nested references.
