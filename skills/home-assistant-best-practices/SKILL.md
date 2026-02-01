@@ -15,6 +15,8 @@ description: >
   - Agent uses device_id instead of entity_id in triggers/actions
   - Agent modifies entity IDs or config objects without checking all consumers
   - Agent chooses wrong automation mode (e.g., single for motion lights)
+metadata:
+  version: "1.0.0"
 ---
 
 # Home Assistant Best Practices
