@@ -9,7 +9,7 @@ Community-contributed [Agent Skills](https://agentskills.io) for Home Assistant.
 
 | Skill | Description |
 |---|---|
-| [home-assistant-best-practices](skills/home-assistant-best-practices/) | Native HA constructs over templates, helper selection, automation modes, Zigbee button patterns, and device control best practices. |
+| [home-assistant-best-practices](skills/home-assistant-best-practices/) | Native HA constructs over templates, helper selection, automation modes, Zigbee button patterns, device control best practices, and safe refactoring workflows for existing config. |
 
 ## Installation
 
@@ -41,6 +41,7 @@ The `home-assistant-best-practices` skill includes:
 | File | Purpose |
 |------|---------|
 | `SKILL.md` | Decision workflow and quick-reference routing |
+| `references/safe-refactoring.md` | Safe workflow for renaming entities, replacing helpers, restructuring automations |
 | `references/automation-patterns.md` | Native conditions, triggers, waits, automation modes |
 | `references/helper-selection.md` | Built-in helpers vs template sensors (with decision matrix) |
 | `references/template-guidelines.md` | When templates ARE the right choice |
