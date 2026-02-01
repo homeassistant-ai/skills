@@ -24,7 +24,7 @@ Search every component type that references entity IDs. Do not limit searches to
 | Component | How to search |
 |-----------|---------------|
 | Automations | `ha_deep_search(query="entity_id")` or grep `automations.yaml` |
-| Dashboards | grep `.storage/lovelace*`, `ui-lovelace.yaml` |
+| Dashboards | `ha_dashboard_find_card(entity_id="...")` or grep `.storage/lovelace*`, `ui-lovelace.yaml` |
 | Scripts | grep `scripts.yaml` |
 | Scenes | grep `scenes.yaml` |
 | Other | Check AppDaemon apps, Node-RED flows, Pyscript scripts, or any custom integration that references entity IDs |
