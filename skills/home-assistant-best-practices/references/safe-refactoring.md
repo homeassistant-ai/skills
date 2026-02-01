@@ -23,10 +23,10 @@ Search every component type that references entity IDs. Do not limit searches to
 
 | Component | How to search |
 |-----------|---------------|
-| Automations | `ha_deep_search(query="entity_id")` or grep `automations.yaml` / `.storage/automations` |
-| Dashboards | `ha_dashboard_find_card(entity_id="...")` or grep `.storage/lovelace*` |
-| Scripts | grep `scripts.yaml` / `.storage/scripts` |
-| Scenes | grep `scenes.yaml` / `.storage/scenes` |
+| Automations | `ha_deep_search(query="entity_id")` or grep `automations.yaml` |
+| Dashboards | grep `.storage/lovelace*`, `ui-lovelace.yaml` |
+| Scripts | grep `scripts.yaml` |
+| Scenes | grep `scenes.yaml` |
 | Other | Check AppDaemon apps, Node-RED flows, Pyscript scripts, or any custom integration that references entity IDs |
 
 Record every location found. This list becomes your update checklist for Step 4.
@@ -60,12 +60,17 @@ Example — renaming a smart plug's entities from manufacturer defaults to room-
 
 | Domain | Old entity ID | New entity ID |
 |---|---|---|
-| switch | `switch.shelly_plug_s_abc123` | `switch.office_heater` |
-| sensor | `sensor.shelly_plug_s_abc123_energy` | `sensor.office_heater_energy` |
-| update | `update.shelly_plug_s_abc123` | `update.office_heater` |
+| switch | `switch.shellyplug_s_a1b2c3d4e5f6` | `switch.office_heater` |
+| sensor | `sensor.shellyplug_s_a1b2c3d4e5f6_energy` | `sensor.office_heater_energy` |
+| update | `update.shellyplug_s_a1b2c3d4e5f6` | `update.office_heater` |
 
 **Dashboard reference locations (Step 2):**
-Dashboard cards reference entities in multiple places: `entity:` field, `tap_action` targets, `hold_action` targets, conditional card conditions, and template card Jinja2 blocks. Search all of these.
+Dashboard cards reference entities in multiple places. Search all of these:
+
+- `entity:` field
+- `tap_action` and `hold_action` targets
+- Conditional card conditions
+- Template card Jinja2 blocks
 
 ---
 

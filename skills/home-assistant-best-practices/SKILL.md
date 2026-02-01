@@ -38,7 +38,7 @@ Before writing any template, check `references/automation-patterns.md` for nativ
 - `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
 - `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
 - `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
-- `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger
+- `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger (caveat: different behavior when state is already true — see `references/safe-refactoring.md#trigger-restructuring`)
 
 ### 2. Check for built-in helper
 Before creating a template sensor, check `references/helper-selection.md`.
@@ -78,7 +78,7 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Anti-pattern | Use instead | Why | Reference |
 |---|---|---|---|
 | `condition: template` with `float > 25` | `condition: numeric_state` | Validated at load, not runtime | `references/automation-patterns.md#native-conditions` |
-| `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger | Event-driven, not polling; waits for *change* | `references/automation-patterns.md#wait-actions` |
+| `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger | Event-driven, not polling; waits for *change* (see `references/safe-refactoring.md#trigger-restructuring` for semantic differences) | `references/automation-patterns.md#wait-actions` |
 | `device_id` in triggers | `entity_id` (or `device_ieee` for ZHA) | device_id breaks on re-add | `references/device-control.md#entity-id-vs-device-id` |
 | `mode: single` for motion lights | `mode: restart` | Re-triggers must reset the timer | `references/automation-patterns.md#automation-modes` |
 | Template sensor for sum/mean | `min_max` helper | Declarative, handles unavailable states | `references/helper-selection.md#numeric-aggregation` |
