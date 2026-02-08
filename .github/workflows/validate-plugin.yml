@@ -1,0 +1,27 @@
+name: Validate Plugin Manifests
+
+on:
+  pull_request:
+    paths: [".claude-plugin/**"]
+  push:
+    branches: [main]
+    paths: [".claude-plugin/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate plugin manifests
+        run: claude plugin validate .
