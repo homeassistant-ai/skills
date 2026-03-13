@@ -1,7 +1,8 @@
 ---
 name: home-assistant-best-practices
 description: >
-  Best practices for Home Assistant automations, helpers, scripts, and device controls.
+  Best practices for Home Assistant automations, helpers, scripts, device controls, and
+  Lovelace dashboard configuration.
 
   TRIGGER THIS SKILL WHEN:
   - Creating or editing HA automations, scripts, or scenes
@@ -9,14 +10,17 @@ description: >
   - Writing or restructuring triggers, conditions, or automation modes
   - Setting up Zigbee button/remote automations (ZHA or Zigbee2MQTT)
   - Renaming entities or migrating device_id references to entity_id
+  - Configuring Lovelace dashboard cards and selecting the right sensor or helper to feed them
 
   SYMPTOMS THAT TRIGGER THIS SKILL:
   - Agent uses Jinja2 templates where native conditions, triggers, or helpers exist
   - Agent uses device_id instead of entity_id in triggers/actions
   - Agent modifies entity IDs or config objects without checking all consumers
   - Agent chooses wrong automation mode (e.g., single for motion lights)
+  - Agent hard-codes min/max values or picks a raw sensor when a derived helper is more
+    appropriate for a dashboard card
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Home Assistant Best Practices
@@ -42,7 +46,7 @@ Before writing any template, check `references/automation-patterns.md` for nativ
 - `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
 - `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger (caveat: different behavior when state is already true — see `references/safe-refactoring.md#trigger-restructuring`)
 
-### 2. Check for built-in helper
+### 2. Check for built-in helper or Template Helper
 Before creating a template sensor, check `references/helper-selection.md`.
 
 **Common substitutions:**
@@ -51,6 +55,11 @@ Before creating a template sensor, check `references/helper-selection.md`.
 - Rate of change → `derivative` integration
 - Cross threshold detection → `threshold` integration
 - Consumption tracking → `utility_meter` helper
+
+**If no built-in helper fits, use a Template Helper — not YAML.**
+Create it via the HA config flow (MCP tool or API) or via the UI:
+Settings → Devices & Services → Helpers → Create Helper → Template.
+Only write `template:` YAML if explicitly requested or if neither path is available.
 
 ### 3. Select correct automation mode
 Default `single` mode is often wrong. See `references/automation-patterns.md#automation-modes`.
@@ -86,6 +95,7 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Template sensor for sum/mean | `min_max` helper | Declarative, handles unavailable states | `references/helper-selection.md#numeric-aggregation` |
 | Template binary sensor with threshold | `threshold` helper | Built-in hysteresis support | `references/helper-selection.md#threshold` |
 | Renaming entity IDs without impact analysis | Follow `references/safe-refactoring.md` workflow | Renames break dashboards, scripts, and scenes silently | `references/safe-refactoring.md#entity-renames` |
+| `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | `references/template-guidelines.md` |
 
 ---
 

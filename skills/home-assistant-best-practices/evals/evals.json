@@ -1,0 +1,53 @@
+{
+  "skill_name": "home-assistant-best-practices",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "vacuum-last-clean",
+      "prompt": "create a sensor that shows my vacuum's last clean time in a human-readable format",
+      "expected_output": "Recommends creating a Template Helper (via UI or config flow/MCP), NOT writing a template: block in configuration.yaml",
+      "assertions": [
+        {
+          "id": "recommends_template_helper",
+          "description": "Response recommends Template Helper (UI or API/MCP) rather than YAML template: block"
+        },
+        {
+          "id": "no_yaml_template_first",
+          "description": "Response does NOT lead with or exclusively suggest writing template: YAML in configuration.yaml"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "media-player-song",
+      "prompt": "I want a sensor showing my media player's current song title",
+      "expected_output": "Recommends creating a Template Helper (via UI or config flow/MCP) for attribute extraction, not YAML",
+      "assertions": [
+        {
+          "id": "recommends_template_helper",
+          "description": "Response recommends Template Helper (UI or API/MCP) rather than YAML template: block"
+        },
+        {
+          "id": "no_yaml_template_first",
+          "description": "Response does NOT lead with or exclusively suggest writing template: YAML in configuration.yaml"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "avg-temperature",
+      "prompt": "create a sensor that averages my 3 room temperature sensors",
+      "expected_output": "Recommends min_max helper (built-in integration), NOT Template Helper or YAML template",
+      "assertions": [
+        {
+          "id": "recommends_min_max",
+          "description": "Response recommends the min_max integration helper with type: mean"
+        },
+        {
+          "id": "no_template_needed",
+          "description": "Response does NOT recommend a template sensor (YAML or UI helper) as the primary solution"
+        }
+      ]
+    }
+  ]
+}

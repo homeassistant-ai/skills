@@ -1,3 +1,7 @@
+> **Prefer a Template Helper over YAML.**
+> Before writing any `template:` block, create a Template Helper via the HA config flow (MCP tool or API) or the UI: Settings → Devices & Services → Helpers → Create Helper → Template.
+> Use `template:` YAML only when explicitly requested or when neither programmatic nor UI access is available.
+
 # Template Guidelines
 
 This document covers when templates ARE the right choice in Home Assistant, and best practices for writing reliable templates.
