@@ -220,9 +220,14 @@ template:
         state: "{{ states('sensor.raw_temp') | float / 10 }}"
 ```
 
-### Use state_class for Statistics
+### Use state_class for Statistics (Mandatory for Numeric Sensors)
 
-Required for long-term statistics:
+**If `unit_of_measurement` is set, `state_class` MUST also be set.** Without it, HA writes
+no long-term statistics — the sensor will not appear in `statistics_meta` at all and will be
+invisible to the Energy Dashboard and History graphs.
+(Verified on HA 2026.3: `statistics_meta` empty without `state_class`, entry created after adding it.)
+
+Also mirror `device_class` from the source sensor where applicable (e.g., `duration`, `temperature`, `energy`).
 
 ```yaml
 template:
@@ -230,7 +235,7 @@ template:
       - name: "Power Usage"
         device_class: power
         unit_of_measurement: "W"
-        state_class: measurement  # Enables statistics
+        state_class: measurement  # REQUIRED – without this, no long-term statistics are written
         state: "{{ states('sensor.amps') | float * 230 }}"
 ```
 
@@ -240,7 +245,7 @@ Trigger-based templates only update when sources change:
 
 ```yaml
 template:
-  - trigger:
+  - triggers:                    # Recommended plural form (HA 2024.10+)
       - trigger: state
         entity_id: 
           - sensor.temp_bedroom
@@ -254,12 +259,56 @@ template:
           ] %}
           {{ (temps | sum / temps | count) | round(1) }}
         unit_of_measurement: "°C"
+        state_class: measurement
 ```
 
 **Benefits of trigger-based:**
 - Only evaluates when trigger fires (not on every state change)
 - Access to `trigger` variable
 - More efficient for complex templates
+
+### YAML Block Structure Conventions (HA 2024.10+)
+
+**Use plural keys in trigger-based template blocks.** Since HA 2024.10 the recommended syntax
+uses `triggers:` and `actions:` (plural). The singular forms still work — there is no deprecation
+and no warnings — but all official HA docs now use plural. Write new templates in plural form.
+
+**Consolidate same-type entities in one block.** All `sensor` or `binary_sensor` entries of
+the same type belong in a single block, not in separate blocks per entity:
+
+```yaml
+# CORRECT — one block, multiple entries:
+template:
+  - binary_sensor:
+      - name: "Motion Room A"
+        unique_id: motion_room_a
+        state: "{{ ... }}"
+      - name: "Motion Room B"
+        unique_id: motion_room_b
+        state: "{{ ... }}"
+
+# AVOID — separate block per entity:
+template:
+  - binary_sensor:
+      - name: "Motion Room A"
+  - binary_sensor:
+      - name: "Motion Room B"
+```
+
+**Use 4-space indentation for list items under block keys.** Official HA template docs consistently
+use 4-space indent under `sensor:` / `binary_sensor:`. Two-space is YAML-valid but creates
+visual ambiguity:
+
+```yaml
+# CORRECT — 4-space indent, matches official docs:
+- binary_sensor:
+    - name: "My Sensor"
+      state: "{{ ... }}"
+
+# VALID but harder to read — avoid:
+- binary_sensor:
+  - name: "My Sensor"
+```
 
 ---
 
