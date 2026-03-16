@@ -123,14 +123,14 @@ After the registry rename, update group membership via the Options Flow:
 
 1. Initiate the flow:
 
-```bash
+```http
 POST /api/config/config_entries/options/flow
 {"handler": "<group_config_entry_id>"}
 ```
 
 2. Submit the updated member list using the returned `flow_id`:
 
-```bash
+```http
 POST /api/config/config_entries/options/flow/<flow_id>
 {"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": false, "all": false}
 ```
