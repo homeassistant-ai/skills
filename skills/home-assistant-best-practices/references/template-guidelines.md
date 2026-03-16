@@ -295,17 +295,17 @@ template:
       - name: "Motion Room B"
 ```
 
-**Use 4-space indentation for list items under block keys.** Official HA template docs consistently
-use 4-space indent under `sensor:` / `binary_sensor:`. Two-space is YAML-valid but creates
-visual ambiguity:
+**Prefer 4-space indentation for list items under block keys.** Official HA template docs
+consistently use 4-space indent under `sensor:` / `binary_sensor:`. Two-space is YAML-valid
+and works without issues, but 4-space improves visual alignment with the block key:
 
 ```yaml
-# CORRECT — 4-space indent, matches official docs:
+# Preferred — 4-space indent, matches official docs:
 - binary_sensor:
     - name: "My Sensor"
       state: "{{ ... }}"
 
-# VALID but harder to read — avoid:
+# Also valid — 2-space indent is YAML-correct, just less visually distinct:
 - binary_sensor:
   - name: "My Sensor"
 ```
