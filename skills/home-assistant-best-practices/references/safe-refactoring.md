@@ -107,32 +107,34 @@ When renaming entities that are members of a HA **group** created via the UI (Co
 Group member entity IDs are stored in `options.entities` of the group's Config Entry — not in the entity registry. A registry rename leaves the group referencing the old (now non-existent) entity ID, silently breaking it.
 
 **Detection (Step 2):**
-List all Config-Entry-based groups and check their current member entity IDs:
+List all Config-Entry-based groups to get their config entry IDs:
 
-```bash
+```
 ha_get_integration(domain="group")
 ```
 
 > **Note:** `ha_get_integration` does not expose `options.entities` in its response (tool
-> limitation). To inspect current members, initiate an Options Flow for each group entry and
-> read the `suggested_value` in the returned `data_schema.entities` field — or read
-> `.storage/core.config_entries` directly and filter by `domain: group`.
+> limitation). The response does include `entry_id` for each group, which is used as the
+> `handler` in the fix step below. To inspect current members, initiate an Options Flow for
+> each group entry and read the `suggested_value` in the returned `data_schema.entities` field.
 
 **Fix (Step 4):**
-After the registry rename, update group membership via the Options Flow:
+After the registry rename, update group membership via the Options Flow.
+Use the `entry_id` from `ha_get_integration(domain="group")` as `<group_config_entry_id>`.
 
-1. Initiate the flow:
+1. Initiate the flow and read the current option values from the response:
 
 ```http
 POST /api/config/config_entries/options/flow
 {"handler": "<group_config_entry_id>"}
 ```
 
-2. Submit the updated member list using the returned `flow_id`:
+2. Submit the updated member list, preserving existing values for `hide_members` and `all`
+   (read from the `suggested_value` fields in the step 1 response):
 
 ```http
 POST /api/config/config_entries/options/flow/<flow_id>
-{"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": false, "all": false}
+{"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": <existing_value>, "all": <existing_value>}
 ```
 
 **Verify (Step 5):**
