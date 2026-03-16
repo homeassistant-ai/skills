@@ -114,15 +114,19 @@ ha_get_integration(domain="group")
 ```
 
 > **Note:** `ha_get_integration` does not expose `options.entities` in its response (tool
-> limitation). The response does include `entry_id` for each group, which is used as the
-> `handler` in the fix step below. To inspect current members, initiate an Options Flow for
-> each group entry and read the `suggested_value` in the returned `data_schema.entities` field.
+> limitation — returns `options: {}`). The response does include `entry_id` for each group,
+> which is used as the `handler` in the fix step below. To inspect current members, initiate
+> an Options Flow for the group's `entry_id` and read the `suggested_value` in the returned
+> `data_schema.entities` field. Note that HA allows only one active Options Flow per Config
+> Entry at a time — if you open a flow to read current values, complete or abandon it before
+> initiating the fix flow.
 
 **Fix (Step 4):**
 After the registry rename, update group membership via the Options Flow.
 Use the `entry_id` from `ha_get_integration(domain="group")` as `<group_config_entry_id>`.
 
-1. Initiate the flow and read the current option values from the response:
+1. Initiate the flow and read the current option values (`hide_members`, `all`) from
+   the `suggested_value` fields in the response:
 
 ```http
 POST /api/config/config_entries/options/flow
@@ -130,14 +134,18 @@ POST /api/config/config_entries/options/flow
 ```
 
 2. Submit the updated member list, preserving existing values for `hide_members` and `all`
-   (read from the `suggested_value` fields in the step 1 response):
+   (use the `suggested_value` from the step 1 response — do not hardcode `false`):
 
 ```http
 POST /api/config/config_entries/options/flow/<flow_id>
-{"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": <existing_value>, "all": <existing_value>}
+{"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": <suggested_value>, "all": <suggested_value>}
 ```
 
+> **Note:** Cover groups do not have an `all` field — omit it if the step 1 response does
+> not include it in `data_schema`.
+
 **Verify (Step 5):**
-Re-fetch the group config entry (or re-initiate the Options Flow) and confirm that
-`suggested_value` for `entities` contains only the updated entity IDs.
+Re-initiate the Options Flow for the group's `entry_id` and confirm that `suggested_value`
+for `entities` contains only the updated entity IDs. (Direct re-fetch via `ha_get_integration`
+does not show group members — use the Options Flow for verification.)
 
