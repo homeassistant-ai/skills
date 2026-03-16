@@ -291,21 +291,23 @@ template:
 template:
   - binary_sensor:
       - name: "Motion Room A"
+        unique_id: motion_room_a_avoid
+        state: "{{ ... }}"
   - binary_sensor:
       - name: "Motion Room B"
+        unique_id: motion_room_b_avoid
+        state: "{{ ... }}"
 ```
 
-**Prefer 4-space indentation for list items under block keys.** Official HA template docs
-consistently use 4-space indent under `sensor:` / `binary_sensor:`. Two-space is YAML-valid
-and works without issues, but 4-space improves visual alignment with the block key:
+**Follow HA's 2-space indentation rule ([HA YAML Style Guide](https://developers.home-assistant.io/docs/documenting/yaml-style-guide/)).** In template blocks, list items under `sensor:` / `binary_sensor:` are indented 2 spaces relative to the key — which, combined with the `- ` sequence marker, results in 4 visual columns from the parent dash. This is the style used consistently in the official HA template integration documentation.
 
 ```yaml
-# Preferred — 4-space indent, matches official docs:
+# Standard — 2-space indent per level (HA Style Guide, matches official docs):
 - binary_sensor:
     - name: "My Sensor"
       state: "{{ ... }}"
 
-# Also valid — 2-space indent is YAML-correct, just less visually distinct:
+# Non-standard — compact notation (valid YAML, but absent from official HA docs):
 - binary_sensor:
   - name: "My Sensor"
 ```
