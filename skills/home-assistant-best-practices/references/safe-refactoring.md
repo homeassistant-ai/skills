@@ -27,6 +27,7 @@ Search every component type that references entity IDs. Do not limit searches to
 | Dashboards | `ha_dashboard_find_card(entity_id="...")` or grep `.storage/lovelace*`, `ui-lovelace.yaml` |
 | Scripts | grep `scripts.yaml` |
 | Scenes | grep `scenes.yaml` |
+| Config-Entry-based groups | `GET /api/config/config_entries/entry?type=config&domain=group` — members in `options.entities`; `ha_rename_entity` does NOT update these automatically (→ see Config-Entry-Groups section) |
 | Other | Check AppDaemon apps, Node-RED flows, Pyscript scripts, or any custom integration that references entity IDs |
 
 Record every location found. This list becomes your update checklist for Step 4.
