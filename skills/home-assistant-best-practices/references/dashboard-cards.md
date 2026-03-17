@@ -1,6 +1,6 @@
 # Dashboard Card Types
 
-Home Assistant provides 41 built-in card types. For card-specific documentation, fetch from GitHub on demand.
+Home Assistant provides 37 built-in card types. For card-specific documentation, fetch from GitHub on demand.
 
 ## Available Card Types
 

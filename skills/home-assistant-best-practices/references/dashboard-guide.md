@@ -72,7 +72,7 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 | **Display** | sensor, history-graph, statistics-graph, gauge, energy, calendar |
 | **Legacy Control** | entity, entities, light, thermostat (use tile instead) |
 
-**Default:** Use `tile` card for most entities. Use `references/dashboard-cards.md` to look up all 41 card types or fetch card-specific docs.
+**Default:** Use `tile` card for most entities. Use `references/dashboard-cards.md` to look up all 37 card types or fetch card-specific docs.
 
 ### Tile Card
 
