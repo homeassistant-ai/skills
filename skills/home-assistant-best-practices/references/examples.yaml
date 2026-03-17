@@ -219,3 +219,87 @@ automation:
             data:
               title: "Doorbell"
               message: "Someone is at the door"
+
+
+# -----------------------------------------------------------------------------
+# EXAMPLE 6: Script with fields, sequence, and mode
+# -----------------------------------------------------------------------------
+# Demonstrates: correct script schema (sequence not actions), fields for
+# parameterization, mode selection, area targeting, multiple service calls
+# Best practice: Use ha_config_create_script API tool to create scripts
+# rather than generating YAML snippets for manual file editing
+
+script:
+  good_night:
+    alias: "Good Night"
+    description: "Turn off lights, lock doors, and set thermostat for sleeping"
+    icon: mdi:weather-night
+    mode: single
+    fields:
+      sleep_temp:
+        name: Sleep Temperature
+        description: "Target temperature for sleeping"
+        selector:
+          number:
+            min: 60
+            max: 75
+            unit_of_measurement: "°F"
+        default: 68
+    sequence:
+      - action: light.turn_off
+        target:
+          area_id:
+            - living_room
+            - kitchen
+            - bedroom
+
+      - action: lock.lock
+        target:
+          entity_id:
+            - lock.front_door
+            - lock.back_door
+
+      - action: climate.set_temperature
+        target:
+          entity_id: climate.main
+        data:
+          temperature: "{{ sleep_temp }}"
+          hvac_mode: heat
+
+      - action: notify.mobile_app_phone
+        data:
+          message: "Good night! Lights off, doors locked, thermostat set to {{ sleep_temp }}°F."
+
+
+# -----------------------------------------------------------------------------
+# EXAMPLE 7: MQTT integration configuration (YAML)
+# -----------------------------------------------------------------------------
+# NOTE: Most integrations are configured via the HA UI (Settings > Devices &
+# Services), NOT via YAML. Only use YAML when the specific integration
+# documents YAML support. MQTT is one of the few that supports both.
+# Best practice: Direct users to the UI first. Only generate YAML config
+# when the integration requires it or the user explicitly asks for it.
+
+# Add to configuration.yaml (only if YAML-based MQTT config is needed):
+mqtt:
+  sensor:
+    - name: "Outdoor Temperature"
+      state_topic: "home/outdoor/temperature"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      value_template: "{{ value_json.temperature }}"
+
+    - name: "Outdoor Humidity"
+      state_topic: "home/outdoor/humidity"
+      unit_of_measurement: "%"
+      device_class: humidity
+      state_class: measurement
+      value_template: "{{ value_json.humidity }}"
+
+  binary_sensor:
+    - name: "Garage Door"
+      state_topic: "home/garage/door"
+      payload_on: "open"
+      payload_off: "closed"
+      device_class: garage_door

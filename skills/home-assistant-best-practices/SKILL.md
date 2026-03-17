@@ -1,26 +1,27 @@
 ---
 name: home-assistant-best-practices
 description: >
-  Best practices for Home Assistant automations, helpers, scripts, device controls, and
-  Lovelace dashboard configuration.
+  Best practices for HA automations, helpers, scripts, device controls, and dashboards.
 
-  TRIGGER THIS SKILL WHEN:
-  - Creating or editing HA automations, scripts, or scenes
+  TRIGGER WHEN:
+  - Creating/editing automations, scripts, scenes, or dashboards
   - Choosing between template sensors and built-in helpers
-  - Writing or restructuring triggers, conditions, or automation modes
-  - Setting up Zigbee button/remote automations (ZHA or Zigbee2MQTT)
-  - Renaming entities or migrating device_id references to entity_id
-  - Configuring Lovelace dashboard cards and selecting the right sensor or helper to feed them
+  - Writing triggers, conditions, or choosing automation modes
+  - Setting up Zigbee button/remote automations (ZHA or Z2M)
+  - Renaming entities or migrating device_id to entity_id
+  - Configuring dashboard cards or selecting the right helper to feed them
+  - Looking up card types or domain-specific documentation
 
-  SYMPTOMS THAT TRIGGER THIS SKILL:
-  - Agent uses Jinja2 templates where native conditions, triggers, or helpers exist
-  - Agent uses device_id instead of entity_id in triggers/actions
-  - Agent modifies entity IDs or config objects without checking all consumers
+  SYMPTOMS:
+  - Agent uses templates where native conditions/triggers/helpers exist
+  - Agent uses device_id instead of entity_id
+  - Agent modifies entity IDs without checking all consumers
   - Agent chooses wrong automation mode (e.g., single for motion lights)
-  - Agent hard-codes min/max values or picks a raw sensor when a derived helper is more
-    appropriate for a dashboard card
+  - Agent hard-codes values or picks raw sensor over a derived helper
+  - Agent searches for HA config files on disk or generates YAML snippets
+  - Agent tells user to edit configuration.yaml for a UI-configured integration
 metadata:
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Home Assistant Best Practices
@@ -96,6 +97,9 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Template binary sensor with threshold | `threshold` helper | Built-in hysteresis support | `references/helper-selection.md#threshold` |
 | Renaming entity IDs without impact analysis | Follow `references/safe-refactoring.md` workflow | Renames break dashboards, scripts, and scenes silently | `references/safe-refactoring.md#entity-renames` |
 | `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | `references/template-guidelines.md` |
+| Searching for or reading HA config files on disk | Use ha-mcp API tools to manage config via the API | HA is a remote system accessed via REST/WebSocket APIs; config files are not on the local filesystem | — |
+| Generating YAML snippets for automations/scripts/scenes | Use `ha_config_create_automation`, `ha_config_create_script`, `ha_config_set_*` API tools | API tools validate config, avoid syntax errors, and don't require user to manually edit files or restart | `references/automation-patterns.md`, `references/examples.yaml` |
+| Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
 
 ---
 
@@ -110,4 +114,7 @@ Read these when you need detailed information:
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
 | `references/device-control.md` | Writing service calls, Zigbee button automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#zigbee-buttonremote-patterns`, `#domain-specific-patterns` |
+| `references/dashboard-guide.md` | Designing or modifying Lovelace dashboards, choosing view types, configuring cards or features | `#dashboard-structure`, `#view-types`, `#built-in-cards`, `#features`, `#custom-cards`, `#css-styling`, `#common-pitfalls` |
+| `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
+| `references/domain-docs.md` | Looking up integration or domain documentation for service calls, entity attributes, or configuration | — |
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
