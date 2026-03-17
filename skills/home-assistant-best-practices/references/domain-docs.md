@@ -10,7 +10,7 @@ https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/cu
 
 Replace `{domain}` with the integration name (e.g., `light`, `climate`, `mqtt`).
 
-If the MCP server provides resource URIs, use `ha://docs/domains/{domain}` instead.
+If the MCP server registers resource URI templates for domain docs, prefer those over raw GitHub fetches.
 
 ## Common Domains
 

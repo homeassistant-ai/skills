@@ -4,7 +4,9 @@ Home Assistant provides 41 built-in card types. For card-specific documentation,
 
 ## Available Card Types
 
-alarm-panel, area, button, calendar, clock, conditional, energy, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, masonry, media-control, panel, picture-elements, picture-entity, picture-glance, picture, plant-status, sections, sensor, shopping-list, sidebar, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
+alarm-panel, area, button, calendar, clock, conditional, energy, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, media-control, picture-elements, picture-entity, picture-glance, picture, plant-status, sensor, shopping-list, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
+
+**Note:** The HA docs URL pattern also covers 4 view types (`masonry`, `panel`, `sections`, `sidebar`) — these are set at the view level via `"type"` in view config, NOT inside card arrays. See `references/dashboard-guide.md#view-types`.
 
 ## Fetching Card Documentation
 
@@ -16,7 +18,7 @@ https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/cu
 
 Replace `{card_type}` with the card name from the list above (e.g., `tile`, `grid`, `button`).
 
-If the MCP server provides resource URIs, use `ha://docs/cards/{card_type}` instead.
+If the MCP server registers resource URI templates for card docs, prefer those over raw GitHub fetches.
 
 ## Quick Card Selection Guide
 

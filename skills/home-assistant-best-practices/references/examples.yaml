@@ -226,7 +226,7 @@ automation:
 # -----------------------------------------------------------------------------
 # Demonstrates: correct script schema (sequence not actions), fields for
 # parameterization, mode selection, area targeting, multiple service calls
-# Best practice: Use ha_config_create_script API tool to create scripts
+# Best practice: Use ha_config_set_script API tool to create scripts
 # rather than generating YAML snippets for manual file editing
 
 script:

@@ -98,7 +98,7 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Renaming entity IDs without impact analysis | Follow `references/safe-refactoring.md` workflow | Renames break dashboards, scripts, and scenes silently | `references/safe-refactoring.md#entity-renames` |
 | `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | `references/template-guidelines.md` |
 | Searching for or reading HA config files on disk | Use ha-mcp API tools to manage config via the API | HA is a remote system accessed via REST/WebSocket APIs; config files are not on the local filesystem | — |
-| Generating YAML snippets for automations/scripts/scenes | Use `ha_config_create_automation`, `ha_config_create_script`, `ha_config_set_*` API tools | API tools validate config, avoid syntax errors, and don't require user to manually edit files or restart | `references/automation-patterns.md`, `references/examples.yaml` |
+| Generating YAML snippets for automations/scripts/scenes | Use `ha_config_set_automation`, `ha_config_set_script`, `ha_config_set_*` API tools | API tools validate config, avoid syntax errors, and don't require user to manually edit files or restart | `references/automation-patterns.md`, `references/examples.yaml` |
 | Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
 
 ---

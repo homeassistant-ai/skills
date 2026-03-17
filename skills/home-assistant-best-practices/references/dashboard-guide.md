@@ -184,7 +184,41 @@ For isolated styling, use Shadow DOM (`this.attachShadow({ mode: "open" })`) and
 
 ### Hosting
 
-Use `ha_create_dashboard_resource` to convert inline code to a hosted URL, then register as a dashboard resource. Size limit: ~24KB source code.
+Use `ha_config_set_dashboard_resource` to convert inline code to a hosted URL, then register as a dashboard resource. Size limit: ~24KB source code.
+
+### Custom Card Workflow
+
+```python
+# 1. Create the card code
+card_code = '''
+class QuickStatusCard extends HTMLElement {
+  setConfig(config) { this.config = config; }
+  set hass(hass) {
+    const state = hass.states[this.config.entity];
+    this.innerHTML = `<ha-card>
+      <div style="padding:16px;text-align:center;">
+        <div style="font-size:2em;">${state?.state || "?"}</div>
+        <div>${this.config.name || this.config.entity}</div>
+      </div>
+    </ha-card>`;
+  }
+  getCardSize() { return 2; }
+}
+customElements.define("quick-status-card", QuickStatusCard);
+'''
+
+# 2. Get hosted URL
+result = ha_config_set_dashboard_resource(content=card_code, resource_type="module")
+
+# 3. Register as dashboard resource
+
+# 4. Use in dashboard
+card_config = {
+  "type": "custom:quick-status-card",
+  "entity": "sensor.temperature",
+  "name": "Living Room"
+}
+```
 
 ---
 
@@ -224,11 +258,37 @@ entities:
 | Use case | Solution |
 |----------|----------|
 | Popular community card | HACS — `ha_hacs_search` + `ha_hacs_download` |
-| Small custom styling | Inline CSS — `ha_create_dashboard_resource` |
-| One-off custom card | Inline module — `ha_create_dashboard_resource` |
+| Small custom styling | Inline CSS — `ha_config_set_dashboard_resource` |
+| One-off custom card | Inline module — `ha_config_set_dashboard_resource` |
 | Large/complex card | HACS or filesystem (`/config/www/`) |
 
-Popular HACS cards: mushroom, button-card, mini-graph-card, card-mod, layout-card, apexcharts-card.
+### Finding Cards
+
+```python
+# Search for cards
+result = ha_hacs_search(query="mushroom", category="lovelace")
+
+# Get repository details
+result = ha_hacs_repository_info(repository_id="piitaya/lovelace-mushroom")
+```
+
+### Installing Cards
+
+```python
+# Install from HACS (requires user confirmation)
+result = ha_hacs_download(repository_id="piitaya/lovelace-mushroom")
+```
+
+**Note:** HACS install operations have `destructiveHint: True` — clients will ask for user confirmation.
+
+### Popular HACS Cards
+
+- **mushroom** — Modern, clean card collection
+- **button-card** — Highly customizable buttons
+- **mini-graph-card** — Compact graphs
+- **card-mod** — CSS styling for any card
+- **layout-card** — Advanced layout control
+- **apexcharts-card** — Professional charts
 
 ---
 
@@ -325,3 +385,49 @@ Popular HACS cards: mushroom, button-card, mini-graph-card, card-mod, layout-car
 - Excessive use of vertical-stack/horizontal-stack instead of grid
 - Masonry view (auto-layout) — use sections for precise control
 - Putting all entities in generic "entities" cards
+
+---
+
+## Visual Iteration Workflow
+
+For iterative dashboard design with visual feedback, add a browser automation MCP server:
+
+### Recommended MCP Servers
+
+- **Playwright MCP** (`@anthropic/mcp-playwright`) — Take screenshots, interact with pages
+- **Puppeteer MCP** — Similar browser automation capabilities
+- **Browser DevTools MCP** — Inspect elements, debug layouts
+
+### Workflow
+
+```
+1. Create/update dashboard with ha_config_set_dashboard()
+2. Navigate browser to dashboard URL (e.g., http://homeassistant.local:8123/lovelace/my-dashboard)
+3. Take screenshot to see current layout
+4. Analyze screenshot for issues (spacing, alignment, colors)
+5. Adjust configuration and repeat
+```
+
+### Example with Playwright MCP
+
+```python
+# Get base URL from system overview
+overview = ha_get_overview(detail_level="minimal")
+base_url = overview["system_info"]["base_url"]  # e.g., "http://homeassistant.local:8123"
+
+# After updating dashboard
+ha_config_set_dashboard(url_path="my-dashboard", config={...})
+
+# Use Playwright MCP to capture result
+browser_navigate(f"{base_url}/lovelace/my-dashboard")
+browser_screenshot()  # Returns image for visual analysis
+
+# Analyze and iterate based on what you see
+```
+
+### Benefits
+
+- See actual rendered output, not just JSON config
+- Catch visual issues (card overlap, responsive breakpoints)
+- Verify custom card styling
+- Test on different viewport sizes
