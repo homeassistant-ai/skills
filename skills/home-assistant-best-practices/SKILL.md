@@ -114,7 +114,7 @@ Read these when you need detailed information:
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
 | `references/device-control.md` | Writing service calls, Zigbee button automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#zigbee-buttonremote-patterns`, `#domain-specific-patterns` |
-| `references/dashboard-guide.md` | Designing or modifying Lovelace dashboards, choosing view types, configuring cards or features | `#dashboard-structure`, `#view-types`, `#built-in-cards`, `#features`, `#custom-cards`, `#css-styling`, `#common-pitfalls` |
+| `references/dashboard-guide.md` | Designing or modifying Lovelace dashboards — layout, view types, sections, custom cards, CSS styling, HACS | `#dashboard-structure`, `#view-types`, `#built-in-cards`, `#features`, `#custom-cards`, `#css-styling`, `#common-pitfalls` |
 | `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
 | `references/domain-docs.md` | Looking up integration or domain documentation for service calls, entity attributes, or configuration | — |
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
