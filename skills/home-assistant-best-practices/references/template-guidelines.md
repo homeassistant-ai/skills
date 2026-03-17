@@ -220,11 +220,12 @@ template:
         state: "{{ states('sensor.raw_temp') | float / 10 }}"
 ```
 
-### Use state_class for Statistics (Mandatory for Numeric Sensors)
+### Use state_class for Long-Term Statistics (Recommended for Numeric Sensors)
 
-**If `unit_of_measurement` is set, `state_class` MUST also be set.** Without it, HA writes
-no long-term statistics — the sensor will not appear in `statistics_meta` at all and will be
-invisible to the Energy Dashboard and History graphs.
+**If long-term statistics are needed, set `state_class`.** Without it, HA writes no
+long-term statistics — the sensor will not appear in `statistics_meta` and will be invisible
+to the Energy Dashboard and History graphs. `state_class` is optional for diagnostic or
+one-shot sensors where statistics are not required.
 (Verified on HA 2026.3: `statistics_meta` empty without `state_class`, entry created after adding it.)
 
 Also mirror `device_class` from the source sensor where applicable (e.g., `duration`, `temperature`, `energy`).
@@ -235,7 +236,7 @@ template:
       - name: "Power Usage"
         device_class: power
         unit_of_measurement: "W"
-        state_class: measurement  # REQUIRED – without this, no long-term statistics are written
+        state_class: measurement  # enables long-term statistics (omit if not needed)
         state: "{{ states('sensor.amps') | float * 230 }}"
 ```
 
