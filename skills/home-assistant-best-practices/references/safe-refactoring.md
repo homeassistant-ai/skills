@@ -107,45 +107,66 @@ When renaming entities that are members of a HA **group** created via the UI (Co
 Group member entity IDs are stored in `options.entities` of the group's Config Entry — not in the entity registry. A registry rename leaves the group referencing the old (now non-existent) entity ID, silently breaking it.
 
 **Detection (Step 2):**
-List all Config-Entry-based groups to get their config entry IDs:
+List all Config-Entry-based groups to get their `entry_id` values:
 
+```http
+GET /api/config/config_entries/entry?type=config&domain=group
 ```
-ha_get_integration(domain="group")
-```
 
-> **Note:** `ha_get_integration` does not expose `options.entities` in its response (tool
-> limitation — returns `options: {}`). The response does include `entry_id` for each group,
-> which is used as the `handler` in the fix step below. To inspect current members, initiate
-> an Options Flow for the group's `entry_id` and read the `suggested_value` in the returned
-> `data_schema.entities` field. Note that HA allows only one active Options Flow per Config
-> Entry at a time — if you open a flow to read current values, complete or abandon it before
-> initiating the fix flow.
+> *ha-mcp alternative:* `ha_get_integration(domain="group")` returns the same data, but
+> does not expose `options.entities` (returns `options: {}`). Use the REST endpoint above
+> if you need to confirm current members without initiating a flow.
 
-**Fix (Step 4):**
-After the registry rename, update group membership via the Options Flow.
-Use the `entry_id` from `ha_get_integration(domain="group")` as `<group_config_entry_id>`.
-
-1. Initiate the flow and read the current option values (`hide_members`, `all`) from
-   the `suggested_value` fields in the response:
+To inspect current members of a specific group, initiate an Options Flow and read
+`suggested_value` in the returned `data_schema.entities` field:
 
 ```http
 POST /api/config/config_entries/options/flow
 {"handler": "<group_config_entry_id>"}
 ```
 
-2. Submit the updated member list, preserving existing values for `hide_members` and `all`
-   (use the `suggested_value` from the step 1 response — do not hardcode `false`):
+> **One active flow per Config Entry:** HA allows only one active Options Flow per Config
+> Entry at a time. If you open a detection flow to read current values, abandon or complete
+> it before initiating the fix flow. To abandon:
+>
+> ```http
+> DELETE /api/config/config_entries/options/flow/<flow_id>
+> ```
+
+**Fix (Step 4):**
+After the registry rename, update group membership via the Options Flow.
+
+1. Initiate a new fix flow (the detection flow from above must be abandoned or completed
+   first). Read the current option values from `suggested_value`. Note the `flow_id`:
+
+```http
+POST /api/config/config_entries/options/flow
+{"handler": "<group_config_entry_id>"}
+```
+
+2. Submit the updated member list, preserving existing `hide_members` value.
+   Include `all` only if it was present in the step 1 `data_schema` response — only
+   `light`, `switch`, and `binary_sensor` groups support it. For all other group types
+   (fan, lock, media_player, sensor, etc.) omit `all` entirely:
+
+```http
+POST /api/config/config_entries/options/flow/<flow_id>
+{"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": <suggested_value>}
+```
+
+   If the group type supports `all`, add it explicitly:
 
 ```http
 POST /api/config/config_entries/options/flow/<flow_id>
 {"entities": ["new.entity_id_1", "new.entity_id_2"], "hide_members": <suggested_value>, "all": <suggested_value>}
 ```
 
-> **Note:** Cover groups do not have an `all` field — omit it if the step 1 response does
-> not include it in `data_schema`.
+> **Safe rule:** Always derive field presence from the step 1 `data_schema` response —
+> never hardcode fields. Submitting unknown fields may result in a validation error.
 
 **Verify (Step 5):**
 Re-initiate the Options Flow for the group's `entry_id` and confirm that `suggested_value`
-for `entities` contains only the updated entity IDs. (Direct re-fetch via `ha_get_integration`
-does not show group members — use the Options Flow for verification.)
+for `entities` contains only the updated entity IDs. The REST endpoint
+`GET /api/config/config_entries/entry` does not expose `options.entities` — the Options
+Flow is the only way to read current group members.
 
