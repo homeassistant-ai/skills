@@ -14,7 +14,7 @@ Answer three questions before touching anything:
 
 1. **What changes?** Entity ID, automation structure, sensor type, or trigger semantics.
 2. **What sibling entities share the same device?** Query the device to list every entity it owns (battery sensor, update entity, diagnostic button). Plan changes for all siblings together.
-   - *Tool hint:* `ha_get_device(entity_id="...")` if available, or inspect Settings > Devices.
+   - Query the device via the HA REST API (`GET /api/states/<entity_id>`) or inspect Settings > Devices.
 3. **Rename one entity or all device entities?** Devices bundle 2-6 entities. Renaming the primary but leaving siblings with the old naming scheme creates inconsistency.
 
 ### Step 2: Search ALL consumers
@@ -23,8 +23,8 @@ Search every component type that references entity IDs. Do not limit searches to
 
 | Component | How to search |
 |-----------|---------------|
-| Automations | `ha_deep_search(query="entity_id")` or grep `automations.yaml` |
-| Dashboards | `ha_dashboard_find_card(entity_id="...")` or grep `.storage/lovelace*`, `ui-lovelace.yaml` |
+| Automations | Search automations for the entity ID via the HA API or grep `automations.yaml` |
+| Dashboards | Search dashboard configs for the entity ID via the HA API or grep `.storage/lovelace*`, `ui-lovelace.yaml` |
 | Scripts | grep `scripts.yaml` |
 | Scenes | grep `scenes.yaml` |
 | Other | Check AppDaemon apps, Node-RED flows, Pyscript scripts, or any custom integration that references entity IDs |
@@ -42,7 +42,7 @@ Work through each location from your Step 2 checklist. Update every reference to
 ### Step 5: Verify
 
 1. **Search for the OLD identifier** across all component types. Expect zero results.
-   - *Tool hint:* `ha_search_entities(query="old_name")` or grep all config files.
+   - Search for the old entity ID via the HA API or grep all config files.
 2. **Search for the NEW identifier** to confirm all expected locations reference it.
 3. **Reload or check dashboards** if entity IDs changed.
 4. **If stale references remain that you cannot update**, rename the entity back to its original ID to restore functionality, then report the blocking locations to the user.

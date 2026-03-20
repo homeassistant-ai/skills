@@ -3,23 +3,23 @@ name: home-assistant-best-practices
 description: >
   Best practices for HA automations, helpers, scripts, device controls, and dashboards.
 
-  TRIGGER WHEN:
+  TRIGGER THIS SKILL WHEN:
   - Creating/editing automations, scripts, scenes, or dashboards
   - Choosing between template sensors and built-in helpers
-  - Writing triggers, conditions, or choosing automation modes
-  - Setting up Zigbee button/remote automations (ZHA or Z2M)
+  - Writing or restructuring triggers, conditions, or automation modes
+  - Setting up Zigbee button/remote automations (ZHA or Zigbee2MQTT)
   - Renaming entities or migrating device_id to entity_id
-  - Configuring dashboard cards or selecting the right helper to feed them
+  - Configuring dashboard cards or picking helpers to feed them
   - Looking up card types or domain-specific documentation
 
   SYMPTOMS:
-  - Agent uses templates where native conditions/triggers/helpers exist
+  - Agent uses Jinja2 templates where native conditions/triggers/helpers exist
   - Agent uses device_id instead of entity_id
-  - Agent modifies entity IDs without checking all consumers
+  - Agent modifies entity IDs without checking consumers
   - Agent chooses wrong automation mode (e.g., single for motion lights)
-  - Agent hard-codes values or picks raw sensor over a derived helper
+  - Agent hard-codes values or picks raw sensor over derived helper
   - Agent searches for HA config files on disk or generates YAML snippets
-  - Agent tells user to edit configuration.yaml for a UI-configured integration
+  - Agent tells user to edit configuration.yaml for UI-configured integrations
 metadata:
   version: 3
 ---
@@ -97,8 +97,8 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Template binary sensor with threshold | `threshold` helper | Built-in hysteresis support | `references/helper-selection.md#threshold` |
 | Renaming entity IDs without impact analysis | Follow `references/safe-refactoring.md` workflow | Renames break dashboards, scripts, and scenes silently | `references/safe-refactoring.md#entity-renames` |
 | `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | `references/template-guidelines.md` |
-| Searching for or reading HA config files on disk | Use ha-mcp API tools to manage config via the API | HA is a remote system accessed via REST/WebSocket APIs; config files are not on the local filesystem | — |
-| Generating YAML snippets for automations/scripts/scenes | Use `ha_config_set_automation`, `ha_config_set_script`, `ha_config_set_*` API tools | API tools validate config, avoid syntax errors, and don't require user to manually edit files or restart | `references/automation-patterns.md`, `references/examples.yaml` |
+| Searching for or reading HA config files on disk | Use the HA REST/WebSocket API to manage config programmatically | HA is a remote system accessed via APIs; config files are not on the local filesystem | — |
+| Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | `references/automation-patterns.md`, `references/examples.yaml` |
 | Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
 
 ---

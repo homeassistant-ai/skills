@@ -2,6 +2,21 @@
 
 Patterns and decisions for designing Home Assistant Lovelace dashboards.
 
+## Table of Contents
+
+- [Dashboard Structure](#dashboard-structure)
+- [View Types](#view-types)
+- [Built-in Cards](#built-in-cards)
+- [Features](#features)
+- [Actions](#actions)
+- [Custom Cards](#custom-cards)
+- [CSS Styling](#css-styling)
+- [HACS Integration](#hacs-integration)
+- [Complete Example: Multi-View Dashboard](#complete-example-multi-view-dashboard)
+- [Common Pitfalls](#common-pitfalls)
+- [Modern Best Practices (2024+)](#modern-best-practices-2024)
+- [Visual Iteration Workflow](#visual-iteration-workflow)
+
 ---
 
 ## Dashboard Structure
@@ -29,7 +44,7 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 
 **url_path rules:**
 - New dashboards must contain a hyphen: `my-dashboard` (not `mydashboard`)
-- Use `lovelace` or `default` to target the built-in default dashboard
+- Use `lovelace` to target the built-in default dashboard
 - `dashboard_id`: internal identifier (returned on create, used for update/delete)
 - `url_path`: URL identifier (user-facing, used in dashboard URLs)
 
@@ -184,36 +199,16 @@ For isolated styling, use Shadow DOM (`this.attachShadow({ mode: "open" })`) and
 
 ### Hosting
 
-Use `ha_config_set_dashboard_resource` to convert inline code to a hosted URL, then register as a dashboard resource. Size limit: ~24KB source code.
+Use the HA dashboard resource API to convert inline code to a hosted URL, then register as a dashboard resource. Size limit: ~24KB source code.
 
 ### Custom Card Workflow
 
-```python
-# 1. Create the card code
-card_code = '''
-class QuickStatusCard extends HTMLElement {
-  setConfig(config) { this.config = config; }
-  set hass(hass) {
-    const state = hass.states[this.config.entity];
-    this.innerHTML = `<ha-card>
-      <div style="padding:16px;text-align:center;">
-        <div style="font-size:2em;">${state?.state || "?"}</div>
-        <div>${this.config.name || this.config.entity}</div>
-      </div>
-    </ha-card>`;
-  }
-  getCardSize() { return 2; }
-}
-customElements.define("quick-status-card", QuickStatusCard);
-'''
+1. Write the card JavaScript class (see Minimal Custom Card above)
+2. Register it as a dashboard resource via the HA REST API (`/api/config/lovelace/resources`) with `resource_type: "module"`
+3. Use the card in your dashboard config with the `custom:` prefix
 
-# 2. Get hosted URL
-result = ha_config_set_dashboard_resource(content=card_code, resource_type="module")
-
-# 3. Register as dashboard resource
-
-# 4. Use in dashboard
-card_config = {
+```json
+{
   "type": "custom:quick-status-card",
   "entity": "sensor.temperature",
   "name": "Living Room"
@@ -257,29 +252,14 @@ entities:
 
 | Use case | Solution |
 |----------|----------|
-| Popular community card | HACS — `ha_hacs_search` + `ha_hacs_download` |
-| Small custom styling | Inline CSS — `ha_config_set_dashboard_resource` |
-| One-off custom card | Inline module — `ha_config_set_dashboard_resource` |
+| Popular community card | HACS — search and install via HACS API |
+| Small custom styling | Inline CSS — register via HA dashboard resource API |
+| One-off custom card | Inline module — register via HA dashboard resource API |
 | Large/complex card | HACS or filesystem (`/config/www/`) |
 
-### Finding Cards
+### Finding and Installing Cards
 
-```python
-# Search for cards
-result = ha_hacs_search(query="mushroom", category="lovelace")
-
-# Get repository details
-result = ha_hacs_repository_info(repository_id="piitaya/lovelace-mushroom")
-```
-
-### Installing Cards
-
-```python
-# Install from HACS (requires user confirmation)
-result = ha_hacs_download(repository_id="piitaya/lovelace-mushroom")
-```
-
-**Note:** HACS install operations have `destructiveHint: True` — clients will ask for user confirmation.
+Search HACS for community cards by name/category, review repository details, then install. HACS install operations are destructive — clients will ask for user confirmation.
 
 ### Popular HACS Cards
 
@@ -364,7 +344,7 @@ result = ha_hacs_download(repository_id="piitaya/lovelace-mushroom")
 
 | Issue | Solution |
 |-------|----------|
-| url_path rejected | New dashboards need a hyphen: `my-dashboard` not `mydashboard`. Use `lovelace` or `default` for the default dashboard. |
+| url_path rejected | New dashboards need a hyphen: `my-dashboard` not `mydashboard`. Use `lovelace` for the default dashboard. |
 | Entity not found | Use full entity ID: `light.living_room` not `living_room` |
 | Features not working | Match feature type to entity domain (e.g., `light-brightness` only works on `light.*`) |
 | Custom card not loading | Check resource type is `module` and verify URL is accessible |
@@ -401,7 +381,7 @@ For iterative dashboard design with visual feedback, add a browser automation MC
 ### Workflow
 
 ```
-1. Create/update dashboard with ha_config_set_dashboard()
+1. Create/update dashboard via the HA config API
 2. Navigate browser to dashboard URL (e.g., http://homeassistant.local:8123/lovelace/my-dashboard)
 3. Take screenshot to see current layout
 4. Analyze screenshot for issues (spacing, alignment, colors)
@@ -410,19 +390,11 @@ For iterative dashboard design with visual feedback, add a browser automation MC
 
 ### Example with Playwright MCP
 
-```python
-# Get base URL from system overview
-overview = ha_get_overview(detail_level="minimal")
-base_url = overview["system_info"]["base_url"]  # e.g., "http://homeassistant.local:8123"
-
-# After updating dashboard
-ha_config_set_dashboard(url_path="my-dashboard", config={...})
-
-# Use Playwright MCP to capture result
-browser_navigate(f"{base_url}/lovelace/my-dashboard")
-browser_screenshot()  # Returns image for visual analysis
-
-# Analyze and iterate based on what you see
+```
+1. Get the HA base URL from the system overview (e.g., "http://homeassistant.local:8123")
+2. Update dashboard config via the HA REST API
+3. Navigate browser to {base_url}/lovelace/{url_path}
+4. Take screenshot → analyze → adjust → repeat
 ```
 
 ### Benefits

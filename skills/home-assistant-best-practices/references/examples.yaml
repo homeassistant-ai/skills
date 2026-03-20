@@ -226,7 +226,7 @@ automation:
 # -----------------------------------------------------------------------------
 # Demonstrates: correct script schema (sequence not actions), fields for
 # parameterization, mode selection, area targeting, multiple service calls
-# Best practice: Use ha_config_set_script API tool to create scripts
+# Best practice: Use the HA config API to create scripts programmatically
 # rather than generating YAML snippets for manual file editing
 
 script:
@@ -280,8 +280,8 @@ script:
 #
 # APPROACH 1 (RECOMMENDED): MQTT Subentries via UI
 # Settings > Devices & Services > MQTT > Add MQTT device
-# Supports: sensor, binary_sensor, switch, light, climate, cover, fan,
-# lock, button, number, select, text, alarm_control_panel, and more.
+# Supports: sensor, switch, light, climate, cover, fan, lock, button,
+# number, select, text, alarm_control_panel, valve, water_heater, and more.
 # No restart required. Fill in state_topic, device_class, etc. in the UI.
 #
 # APPROACH 2 (PREFERRED for devices): MQTT Discovery
