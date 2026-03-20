@@ -114,9 +114,9 @@ List all Config-Entry-based groups to get their `entry_id` values:
 GET /api/config/config_entries/entry?type=config&domain=group
 ```
 
-> *ha-mcp alternative:* `ha_get_integration(domain="group")` returns the same data, but
-> does not expose `options.entities` (returns `options: {}`). Use the REST endpoint above
-> if you need to confirm current members without initiating a flow.
+> **Note:** Some HA MCP integrations may not expose all fields from the Config Entries API
+> response — in particular, `options.entities` may be absent. Use the REST endpoint above
+> to confirm current group members directly.
 
 To inspect current members of a specific group, initiate an Options Flow and read
 `suggested_value` in the returned `data_schema.entities` field:
