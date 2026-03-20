@@ -27,6 +27,15 @@ code_review:
         - Explain the *why* behind instructions rather than issuing bare MUST/NEVER commands
         - If bundled scripts exist, the skill should tell Claude when and how to use them
 
+        ## Common pitfalls
+        - Skills should not reference specific MCP tool names (e.g. `ha_rename_entity`,
+          `ha_get_integration`) — tools change and vary by agent. Reference HA concepts and
+          REST APIs instead.
+        - Opinionated conventions (naming schemes, code style preferences) do not belong in
+          this shared repo — they apply to any HA installation and will override each user's
+          existing conventions. Flag any guidance that is not backed by official HA behaviour
+          or well-established community consensus.
+
         ## Progressive disclosure
         Skills load in three levels: metadata (~100 words, always in context), SKILL.md body
         (in context when triggered), and bundled resources (loaded as needed). Keep the body

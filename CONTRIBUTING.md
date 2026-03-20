@@ -34,6 +34,10 @@ See Anthropic's [skill authoring best practices](https://docs.anthropic.com/en/d
 
 **Consistent terminology.** Choose one term for each concept and stick to it throughout the skill.
 
+**Don't couple skills to specific tool names.** Reference HA concepts and REST APIs instead of naming specific MCP tools (e.g. `ha_rename_entity`, `ha_get_integration`). Tool names change and not all agents have the same toolset; the underlying HA APIs and concepts are stable.
+
+**No opinionated conventions.** Skills in this repo are applied to any HA installation. Naming conventions, code style preferences, and other user-space opinions belong in a personal skill or instance-level `CLAUDE.md`, not here. Only include guidance that reflects official HA behaviour or well-established community consensus.
+
 ## Reporting Skill Problems
 
 When a skill misleads your agent — broken dashboards, failed automations, wrong configurations — first search existing issues for the same skill and failure. If a matching issue exists, react with thumbs-up or comment with additional context. Otherwise, open a new issue with the **Report Bad Skill Advice** template. Let the agent fill it out — it holds the full context and can trace the failure to its source in the skill.
