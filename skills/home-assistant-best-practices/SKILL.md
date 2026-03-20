@@ -21,7 +21,7 @@ description: >
   - Agent searches for HA config files on disk or generates YAML snippets
   - Agent tells user to edit configuration.yaml for a UI-configured integration
 metadata:
-  version: "1.2.0"
+  version: 3
 ---
 
 # Home Assistant Best Practices

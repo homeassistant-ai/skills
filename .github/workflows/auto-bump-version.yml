@@ -1,0 +1,110 @@
+name: Auto-bump skill version
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+
+# GitHub does not re-trigger workflows for pushes made with GITHUB_TOKEN — no
+# explicit loop guard is needed. Note: switching to a PAT or App token would
+# re-enable triggering and require an explicit guard (e.g. checking the committer).
+permissions:
+  contents: write
+
+jobs:
+  auto-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed skills
+        id: changes
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ "$BEFORE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            echo "::warning::First push or force-push to branch — cannot diff against before SHA, skipping version bump."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BEFORE_SHA" HEAD -- 'skills/' \
+            | cut -d'/' -f1-2 | sort -u | tr '\n' ' ')
+          if [ -n "$changed" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "skills=${changed}" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bump versions
+        if: steps.changes.outputs.has_changes == 'true'
+        id: bump
+        env:
+          SKILLS: ${{ steps.changes.outputs.skills }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          any_bumped=false
+          bumped_skills=""
+          for skill_dir in $SKILLS; do
+            skill_md="${skill_dir}/SKILL.md"
+            [ -f "$skill_md" ] || continue
+
+            # Skip if the only diff is the version field itself (e.g. a standalone format migration)
+            content_diff=$(git diff "$BEFORE_SHA" HEAD -- "$skill_dir" \
+              | grep '^[+-]' | grep -v '^[+-][+-][+-]' | grep -v 'version:' || true)
+            if [ -z "$content_diff" ]; then
+              echo "Skipping ${skill_dir}: no content changes beyond version field"
+              continue
+            fi
+
+            current=$(awk '
+              /^---/{fd++; next}
+              fd==1 && /^metadata:/{m=1; next}
+              fd==1 && m && /^[[:space:]]+version:/{match($0,/[0-9]+/); print substr($0,RSTART,RLENGTH)+0; exit}
+            ' "$skill_md")
+
+            if [ -z "$current" ]; then
+              echo "::error file=${skill_md}::No integer version found in frontmatter — fix metadata.version before merging."
+              exit 1
+            fi
+
+            new_version=$((current + 1))
+
+            trap 'rm -f "${skill_md}.tmp"' EXIT
+            awk -v new_ver="$new_version" '
+              /^---/{fd++; print; next}
+              fd==1 && /^metadata:/{m=1; print; next}
+              fd==1 && m && /^[[:space:]]+version:/{
+                if (/version:[[:space:]]*"/)
+                  sub(/"[^"]*"/, new_ver)    # quoted string — strip quotes and write bare integer
+                else
+                  sub(/[0-9]+/, new_ver)     # unquoted integer
+                m=0
+              }
+              {print}
+            ' "$skill_md" > "${skill_md}.tmp" && mv "${skill_md}.tmp" "$skill_md"
+
+            echo "Bumped ${skill_md}: ${current} -> ${new_version}"
+            any_bumped=true
+            bumped_skills="${bumped_skills} ${skill_md}"
+          done
+          echo "any_bumped=${any_bumped}" >> "$GITHUB_OUTPUT"
+          echo "bumped_skills=${bumped_skills}" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push
+        if: steps.bump.outputs.any_bumped == 'true'
+        env:
+          BUMPED: ${{ steps.bump.outputs.bumped_skills }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          read -ra files <<< "$BUMPED"
+          git add -- "${files[@]}"
+          git commit -m "chore: auto-bump skill versions"
+          git push
