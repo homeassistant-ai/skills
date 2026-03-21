@@ -72,6 +72,7 @@ Dashboard cards reference entities in multiple places. Search all of these:
 - `tap_action` and `hold_action` targets
 - Conditional card conditions
 - Template card Jinja2 blocks
+- `views[n].badges` — badge rows per view; badges are siblings of the cards array, not children, so any card-focused search will miss them — always search the full dashboard config
 
 ---
 
