@@ -223,10 +223,14 @@ template:
 ### Use state_class for Long-Term Statistics (Recommended for Numeric Sensors)
 
 **If long-term statistics are needed, set `state_class`.** Without it, HA writes no
-long-term statistics — the sensor will not appear in `statistics_meta` and will be invisible
-to the Energy Dashboard and History graphs. `state_class` is optional for diagnostic or
-one-shot sensors where statistics are not required.
+long-term statistics — the sensor will not appear in `statistics_meta` or in History graphs.
+`state_class` is optional for diagnostic or one-shot sensors where statistics are not required.
 (Verified on HA 2026.3: `statistics_meta` empty without `state_class`, entry created after adding it.)
+
+> **Energy Dashboard note:** `state_class` alone is not sufficient for Energy Dashboard
+> visibility. The sensor also needs `device_class: energy` (or `power`, `gas`, etc.) to
+> appear as a selectable source. A sensor with `state_class` but no matching `device_class`
+> will have long-term statistics but will not appear in the Energy Dashboard configuration.
 
 Also mirror `device_class` from the source sensor where applicable (e.g., `duration`, `temperature`, `energy`).
 
@@ -274,11 +278,13 @@ template:
 uses `triggers:` and `actions:` (plural). The singular forms still work — there is no deprecation
 and no warnings — but all official HA docs now use plural. Write new templates in plural form.
 
-**Consolidate same-type entities in one block.** All `sensor` or `binary_sensor` entries of
-the same type belong in a single block, not in separate blocks per entity:
+**Consolidate state-based entities of the same type in one block.** Multiple state-based
+`sensor` or `binary_sensor` entries without individual triggers belong in a single block —
+not in separate blocks per entity. Trigger-based blocks (with their own `triggers:` section)
+must be separate regardless of entity type, since each block defines its own trigger context:
 
 ```yaml
-# CORRECT — one block, multiple entries:
+# CORRECT — state-based sensors: one block, multiple entries:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -288,25 +294,31 @@ template:
         unique_id: motion_room_b
         state: "{{ ... }}"
 
-# AVOID — separate block per entity:
+# AVOID — state-based sensors split across separate blocks:
 template:
   - binary_sensor:
       - name: "Motion Room A"
+        unique_id: motion_room_a_avoid
+        state: "{{ ... }}"
   - binary_sensor:
       - name: "Motion Room B"
+        unique_id: motion_room_b_avoid
+        state: "{{ ... }}"
 ```
 
-**Use 4-space indentation for list items under block keys.** Official HA template docs consistently
-use 4-space indent under `sensor:` / `binary_sensor:`. Two-space is YAML-valid but creates
-visual ambiguity:
+> **Trigger-based blocks are always separate** — a block with `triggers:` defines its own
+> update context and cannot share a block with entries of a different trigger configuration.
+> Only consolidate entries that share the same trigger context (or are all state-based).
+
+**Follow HA's 2-space indentation rule ([HA YAML Style Guide](https://developers.home-assistant.io/docs/documenting/yaml-style-guide/)).** In template blocks, list items under `sensor:` / `binary_sensor:` are indented 2 spaces relative to the key — which, combined with the `- ` sequence marker, results in 4 visual columns from the parent dash. This is the style used consistently in the official HA template integration documentation.
 
 ```yaml
-# CORRECT — 4-space indent, matches official docs:
+# Standard — 2-space indent per level (HA Style Guide, matches official docs):
 - binary_sensor:
     - name: "My Sensor"
       state: "{{ ... }}"
 
-# VALID but harder to read — avoid:
+# Non-standard — compact notation (valid YAML, but absent from official HA docs):
 - binary_sensor:
   - name: "My Sensor"
 ```
@@ -530,7 +542,7 @@ sensor:
 ```yaml
 # EFFICIENT - Only runs when specified triggers fire
 template:
-  - trigger:
+  - triggers:
       - trigger: time_pattern
         minutes: "/5"  # Every 5 minutes
     sensor:
