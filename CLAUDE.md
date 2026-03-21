@@ -26,6 +26,7 @@ description: >
 
 Constraints from CONTRIBUTING.md:
 - Max **500 lines** per SKILL.md
+- `metadata.version` must be `0` on new skills (CI assigns real version on merge; do not edit manually)
 - Reference files must be **one level deep** only (e.g. `references/example.yaml`)
 - Use **forward slashes** in all file paths
 - Optional subdirectories: `references/` (additional docs), `scripts/` (utility scripts), `assets/` (static resources)
@@ -36,6 +37,7 @@ Constraints from CONTRIBUTING.md:
 - **Conciseness** — provide patterns and quick-reference tables, not tutorials
 - **Consistent terminology** — one term per concept throughout a skill
 - **Symptom-based triggering** — the `description` frontmatter should describe observable agent behaviors that signal the skill is needed
+- **No tool names** — reference HA REST APIs and concepts, never specific MCP tool names (e.g. `ha_rename_entity`); tool names vary by agent setup
 
 ## Validation
 
