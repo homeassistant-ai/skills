@@ -173,3 +173,75 @@ for `entities` contains only the updated entity IDs. The REST endpoint
 `GET /api/config/config_entries/entry` does not expose `options.entities` — the Options
 Flow is the only way to read current group members.
 
+
+## Config-Entry Data — Blind Spots for `ha_rename_entity`
+
+**`ha_rename_entity` only updates the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
+
+**Affected integrations and storage fields:**
+
+| Integration | Storage field | Fields containing entity_ids |
+|---|---|---|
+| **Better Thermostat** | `data` | `temperature_sensor`, `humidity_sensor`, `outdoor_sensor`, `window_sensors` |
+| Generic Thermostat | `options` | `heater`, `target_sensor` |
+| Generic Hygrostat | `options` | `humidifier`, `target_sensor` |
+| Threshold Helper | `options` | `entity_id` |
+| Min/Max Helper | `options` | `entity_ids` |
+
+**Symptom:** Integration reports "associated entity missing" or behaves incorrectly after restart.
+
+**Timing-critical:** Patch Config-Entry data fields **before the HA restart**. An integration that starts with stale entity_ids can extend restart time significantly.
+
+**Scan snippet:**
+```bash
+python3 -c "
+import json
+data = json.load(open('/config/.storage/core.config_entries'))
+old_ids = ['old.entity_id']
+for entry in data['data']['entries']:
+    text = json.dumps(entry.get('data', {})) + json.dumps(entry.get('options', {}))
+    hits = [o for o in old_ids if o in text]
+    if hits:
+        print(entry['domain'], entry['title'], hits)
+"
+```
+
+**Fix via Options Flow (REST):**
+```http
+POST /api/config/config_entries/options/flow
+{"handler": "<entry_id>"}
+```
+Then submit the returned form with updated entity_ids. See the Config-Entry-Groups section above for the full Options Flow pattern.
+
+---
+
+## Storage-Mode-Dashboards (`.storage/lovelace.*`)
+
+**`ha_rename_entity` does NOT update Lovelace storage dashboards.**
+
+**Recommended fix — no restart required:**
+
+Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save` to write):
+
+```
+1. Read dashboard config:
+   WebSocket: {"type": "lovelace/config", "url_path": "<dashboard_url_path>"}
+   → returns full dashboard config (JSON)
+
+2. Replace entity IDs externally (Python):
+   config_str = json.dumps(config)
+   config_str = config_str.replace('"old.entity_id"', '"new.entity_id"')
+   new_config = json.loads(config_str)
+
+3. Write dashboard config:
+   WebSocket: {"type": "lovelace/config/save", "url_path": "<dashboard_url_path>", "config": new_config}
+   → takes effect immediately, no restart required
+```
+
+HA MCP integrations that expose a dashboard save tool use this WebSocket call internally. The `python_transform` sandbox in some integrations is unsuitable for bulk entity-ID replacement — it blocks `import`, `def`, `isinstance`, and `str.replace()`. Pass the fully replaced config as a plain object instead.
+
+**Fallback — direct file edit (requires restart):**
+Edit `.storage/lovelace.<dashboard_id>` directly and restart HA. Note: files >~40 KB may exceed the `write_file` service limit — compress first with `json.dumps(data, separators=(',', ':'))`.
+
+**List all storage dashboards:**
+WebSocket: `{"type": "lovelace/dashboards/list"}` → returns all dashboards with their url_path.
