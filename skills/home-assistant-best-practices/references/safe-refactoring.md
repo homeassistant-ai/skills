@@ -174,9 +174,9 @@ for `entities` contains only the updated entity IDs. The REST endpoint
 Flow is the only way to read current group members.
 
 
-## Config-Entry Data — Blind Spots for `ha_rename_entity`
+## Config-Entry Data — Blind Spots for entity registry renames
 
-**`ha_rename_entity` only updates the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
+**Entity registry renames only update the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
 
 **Affected integrations and storage fields:**
 
@@ -217,7 +217,7 @@ Then submit the returned form with updated entity_ids. See the Config-Entry-Grou
 
 ## Storage-Mode-Dashboards (`.storage/lovelace.*`)
 
-**`ha_rename_entity` does NOT update Lovelace storage dashboards.**
+**Entity registry renames do NOT update Lovelace storage dashboards.**
 
 **Recommended fix — no restart required:**
 
