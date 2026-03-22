@@ -75,7 +75,7 @@ Dashboard cards reference entities in multiple places. Search all of these:
 - `views[n].badges` — badge rows per view; badges are siblings of the cards array, not children, so any card-focused search will miss them — always search the full dashboard config
 - `views[n].header.card` — sections view only (HA 2025.3+); the view header accepts a Markdown card that supports Jinja2 templates and may contain entity references; it is a sibling of the cards array and is not reachable via card-focused search
 
-> **Warning:** Card-focused searches (e.g. `ha_dashboard_find_card`) do not traverse `views[n].badges` or `views[n].header.card` — these are siblings of `views[n].cards`, not children. Always fetch the full dashboard config and search the raw JSON when renaming entities.
+> **Warning:** Card-focused searches (e.g. `ha_dashboard_find_card`) do not traverse `views[n].badges` or `views[n].header.card` — these are siblings of `views[n].cards`, not children. Always fetch the full dashboard config and search the raw configuration when renaming entities.
 
 ---
 
