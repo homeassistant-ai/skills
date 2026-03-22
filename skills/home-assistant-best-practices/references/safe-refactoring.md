@@ -115,7 +115,7 @@ List all Config-Entry-based groups to get their `entry_id` values:
 GET /api/config/config_entries/entry?type=config&domain=group
 ```
 
-> **Note:** Some HA MCP integrations may not expose all fields from the Config Entries API
+> **Note:** Some integrations may not expose all fields from the Config Entries API
 > response — in particular, `options.entities` may be absent. Use the REST endpoint above
 > to confirm current group members directly.
 
