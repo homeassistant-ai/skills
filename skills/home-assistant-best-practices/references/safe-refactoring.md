@@ -241,7 +241,7 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
 Some HA integrations use this WebSocket call internally for dashboard saves. Scripting sandboxes that restrict Python imports and method calls are unsuitable for bulk entity-ID replacement — pass the fully replaced config as a plain object instead.
 
 **Fallback — direct file edit (requires restart):**
-Edit `.storage/lovelace.<dashboard_id>` directly and restart HA. For large dashboards (>~40 KB) compress the JSON first: `json.dumps(data, separators=(',', ':'))`.
+Edit `.storage/lovelace.<dashboard_id>` directly and restart HA. For large dashboards, compress the JSON first: `json.dumps(data, separators=(',', ':'))`.
 
 **List all storage dashboards:**
 WebSocket: `{"type": "lovelace/dashboards/list"}` → returns all dashboards with their url_path.
