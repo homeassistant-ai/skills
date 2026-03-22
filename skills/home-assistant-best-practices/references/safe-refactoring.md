@@ -73,6 +73,7 @@ Dashboard cards reference entities in multiple places. Search all of these:
 - Conditional card conditions
 - Template card Jinja2 blocks
 - `views[n].badges` — badge rows per view; badges are siblings of the cards array, not children, so any card-focused search will miss them — always search the full dashboard config
+- `views[n].header.card` — sections view only (HA 2025.3+); the view header accepts a Markdown card that supports Jinja2 templates and may contain entity references; it is a sibling of the cards array and is not reachable via card-focused search
 
 ---
 
