@@ -115,7 +115,7 @@ List all Config-Entry-based groups to get their `entry_id` values:
 GET /api/config/config_entries/entry?type=config&domain=group
 ```
 
-> **Note:** Some HA MCP integrations may not expose all fields from the Config Entries API
+> **Note:** Some integrations may not expose all fields from the Config Entries API
 > response — in particular, `options.entities` may be absent. Use the REST endpoint above
 > to confirm current group members directly.
 
@@ -172,3 +172,66 @@ for `entities` contains only the updated entity IDs. The REST endpoint
 `GET /api/config/config_entries/entry` does not expose `options.entities` — the Options
 Flow is the only way to read current group members.
 
+
+## Config-Entry Data — Blind Spots for entity registry renames
+
+**Entity registry renames only update the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
+
+**Affected integrations and storage fields:**
+
+| Integration | Storage field | Fields containing entity_ids |
+|---|---|---|
+| **Better Thermostat** | `data` (not accessible via REST — see note above) | `temperature_sensor`, `humidity_sensor`, `outdoor_sensor`, `window_sensors` |
+| Generic Thermostat | `options` | `heater`, `target_sensor` |
+| Generic Hygrostat | `options` | `humidifier`, `target_sensor` |
+| Threshold Helper | `options` | `entity_id` |
+| Min/Max Helper | `options` | `entity_ids` |
+
+**Symptom:** Integration reports "associated entity missing" or behaves incorrectly after restart.
+
+**Timing:** Patch Config-Entry data fields **before the HA restart**. An integration that starts with stale entity_ids can cause integration setup failures on restart.
+
+**Scan via REST API:**
+```http
+GET /api/config/config_entries/entry
+```
+Iterate the returned entries and check `data` and `options` fields for the old entity ID.
+
+> **Note:** Some custom integrations (including Better Thermostat) do not expose their entity references in `data` or `options` via this endpoint — the fields may appear empty even when the integration is configured. For these integrations, the REST scan will return no matches; use the Options Flow (see Fix section below) to inspect and update the configuration instead.
+
+**Fix:**
+
+For integrations that store entity_ids in `options` (Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern.
+
+For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename.
+
+---
+
+## Storage-Mode-Dashboards (`.storage/lovelace.*`)
+
+**Entity registry renames do NOT update Lovelace storage dashboards.**
+
+**Recommended fix — no restart required:**
+
+Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save` to write):
+
+```
+1. Read dashboard config:
+   WebSocket: {"type": "lovelace/config", "url_path": "<dashboard_url_path>"}
+   Note: the default (Overview) dashboard requires `"url_path": null`; custom dashboards use their string path.
+   → returns full dashboard config (JSON)
+
+2. Replace entity IDs externally (Python):
+   config_str = json.dumps(config)
+   config_str = config_str.replace('"old.entity_id"', '"new.entity_id"')
+   new_config = json.loads(config_str)
+
+3. Write dashboard config:
+   WebSocket: {"type": "lovelace/config/save", "url_path": "<dashboard_url_path>", "config": new_config}
+   → takes effect immediately, no restart required
+```
+
+
+
+**List all storage dashboards:**
+WebSocket: `{"type": "lovelace/dashboards/list"}` → returns all dashboards with their url_path.
