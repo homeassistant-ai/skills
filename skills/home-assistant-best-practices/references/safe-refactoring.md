@@ -203,7 +203,7 @@ Iterate the returned entries and check `data` and `options` fields for the old e
 
 For integrations that store entity_ids in `options` (Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern.
 
-For integrations that store entity_ids in `data` (Better Thermostat): the Options Flow only updates `options` — `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation. Edit `data` directly in `.storage/core.config_entries` and restart HA.
+For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename.
 
 ---
 
