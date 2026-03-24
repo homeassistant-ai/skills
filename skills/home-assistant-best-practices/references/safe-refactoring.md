@@ -116,7 +116,7 @@ List all Config-Entry-based groups to get their `entry_id` values:
 GET /api/config/config_entries/entry?type=config&domain=group
 ```
 
-> **Note:** Some integrations may not expose all fields from the Config Entries API
+> **Note:** Some HA MCP integrations may not expose all fields from the Config Entries API
 > response — in particular, `options.entities` may be absent. Use the REST endpoint above
 > to confirm current group members directly.
 
@@ -173,6 +173,7 @@ for `entities` contains only the updated entity IDs. The REST endpoint
 `GET /api/config/config_entries/entry` does not expose `options.entities` — the Options
 Flow is the only way to read current group members.
 
+
 ## Config-Entry Data — Blind Spots for entity registry renames
 
 **Entity registry renames only update the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
@@ -207,6 +208,7 @@ For integrations that store entity_ids in `data` (Better Thermostat): `data` fie
 
 ---
 
+
 ## Storage-Mode-Dashboards (`.storage/lovelace.*`)
 
 **Entity registry renames do NOT update Lovelace storage dashboards.**
@@ -235,4 +237,3 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
 
 **List all storage dashboards:**
 WebSocket: `{"type": "lovelace/dashboards/list"}` → returns all dashboards with their url_path.
-
