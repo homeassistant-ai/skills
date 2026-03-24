@@ -34,7 +34,7 @@ Follow this sequence when creating any automation:
 
 ### 0. Gate: modifying existing config?
 
-If your change affects entity IDs or cross-component references — renaming entities, replacing template sensors with helpers, converting device triggers, or restructuring automations — read `references/safe-refactoring.md` first. That reference covers impact analysis, device-sibling discovery, config-entry data fields, storage dashboard patching, and post-change verification. Complete its workflow before proceeding.
+If your change affects entity IDs or cross-component references — renaming entities, replacing template sensors with helpers, converting device triggers, or restructuring automations — read `references/safe-refactoring.md` first. That reference covers impact analysis, device-sibling discovery, and post-change verification. Complete its workflow before proceeding.
 
 Steps 1-5 below apply to new config or pattern evaluation.
 
@@ -111,7 +111,7 @@ Read these when you need detailed information:
 
 | File | When to read | Key sections |
 |------|--------------|--------------|
-| `references/safe-refactoring.md` | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config | `#universal-workflow`, `#entity-renames`, `#config-entry-data--blind-spots-for-entity-registry-renames`, `#storage-mode-dashboards-storagelovelace`, `#helper-replacements`, `#trigger-restructuring` |
+| `references/safe-refactoring.md` | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config | `#universal-workflow`, `#entity-renames`, `#helper-replacements`, `#trigger-restructuring` |
 | `references/automation-patterns.md` | Writing triggers, conditions, waits, or choosing automation modes | `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#ifthen-vs-choose`, `#trigger-ids` |
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
