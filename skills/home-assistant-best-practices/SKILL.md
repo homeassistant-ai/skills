@@ -119,4 +119,4 @@ Read these when you need detailed information:
 | `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
 | `references/domain-docs.md` | Looking up integration or domain documentation for service calls, entity attributes, or configuration | — |
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
-| `references/storage-schemas.md` | Writing directly to `.storage/` files (input_number, input_boolean, etc.) — min/max schema, entity_registry cleanup | `#input-number`, `#entity-registry` |
+| `references/storage-schemas.md` | Writing directly to `.storage/` files for input_number, input_boolean — min/max schema, entity_registry cleanup | `#input-number`, `#entity-registry` |
