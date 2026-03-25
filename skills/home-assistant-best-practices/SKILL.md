@@ -101,6 +101,7 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Searching for or reading HA config files on disk | Use the HA REST/WebSocket API to manage config programmatically | HA is a remote system accessed via APIs; config files are not on the local filesystem | — |
 | Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | `references/automation-patterns.md`, `references/examples.yaml` |
 | Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
+| `enabled: false` in `automations.yaml` for UI automations | `automation.turn_off` service call or UI disable (Settings > Automations > kebab menu) | YAML flag conflicts with entity registry entry — creates Repair issue not detected by `check_config` | `references/automation-patterns.md#disabling-automations` |
 
 ---
 
