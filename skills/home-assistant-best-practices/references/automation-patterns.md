@@ -506,6 +506,41 @@ automation:
 
 ---
 
+## Disabling Automations
+
+Use `automation.turn_off` or the UI to disable an automation — do not use `enabled: false` in `automations.yaml`.
+
+Home Assistant stores UI-created automations in both the YAML file and the entity registry. Setting `enabled: false` in the YAML file conflicts with the registry entry and creates a Repair issue. The conflict is not detected by `check_config`.
+
+```yaml
+# ❌ WRONG - causes Repair issue for UI automations
+automation:
+  - id: my_automation
+    alias: "My Automation"
+    enabled: false   # conflicts with entity registry entry
+    trigger: ...
+```
+
+```yaml
+# ✅ RIGHT - disable via service call (temporary, survives reload)
+action: automation.turn_off
+target:
+  entity_id: automation.my_automation
+data:
+  stop_actions: false  # optional: let current run finish
+
+# ✅ ALSO RIGHT - re-enable with:
+action: automation.turn_on
+target:
+  entity_id: automation.my_automation
+```
+
+For permanent disabling, use the HA UI: **Settings > Automations > select automation > kebab menu > Disable**. This writes to the entity registry directly.
+
+**When `enabled: false` in YAML is acceptable:** Only for automations that have never been loaded by HA as a UI automation and have no entity registry entry. In practice, any automation that has appeared in the UI has a registry entry; use `automation.turn_off` or the UI instead.
+
+---
+
 ## if/then vs choose
 
 ### if/then/else
