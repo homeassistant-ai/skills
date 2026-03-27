@@ -1,7 +1,7 @@
 # Storage Schemas Reference
 
 This document covers the JSON schema for Home Assistant `.storage/` files
-that agents may need to read or write directly via `write_file` or SSH.
+that agents may need to read or write directly via the HA file API or SSH.
 
 > ⚠️ Always read the existing `.storage/` file before writing — use it as the
 > canonical schema reference. Never reconstruct schemas from memory.
@@ -82,7 +82,7 @@ Structure: `{ "data": { "entities": [ {...}, ... ] } }`
 To remove stale entries (e.g. after a helper was deleted via UI but
 its zombie persists):
 
-Run via SSH terminal (`core.entity_registry` is ~2–3 MB — too large for `write_file`):
+Run via SSH terminal (`core.entity_registry` is ~2–3 MB — too large for the HA file API):
 
 ```python
 import json, shutil
