@@ -623,7 +623,7 @@ data:
 | --- | --- |
 | `stop_actions` | Optional. Stops currently active action runs. **Defaults to `true`.** |
 | Survives reload? | Yes — state is stored in `core.restore_state` |
-| Survives restart? | Only if the automation has an `id:` field — `core.restore_state` matches by `entity_id`, which is derived from `alias:` without `id:` and is unstable if automations are reordered |
+| Survives restart? | Only if the automation has an `id:` field — `core.restore_state` matches by `entity_id`, which is derived from `alias:` without `id:` and is unstable if automations are added, removed, or have conflicting aliases |
 | Entity in state machine? | Yes — state is `off` |
 | Re-enable via | `automation.turn_on` |
 
@@ -639,7 +639,7 @@ Disabling an automation via *Settings → Automations → open automation → �
 | Survives restart? | Yes |
 | Entity in state machine? | **No** — `GET /api/states/<entity_id>` returns 404 |
 | Requires `id:` field? | Yes — the `id:` field in `automations.yaml` becomes the automation's `unique_id`, which is required for an entity registry entry |
-| Re-enable via | UI toggle (*Settings → Automations → open automation → ⋮ → Settings → Enabled toggle*) or WebSocket API (`config/entity_registry/update`) |
+| Re-enable via | UI toggle (*Settings → Automations → open automation → ⋮ → Settings → Enabled toggle*) or WebSocket API (`config/entity_registry/update` with `{"disabled_by": null}`) |
 
 **Note:** The list toggle on the Automations page (`/config/automation/dashboard`) calls `automation.turn_on`/`turn_off` (Method 1). The *Enabled toggle* under *⋮ → Settings* modifies the entity registry (Method 2). Both can be active simultaneously — an automation can be registry-enabled but in state `off`.
 
