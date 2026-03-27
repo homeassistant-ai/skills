@@ -28,6 +28,7 @@ Search every component type that references entity IDs. Do not limit searches to
 | Scripts | grep `scripts.yaml` |
 | Scenes | grep `scenes.yaml` |
 | Config-Entry-based groups | `GET /api/config/config_entries/entry?type=config&domain=group` — members in `options.entities`; entity registry renames do NOT update these automatically (→ see Config-Entry-Groups section) |
+| Config-Entry integrations (Better Thermostat, Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper) | `GET /api/config/config_entries/entry` — scan `data` and `options` fields for the old entity ID; entity registry renames do NOT update these fields automatically (→ see Config-Entry-Data section) |
 | Other | Check AppDaemon apps, Node-RED flows, Pyscript scripts, or any custom integration that references entity IDs |
 
 Record every location found. This list becomes your update checklist for Step 4.
@@ -173,3 +174,73 @@ for `entities` contains only the updated entity IDs. The REST endpoint
 `GET /api/config/config_entries/entry` does not expose `options.entities` — the Options
 Flow is the only way to read current group members.
 
+
+## Config-Entry Data — Blind Spots for entity registry renames
+
+**Entity registry renames only update the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
+
+**Affected integrations and storage fields:**
+
+| Integration | Storage field | Fields containing entity_ids |
+|---|---|---|
+| **Better Thermostat** | `data` (not accessible via REST — see note below) | `temperature_sensor`, `humidity_sensor`, `outdoor_sensor`, `window_sensors` |
+| Generic Thermostat | `options` | `heater`, `target_sensor` |
+| Generic Hygrostat | `options` | `humidifier`, `target_sensor` |
+| Threshold Helper | `options` | `entity_id` |
+| Min/Max Helper | `options` | `entity_ids` |
+
+**Symptom:** Integration reports "associated entity missing" or behaves incorrectly after restart.
+
+**Timing:** Patch Config-Entry data fields **before the HA restart**. An integration that starts with stale entity_ids can cause integration setup failures on restart.
+
+**Scan via REST API:**
+```http
+GET /api/config/config_entries/entry
+```
+Iterate the returned entries and check `data` and `options` fields for the old entity ID.
+
+> **Note:** Some custom integrations (including Better Thermostat) do not expose their entity references in `data` or `options` via this endpoint — the fields may appear empty even when the integration is configured. For these integrations, the REST scan will return no matches; the Fix section below documents whether an alternative fix path exists.
+
+**Fix:**
+
+For integrations that store entity_ids in `options` (Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern.
+
+For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename.
+
+---
+
+
+## Storage-Mode-Dashboards (`.storage/lovelace.*`)
+
+**Entity registry renames do NOT update Lovelace storage dashboards.**
+
+**Recommended fix — no restart required:**
+
+Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save` to write):
+
+```
+1. Read dashboard config:
+   WebSocket: {"type": "lovelace/config", "url_path": "<dashboard_url_path>"}
+   Note: the default (Overview) dashboard requires `"url_path": null`; custom dashboards use their string path.
+   → returns full dashboard config (JSON)
+
+2. Replace entity IDs (Python — JSON-aware, boundary-safe):
+   def _replace_ids(obj, old_id, new_id):
+       if isinstance(obj, str): return new_id if obj == old_id else obj
+       if isinstance(obj, list): return [_replace_ids(i, old_id, new_id) for i in obj]
+       if isinstance(obj, dict): return {(new_id if k == old_id else k): _replace_ids(v, old_id, new_id) for k, v in obj.items()}
+       return obj
+   new_config = _replace_ids(config, "old.entity_id", "new.entity_id")
+   # Note: string replace on json.dumps() is not boundary-safe — it matches entity IDs
+   # that appear as JSON keys or as substrings of other strings in the serialized output.
+
+3. Write dashboard config:
+   WebSocket: {"type": "lovelace/config/save", "url_path": "<dashboard_url_path>", "config": new_config}
+   Note: use `"url_path": null` for the default (Overview) dashboard; use the string path for custom dashboards.
+   → takes effect immediately, no restart required
+```
+
+
+
+**List all storage dashboards:**
+WebSocket: `{"type": "lovelace/dashboards/list"}` → returns all dashboards with their url_path.

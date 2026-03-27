@@ -95,8 +95,9 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | `mode: single` for motion lights | `mode: restart` | Re-triggers must reset the timer | `references/automation-patterns.md#automation-modes` |
 | Template sensor for sum/mean | `min_max` helper | Declarative, handles unavailable states | `references/helper-selection.md#numeric-aggregation` |
 | Template binary sensor with threshold | `threshold` helper | Built-in hysteresis support | `references/helper-selection.md#threshold` |
-| Renaming entity IDs without impact analysis | Follow `references/safe-refactoring.md` workflow | Renames break dashboards, scripts, and scenes silently | `references/safe-refactoring.md#entity-renames` |
+| Renaming entity IDs without impact analysis | Follow `references/safe-refactoring.md` workflow | Renames break dashboards, scripts, scenes, Config-Entry data, and storage dashboards silently | `references/safe-refactoring.md#entity-renames` |
 | Renaming members of Config-Entry-based groups (UI groups) without updating membership | Update group membership via Options Flow after the registry rename | The entity registry rename does not update `options.entities` in the Config Entry — group silently breaks | `references/safe-refactoring.md#config-entry-groups` |
+| Renaming entities used by Config-Entry integrations (Better/Generic Thermostat, Min/Max, Threshold) without patching Config-Entry data | Scan and patch `core.config_entries` `data`+`options` fields | These integrations store entity_ids in Config Entry — not updated by entity registry renames | `references/safe-refactoring.md#config-entry-data--blind-spots-for-entity-registry-renames` |
 | `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | `references/template-guidelines.md` |
 | Searching for or reading HA config files on disk | Use the HA REST/WebSocket API to manage config programmatically | HA is a remote system accessed via APIs; config files are not on the local filesystem | — |
 | Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | `references/automation-patterns.md`, `references/examples.yaml` |
@@ -110,7 +111,7 @@ Read these when you need detailed information:
 
 | File | When to read | Key sections |
 |------|--------------|--------------|
-| `references/safe-refactoring.md` | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config | `#universal-workflow`, `#entity-renames`, `#helper-replacements`, `#trigger-restructuring` |
+| `references/safe-refactoring.md` | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config | `#universal-workflow`, `#entity-renames`, `#helper-replacements`, `#trigger-restructuring`, `#config-entry-data--blind-spots-for-entity-registry-renames`, `#storage-mode-dashboards-storagelovelace` |
 | `references/automation-patterns.md` | Writing triggers, conditions, waits, or choosing automation modes | `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#ifthen-vs-choose`, `#trigger-ids` |
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
