@@ -50,4 +50,5 @@ The template covers five sections: context, timeline, root cause, impact, and en
 2. Create a folder under `skills/` with your skill name.
 3. Write a `SKILL.md` following the format above.
 4. Test your skill with real scenarios.
-5. Submit a pull request describing what your skill teaches and what problems it solves.
+5. If you added or removed reference files, update the **Skill Contents** table in `README.md`.
+6. Submit a pull request describing what your skill teaches and what problems it solves.
