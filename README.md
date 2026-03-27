@@ -34,7 +34,7 @@ Run each command separately inside Claude Code:
 /plugin install home-assistant-skills@homeassistant-ai-skills
 ```
 
-Restart Claude Code after installation for the skill to take effect.
+Run `/reload-plugins` or restart Claude Code for the skill to take effect.
 
 ### Claude Desktop / claude.ai
 
