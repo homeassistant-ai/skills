@@ -35,12 +35,7 @@ that agents may need to read or write directly via the HA file API or SSH.
 }
 ```
 
-**Key notes:**
-- Keys are `min` / `max` — **not** `minimum` / `maximum`
-- Same key names as in `configuration.yaml` YAML config
-- `initial`, `unit_of_measurement`, `icon` are optional
-- `mode`: `"box"` or `"slider"`
-- `id` must match the `unique_id` in `core.entity_registry`
+**Key notes:** Keys are `min` / `max` (not `minimum` / `maximum`), same as in `configuration.yaml`. `initial`, `unit_of_measurement`, and `icon` are optional. `mode`: `"box"` or `"slider"`. `id` must match the `unique_id` in `core.entity_registry`.
 
 **After writing:** call `input_number/reload` or restart HA.
 
@@ -67,9 +62,7 @@ that agents may need to read or write directly via the HA file API or SSH.
 }
 ```
 
-**Key notes:**
-- No `initial` field — state is not persisted here
-- `icon` is optional
+**Key notes:** No `initial` field — state is not persisted here. `icon` is optional.
 
 ---
 
