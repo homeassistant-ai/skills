@@ -609,7 +609,7 @@ Home Assistant provides two distinct ways to disable an automation, with differe
 
 ### Method 1: Turn Off (Temporary, State Machine)
 
-`automation.turn_off` disables the automation's configured triggers — it will not fire automatically. The entity remains in the state machine with state `off` and can still be triggered manually via `automation.trigger`.
+`automation.turn_off` disables the automation's configured triggers — it will not fire automatically. The entity remains in the state machine with state `off` and can still be invoked via the `automation.trigger` service.
 
 ```yaml
 action: automation.turn_off
@@ -641,12 +641,12 @@ Disabling an automation via *Settings → Automations → open automation → �
 | Requires `id:` field? | Yes — the `id:` field in `automations.yaml` becomes the automation's `unique_id`, which is required for an entity registry entry |
 | Re-enable via | UI toggle (*Settings → Automations → open automation → ⋮ → Settings → Enabled toggle*) or WebSocket API (`config/entity_registry/update` with `{"disabled_by": null}`) |
 
-**Note:** The list toggle on the Automations page (`/config/automation/dashboard`) calls `automation.turn_on`/`turn_off` (Method 1). The *Enabled toggle* under *⋮ → Settings* modifies the entity registry (Method 2). Both can be active simultaneously — an automation can be registry-enabled but in state `off`.
+**Note:** The list toggle on the Automations page (`/config/automation/dashboard`) calls `automation.turn_on`/`turn_off` (Method 1). The *Enabled toggle* under *Settings → Automations → open automation → ⋮ → Settings → Enabled toggle* modifies the entity registry (Method 2). Both can be active simultaneously — an automation can be registry-enabled but in state `off`, or registry-disabled but with a stored `on` state.
 
 ### AVOID: `enabled: false` in automations.yaml
 
 ```yaml
-# AVOID — causes FAILED_SCHEMA on load
+# AVOID — enabled: is not a valid top-level key
 - alias: My Automation
   enabled: false       # not a valid top-level key
   triggers: ...
