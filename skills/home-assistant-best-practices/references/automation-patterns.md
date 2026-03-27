@@ -612,11 +612,11 @@ Home Assistant provides two distinct ways to disable an automation, with differe
 `automation.turn_off` disables the automation's configured triggers — it will not fire automatically. The entity remains in the state machine with state `off` and can still be invoked via the `automation.trigger` service.
 
 ```yaml
-action: automation.turn_off
-target:
-  entity_id: automation.my_automation
-data:
-  stop_actions: true  # default: true — stops currently running actions
+- action: automation.turn_off
+  target:
+    entity_id: automation.my_automation
+  data:
+    stop_actions: true  # default: true — stops currently running actions
 ```
 
 | Attribute | Value |
@@ -656,9 +656,9 @@ Disabling an automation via *Settings → Automations → open automation → �
 
 ```yaml
 # CORRECT — disable temporarily via service (Method 1)
-action: automation.turn_off
-target:
-  entity_id: automation.my_automation
+- action: automation.turn_off
+  target:
+    entity_id: automation.my_automation
 
 # CORRECT — disable permanently via entity registry (Method 2)
 # UI: Settings → Automations → open automation → ⋮ → Settings → Enabled toggle
