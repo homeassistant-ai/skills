@@ -5,13 +5,13 @@
     "email": ""
   },
   "metadata": {
-    "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, and device control",
+    "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, device control, and dashboards",
     "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "home-assistant-skills",
-      "description": "Best practices for Home Assistant automations, helpers, scripts, and device controls",
+      "description": "Best practices for Home Assistant automations, helpers, scripts, device controls, and dashboards",
       "source": "./"
     }
   ]

@@ -11,6 +11,9 @@ This is a community-contributed collection of **Agent Skills** for Home Assistan
 - `skills/<skill-name>/SKILL.md` — each skill lives in its own folder with a `SKILL.md` file
 - `CONTRIBUTING.md` — skill authoring guidelines and submission workflow
 - `.claude-plugin/plugin.json` — Claude Code plugin metadata
+- `.claude-plugin/marketplace.json` — marketplace metadata for plugin discovery
+- `AGENTS.md` — symlink to `CLAUDE.md` (for agents that use `AGENTS.md` convention)
+- `.github/ISSUE_TEMPLATE/skill-rca.md` — "Report Bad Skill Advice" issue template
 
 ## Skill Format
 
@@ -26,7 +29,7 @@ description: >
 
 Constraints from CONTRIBUTING.md:
 - Max **500 lines** per SKILL.md
-- `metadata.version` must be `0` on new skills (CI assigns real version on merge; do not edit manually)
+- `metadata.version` must be `0` on new skills (do not edit manually)
 - Reference files must be **one level deep** only (e.g. `references/example.yaml`)
 - Use **forward slashes** in all file paths
 - Optional subdirectories: `references/` (additional docs), `scripts/` (utility scripts), `assets/` (static resources)
@@ -41,9 +44,12 @@ Constraints from CONTRIBUTING.md:
 
 ## Validation
 
-CI runs `skills-ref validate` on every PR and push to `main` that touches `skills/**`. To validate locally:
+CI runs two workflows on PRs and pushes to `main`:
+- **validate-skills** — runs `skills-ref validate` on every skill when `skills/**` changes
+- **validate-plugin** — validates `.claude-plugin/` metadata
+
+To validate locally:
 
 ```bash
-pip install skills-ref
-python -m skills_ref.cli validate skills/<skill-name>
+uvx skills-ref validate skills/<skill-name>
 ```
