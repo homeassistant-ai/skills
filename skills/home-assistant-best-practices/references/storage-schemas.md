@@ -24,19 +24,17 @@ that agents may need to read or write directly.
         "name": "Display Name",
         "min": 0.0,
         "max": 100.0,
-        "step": 0.5,
-        "initial": 21.0,
-        "mode": "box",
-        "unit_of_measurement": "°C",
-        "icon": "mdi:thermometer"
+        "step": 1.0,
+        "mode": "slider"
       }
     ]
   }
 }
 ```
 
-**Key notes:** min/max (not minimum/maximum), optional keys: initial, unit_of_measurement, icon, mode: "box" or "slider", id becomes unique_id in core.entity_registry, entity_id is input_number.<id>.
-
+**Required keys:** name, min, max.
+**Optional keys:** initial (float), step (float, default 1), mode (box/slider, default slider), icon, unit_of_measurement.
+**Registry:** id becomes unique_id in core.entity_registry, entity_id is input_number.<id>.
 **After writing:** call input_number.reload or restart HA.
 
 ---
@@ -54,16 +52,16 @@ that agents may need to read or write directly.
     "items": [
       {
         "id": "my_flag",
-        "name": "Display Name",
-        "icon": "mdi:toggle-switch"
+        "name": "Display Name"
       }
     ]
   }
 }
 ```
 
-**Key notes:** initial field absent (state not stored), icon optional, id becomes unique_id in core.entity_registry, entity_id is input_boolean.<id>.
-
+**Required keys:** name.
+**Optional keys:** initial (true/false, sets default state on first load), icon.
+**Registry:** id becomes unique_id in core.entity_registry, entity_id is input_boolean.<id>.
 **After writing:** call input_boolean.reload or restart HA.
 
 ---
