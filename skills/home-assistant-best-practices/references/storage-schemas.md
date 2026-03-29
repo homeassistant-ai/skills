@@ -32,7 +32,7 @@ that agents may need to read or write directly.
 }
 ```
 
-**Required keys:** name, min, max.
+**Required keys:** id, name, min, max.
 **Optional keys:** initial (float), step (float, default 1), mode (box/slider, default slider), icon, unit_of_measurement.
 **Registry:** id becomes unique_id in core.entity_registry, entity_id is input_number.<id>.
 **After writing:** call input_number.reload or restart HA.
@@ -59,7 +59,7 @@ that agents may need to read or write directly.
 }
 ```
 
-**Required keys:** name.
+**Required keys:** id, name.
 **Optional keys:** initial (true/false, sets default state on first load), icon.
 **Registry:** id becomes unique_id in core.entity_registry, entity_id is input_boolean.<id>.
 **After writing:** call input_boolean.reload or restart HA.
