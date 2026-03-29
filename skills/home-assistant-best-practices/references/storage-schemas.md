@@ -35,7 +35,7 @@ that agents may need to read or write directly.
 }
 ```
 
-**Key notes:** min/max (not minimum/maximum), optional: initial, unit_of_measurement, icon; mode: "box" or "slider"; id becomes unique_id in core.entity_registry; entity_id is input_number.<id>.
+**Key notes:** min/max (not minimum/maximum), optional: initial, unit_of_measurement, icon, mode: "box" or "slider", id becomes unique_id in core.entity_registry, entity_id is input_number.<id>.
 
 **After writing:** call input_number.reload or restart HA.
 
