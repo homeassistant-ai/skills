@@ -62,7 +62,7 @@ that agents may need to read or write directly.
 }
 ```
 
-**Key notes:** No `initial` field (state is not stored here), `icon` is optional. `icon` is optional.
+**Key notes:** No `initial` field (state is not stored here), `icon` is optional.
 
 ---
 
