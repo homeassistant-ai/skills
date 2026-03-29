@@ -204,12 +204,12 @@ With upper: 25 and hysteresis: 1:
 # WRONG - Automation with counter tracking monthly usage
 automation:
   - alias: "Reset monthly energy"
-    trigger:
+    triggers:
       - trigger: time
         at: "00:00:00"
-    condition:
+    conditions:
       - "{{ now().day == 1 }}"
-    action:
+    actions:
       - action: input_number.set_value
         target:
           entity_id: input_number.monthly_energy
@@ -252,10 +252,10 @@ Then use automation to switch tariffs:
 ```yaml
 automation:
   - alias: "Switch to peak tariff"
-    trigger:
+    triggers:
       - trigger: time
         at: "07:00:00"
-    action:
+    actions:
       - action: utility_meter.select_tariff
         target:
           entity_id: utility_meter.daily_energy
@@ -473,8 +473,8 @@ input_number:
     max: 100
 automation:
   - alias: "Increment coffee"
-    trigger: ...
-    action:
+    triggers: ...
+    actions:
       - action: input_number.set_value
         data:
           value: "{{ states('input_number.coffee_count') | int + 1 }}"
@@ -513,7 +513,7 @@ counter:
 **Instead of:**
 ```yaml
 # WRONG - Delay in automation
-action:
+actions:
   - delay:
       minutes: 5
   - action: notify.mobile_app
