@@ -35,9 +35,9 @@ that agents may need to read or write directly.
 }
 ```
 
-**Key notes:** Keys are `min`/`max` (not `minimum`/`maximum` as in YAML config), `initial`, `unit_of_measurement`, and `icon` are optional, `mode` is `"box"` or `"slider"`, the `id` value (e.g. `my_helper`) becomes the `unique_id` in `core.entity_registry` and the `entity_id` is `input_number.<id>` (e.g. `input_number.my_helper`).
+**Key notes:** min/max (not minimum/maximum), optional: initial, unit_of_measurement, icon; mode: "box" or "slider"; id becomes unique_id in core.entity_registry; entity_id is input_number.<id>.
 
-**After writing:** call the `input_number.reload` service (Reloading → Input Numbers in Developer Tools), or restart HA.
+**After writing:** call input_number.reload or restart HA.
 
 ---
 
@@ -62,9 +62,9 @@ that agents may need to read or write directly.
 }
 ```
 
-**Key notes:** No `initial` field (state is not stored here), `icon` is optional.
+**Key notes:** initial field absent (state not stored), icon optional.
 
-**After writing:** call the `input_boolean.reload` service, or restart HA.
+**After writing:** call input_boolean.reload or restart HA.
 
 ---
 
@@ -74,10 +74,8 @@ that agents may need to read or write directly.
 
 Structure: `{ "data": { "entities": [ {...}, ... ] } }`
 
-To remove stale entries (e.g. after a helper was removed without proper cleanup and its entry persists in the registry):
+> ⚠️ ~2–3 MB — too large for the HA REST file API; use SSH, terminal, or file manager add-on.
 
-> ⚠️ `core.entity_registry` is ~2–3 MB — too large for the HA REST file API.
-> Use a method that supports large file reads and writes (e.g. SSH, terminal access,
-> or a file manager add-on).
+To remove stale entries:
 
-Steps: back up the file, read and parse the JSON structure, remove the entry where `unique_id` matches the stale entity (e.g. `input_number.my_helper` → `unique_id: "my_helper"`), write the modified JSON back, and restart HA (a reload is not sufficient for registry changes).
+Steps: back up file, read/parse JSON, remove entry for stale entity (e.g., for input_number.my_helper, remove where unique_id is "my_helper"), write modified JSON back, restart HA (reload insufficient).
