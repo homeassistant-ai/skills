@@ -45,7 +45,7 @@ action:
   - action: notify.mobile_app
     data:
       message: >
-        {{ trigger.to_state.name }} has been {{ trigger.to_state.state }} 
+        {{ trigger.to_state.name }} has been {{ trigger.to_state.state }}
         for {{ trigger.for.total_seconds() | int // 60 }} minutes.
 ```
 
@@ -72,7 +72,7 @@ action:
   - action: notify.mobile_app
     data:
       message: >
-        {{ trigger.to_state.name }} changed from 
+        {{ trigger.to_state.name }} changed from
         {{ trigger.from_state.state }} to {{ trigger.to_state.state }}
 ```
 
@@ -199,10 +199,10 @@ template:
       - name: "Safe Sensor"
         unique_id: safe_sensor
         availability: >
-          {{ has_value('sensor.source_a') and 
+          {{ has_value('sensor.source_a') and
              has_value('sensor.source_b') }}
         state: >
-          {{ states('sensor.source_a') | float + 
+          {{ states('sensor.source_a') | float +
              states('sensor.source_b') | float }}
 ```
 
@@ -252,7 +252,7 @@ Trigger-based templates only update when sources change:
 template:
   - triggers:                    # Recommended plural form (HA 2024.10+)
       - trigger: state
-        entity_id: 
+        entity_id:
           - sensor.temp_bedroom
           - sensor.temp_living
     sensor:
@@ -369,7 +369,7 @@ automation:
       - action: notify.mobile_app
         data:
           message: >
-            Light changed from {{ trigger.from_state.state }} 
+            Light changed from {{ trigger.from_state.state }}
             to {{ trigger.to_state.state }}
             Entity: {{ trigger.entity_id }}
             Brightness: {{ trigger.to_state.attributes.brightness | default('N/A') }}
