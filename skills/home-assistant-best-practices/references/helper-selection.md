@@ -583,8 +583,8 @@ template:
   - binary_sensor:
       - name: "Work Hours"
         state: >
-          {{ now().weekday() < 5 and 
-             now().hour >= 9 and 
+          {{ now().weekday() < 5 and
+             now().hour >= 9 and
              now().hour < 17 }}
 ```
 
@@ -606,7 +606,7 @@ binary_sensor:
     name: "Morning"
     after: "06:00"
     before: "12:00"
-    
+
   - platform: tod
     name: "Night Time"
     after: sunset
@@ -636,7 +636,7 @@ group:
       - light.bedroom
       - light.kitchen
     all: false  # ON if ANY member is on
-    
+
   security_sensors:
     name: "Security Sensors"
     entities:

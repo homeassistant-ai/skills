@@ -192,7 +192,7 @@ When you must use a template, use the shorthand syntax:
 # Shorthand (preferred when template is necessary)
 conditions:
   - "{{ trigger.to_state.attributes.brightness > 100 }}"
-  
+
 # Long form (equivalent)
 conditions:
   - condition: template

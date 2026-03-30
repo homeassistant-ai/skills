@@ -94,9 +94,9 @@ target:
 # All lights currently on (advanced)
 target:
   entity_id: >
-    {{ states.light 
-       | selectattr('state', 'eq', 'on') 
-       | map(attribute='entity_id') 
+    {{ states.light
+       | selectattr('state', 'eq', 'on')
+       | map(attribute='entity_id')
        | list }}
 ```
 
