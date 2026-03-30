@@ -209,31 +209,31 @@ The workhorse trigger. Fires on entity state changes.
 
 ```yaml
 # Basic state change to specific value
-trigger:
+triggers:
   - trigger: state
     entity_id: binary_sensor.motion
     to: "on"
 
 # From specific state
-trigger:
+triggers:
   - trigger: state
     entity_id: light.bedroom
     from: "off"
     to: "on"
 
 # Any state change (omit to/from)
-trigger:
+triggers:
   - trigger: state
     entity_id: sensor.temperature
 
 # Attribute change
-trigger:
+triggers:
   - trigger: state
     entity_id: climate.thermostat
     attribute: current_temperature
 
 # Duration trigger (entity has been in state for X)
-trigger:
+triggers:
   - trigger: state
     entity_id: light.porch
     to: "on"
@@ -241,7 +241,7 @@ trigger:
       minutes: 30
 
 # Multiple entities
-trigger:
+triggers:
   - trigger: state
     entity_id:
       - binary_sensor.motion_kitchen
@@ -254,7 +254,7 @@ trigger:
 Fires when crossing a threshold.
 
 ```yaml
-trigger:
+triggers:
   - trigger: numeric_state
     entity_id: sensor.temperature
     above: 25
@@ -268,22 +268,22 @@ Fires at specific times.
 
 ```yaml
 # Fixed time
-trigger:
+triggers:
   - trigger: time
     at: "07:00:00"
 
 # Input datetime helper
-trigger:
+triggers:
   - trigger: time
     at: input_datetime.morning_alarm
 
 # Time pattern (every 5 minutes)
-trigger:
+triggers:
   - trigger: time_pattern
     minutes: "/5"
 
 # Every hour at :30
-trigger:
+triggers:
   - trigger: time_pattern
     minutes: 30
 ```
@@ -293,7 +293,7 @@ trigger:
 Fires at sunrise/sunset with optional offset.
 
 ```yaml
-trigger:
+triggers:
   - trigger: sun
     event: sunset
     offset: "-00:30:00"  # 30 minutes before sunset
@@ -305,7 +305,7 @@ Fires on Home Assistant events.
 
 ```yaml
 # ZHA button event
-trigger:
+triggers:
   - trigger: event
     event_type: zha_event
     event_data:
@@ -313,7 +313,7 @@ trigger:
       command: "on"
 
 # Custom event
-trigger:
+triggers:
   - trigger: event
     event_type: my_custom_event
 ```
@@ -323,7 +323,7 @@ trigger:
 Fires on MQTT messages.
 
 ```yaml
-trigger:
+triggers:
   - trigger: mqtt
     topic: "zigbee2mqtt/button/action"
     payload: "single"
@@ -335,7 +335,7 @@ Device triggers use device_id which is NOT persistent. Prefer state triggers.
 
 ```yaml
 # Avoid when possible - device_id changes on re-add
-trigger:
+triggers:
   - trigger: device
     domain: mqtt
     device_id: abc123
@@ -423,11 +423,11 @@ New triggers are ignored while running. A warning is logged.
 automation:
   - alias: "Doorbell notification"
     mode: single
-    trigger:
+    triggers:
       - trigger: state
         entity_id: binary_sensor.doorbell
         to: "on"
-    action:
+    actions:
       - action: notify.mobile_app
         data:
           message: "Someone at the door!"
@@ -456,11 +456,11 @@ automation:
   - alias: "Garage door controller"
     mode: queued
     max: 5  # Maximum queue size
-    trigger:
+    triggers:
       - trigger: state
         entity_id: input_boolean.garage_door_trigger
         to: "on"
-    action:
+    actions:
       - action: cover.toggle
         target:
           entity_id: cover.garage_door
@@ -479,7 +479,7 @@ automation:
   - alias: "Window open too long"
     mode: parallel
     max: 10  # Maximum parallel runs
-    trigger:
+    triggers:
       - trigger: state
         entity_id:
           - binary_sensor.window_bedroom
@@ -488,7 +488,7 @@ automation:
         to: "on"
         for:
           minutes: 30
-    action:
+    actions:
       - action: notify.mobile_app
         data:
           message: "{{ trigger.to_state.name }} has been open for 30 minutes"
@@ -567,7 +567,7 @@ Assign IDs to triggers for use in conditions and choose:
 ```yaml
 automation:
   - alias: "Multi-trigger automation"
-    trigger:
+    triggers:
       - trigger: state
         entity_id: binary_sensor.motion
         to: "on"
@@ -580,7 +580,7 @@ automation:
           minutes: 5
         id: "motion_off"
 
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger

@@ -27,7 +27,7 @@ Templates are the RIGHT choice when:
 You need to pass dynamic values to service calls based on entity states or trigger context.
 
 ```yaml
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.bedroom
@@ -41,7 +41,7 @@ action:
 Messages that include runtime information:
 
 ```yaml
-action:
+actions:
   - action: notify.mobile_app
     data:
       message: >
@@ -68,7 +68,7 @@ rest:
 Using `trigger.` variables in automations:
 
 ```yaml
-action:
+actions:
   - action: notify.mobile_app
     data:
       message: >
@@ -333,11 +333,11 @@ For template conditions, use the shorthand:
 
 ```yaml
 # Shorthand (preferred)
-condition:
+conditions:
   - "{{ trigger.to_state.attributes.brightness > 100 }}"
 
 # Long form (equivalent but verbose)
-condition:
+conditions:
   - condition: template
     value_template: "{{ trigger.to_state.attributes.brightness > 100 }}"
 ```
@@ -347,7 +347,7 @@ condition:
 For readability in complex templates:
 
 ```yaml
-action:
+actions:
   - action: notify.mobile_app
     data:
       message: >
@@ -362,10 +362,10 @@ action:
 
 ```yaml
 automation:
-  - trigger:
+  - triggers:
       - trigger: state
         entity_id: light.bedroom
-    action:
+    actions:
       - action: notify.mobile_app
         data:
           message: >

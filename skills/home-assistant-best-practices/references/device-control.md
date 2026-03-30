@@ -16,14 +16,14 @@ Best practices for controlling devices, triggering from Zigbee buttons/remotes, 
 
 ```yaml
 # ❌ WRONG - device_id changes if device is re-added
-trigger:
-  - platform: device
+triggers:
+  - trigger: device
     device_id: abc123def456
     domain: binary_sensor
     type: motion
 
 # ✅ RIGHT - entity_id is stable and renameable
-trigger:
+triggers:
   - trigger: state
     entity_id: binary_sensor.hallway_motion
     to: "on"
@@ -46,7 +46,7 @@ The only cases where `device_id` might be acceptable:
 Modern Home Assistant service calls use the `target:` key to specify entities, areas, or devices:
 
 ```yaml
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
@@ -110,7 +110,7 @@ ZHA buttons fire `zha_event` events. Use **event triggers** with `device_ieee` (
 
 ```yaml
 # ✅ ZHA button trigger - device_ieee is persistent
-trigger:
+triggers:
   - trigger: event
     event_type: zha_event
     event_data:
@@ -133,7 +133,7 @@ Z2M creates **MQTT device triggers** that are autodiscovered. These are acceptab
 
 ```yaml
 # ✅ Z2M device trigger - autodiscovered
-trigger:
+triggers:
   - trigger: device
     device_id: abc123def456  # OK for Z2M, managed by autodiscovery
     domain: mqtt
@@ -141,7 +141,7 @@ trigger:
     subtype: single
 
 # Alternative: MQTT topic trigger (more explicit)
-trigger:
+triggers:
   - trigger: mqtt
     topic: "zigbee2mqtt/Bedroom Button/action"
     payload: "single"
@@ -170,7 +170,7 @@ trigger:
 
 ```yaml
 # Turn on with brightness and transition
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
@@ -180,7 +180,7 @@ action:
       color_temp_kelvin: 3000
 
 # Turn on multiple lights differently
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.main
@@ -198,7 +198,7 @@ action:
 
 ```yaml
 # Set temperature with HVAC mode
-action:
+actions:
   - action: climate.set_temperature
     target:
       entity_id: climate.living_room
@@ -207,7 +207,7 @@ action:
       hvac_mode: heat
 
 # Set preset mode
-action:
+actions:
   - action: climate.set_preset_mode
     target:
       entity_id: climate.living_room
@@ -219,7 +219,7 @@ action:
 
 ```yaml
 # Set to specific position (0 = closed, 100 = open)
-action:
+actions:
   - action: cover.set_cover_position
     target:
       entity_id: cover.living_room_blinds
@@ -227,7 +227,7 @@ action:
       position: 50
 
 # Tilt control
-action:
+actions:
   - action: cover.set_cover_tilt_position
     target:
       entity_id: cover.living_room_blinds
@@ -239,7 +239,7 @@ action:
 
 ```yaml
 # Play media
-action:
+actions:
   - action: media_player.play_media
     target:
       entity_id: media_player.living_room_speaker
@@ -248,7 +248,7 @@ action:
       media_content_type: music
 
 # Set volume (0.0 to 1.0)
-action:
+actions:
   - action: media_player.volume_set
     target:
       entity_id: media_player.living_room_speaker
@@ -260,7 +260,7 @@ action:
 
 ```yaml
 # Mobile app notification
-action:
+actions:
   - action: notify.mobile_app_phone
     data:
       title: "Motion Detected"
@@ -274,7 +274,7 @@ action:
             title: "View Camera"
 
 # Persistent notification
-action:
+actions:
   - action: notify.persistent_notification
     data:
       title: "Reminder"
@@ -288,19 +288,19 @@ action:
 
 ```yaml
 # Start cleaning
-action:
+actions:
   - action: vacuum.start
     target:
       entity_id: vacuum.roborock
 
 # Return to dock
-action:
+actions:
   - action: vacuum.return_to_base
     target:
       entity_id: vacuum.roborock
 
 # Clean specific rooms (integration-specific)
-action:
+actions:
   - action: vacuum.send_command
     target:
       entity_id: vacuum.roborock
@@ -318,7 +318,7 @@ action:
 Some services return data. Use `response_variable` to capture it:
 
 ```yaml
-action:
+actions:
   - action: weather.get_forecasts
     target:
       entity_id: weather.home
@@ -338,14 +338,14 @@ action:
 
 ```yaml
 # WRONG (deprecated)
-action:
+actions:
   - action: light.turn_on
     data:
       entity_id: light.living_room
       brightness: 255
 
 # RIGHT
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
@@ -357,13 +357,13 @@ action:
 
 ```yaml
 # WRONG - breaks on device re-add
-action:
+actions:
   - action: light.turn_on
     target:
       device_id: abc123def456
 
 # RIGHT
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
@@ -373,14 +373,14 @@ action:
 
 ```yaml
 # WRONG - brightness_pct at wrong level
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
     brightness_pct: 100
 
 # RIGHT - brightness_pct inside data
-action:
+actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
@@ -393,7 +393,7 @@ action:
 ## Quick Reference: Service Call Structure
 
 ```yaml
-action:
+actions:
   - action: domain.service_name   # Required
     target:                       # Optional but recommended
       entity_id: entity.id        # Single or list

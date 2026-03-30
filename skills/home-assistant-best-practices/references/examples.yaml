@@ -17,18 +17,18 @@ automation:
     description: "Turn on hallway light when motion detected, auto-off after 3 minutes"
     mode: restart  # Re-trigger resets the timer
 
-    trigger:
+    triggers:
       - trigger: state
         entity_id: binary_sensor.hallway_motion
         to: "on"
 
-    condition:
+    conditions:
       # Native time condition - no template needed
       - condition: time
         after: "06:00:00"
         before: "23:00:00"
 
-    action:
+    actions:
       - action: light.turn_on
         target:
           entity_id: light.hallway
@@ -65,7 +65,7 @@ automation:
     description: "Handle single, double, and hold presses on ZHA button"
     mode: single
 
-    trigger:
+    triggers:
       - trigger: event
         event_type: zha_event
         event_data:
@@ -87,7 +87,7 @@ automation:
           command: "hold"
         id: hold
 
-    action:
+    actions:
       - choose:
           - conditions:
               - condition: trigger
@@ -128,12 +128,12 @@ automation:
     mode: queued  # Process each unlock event in order
     max: 10
 
-    trigger:
+    triggers:
       - trigger: state
         entity_id: lock.front_door
         to: "unlocked"
 
-    condition:
+    conditions:
       # Native not + state condition with attribute check - no template
       - condition: not
         conditions:
@@ -142,7 +142,7 @@ automation:
             attribute: changed_by
             state: "auto_unlock"
 
-    action:
+    actions:
       - action: notify.mobile_app_phone
         data:
           title: "Front Door Unlocked"
@@ -163,7 +163,7 @@ automation:
     mode: parallel  # Handle multiple windows independently
     max: 10
 
-    trigger:
+    triggers:
       - trigger: state
         entity_id:
           - binary_sensor.bedroom_window
@@ -171,7 +171,7 @@ automation:
           - binary_sensor.kitchen_window
         to: "on"
 
-    action:
+    actions:
       # Use trigger variable to determine which room
       - action: climate.turn_off
         target:
@@ -191,12 +191,12 @@ automation:
     description: "Announce doorbell with different messages based on time"
     mode: single
 
-    trigger:
+    triggers:
       - trigger: state
         entity_id: binary_sensor.doorbell
         to: "on"
 
-    action:
+    actions:
       - if:
           - condition: time
             after: "22:00:00"
