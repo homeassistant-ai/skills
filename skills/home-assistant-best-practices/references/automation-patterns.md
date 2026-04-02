@@ -7,9 +7,11 @@ This document covers native Home Assistant automation constructs that should be 
 2. [Trigger Types](#trigger-types)
 3. [Wait Actions](#wait-actions)
 4. [Automation Modes](#automation-modes)
-5. [if/then vs choose](#ifthen-vs-choose)
-6. [Trigger IDs](#trigger-ids)
-7. [Disabling Automations](#disabling-automations)
+5. [Continue on Error](#continue-on-error)
+6. [Repeat Actions](#repeat-actions)
+7. [if/then vs choose](#ifthen-vs-choose)
+8. [Trigger IDs](#trigger-ids)
+9. [Disabling Automations](#disabling-automations)
 
 ---
 
@@ -202,6 +204,16 @@ conditions:
 ---
 
 ## Trigger Types
+
+### Purpose-Specific Triggers (2026.2+)
+
+The HA visual automation editor offers **purpose-specific triggers and conditions** organized by real-world concepts (door opened, motion detected, temperature threshold, battery low, etc.) rather than by technical entity domain. These work across entity types — e.g., "when a door opens" fires whether the door is a contact sensor or a motorized cover.
+
+**Key points:**
+- This is a **UI editor feature** — under the hood, it generates standard `state`, `numeric_state`, and other trigger types
+- No new YAML trigger syntax — the YAML output uses the same triggers documented below
+- Available concepts: door/window/gate open/close, motion/occupancy detection, temperature/humidity/illuminance thresholds, power consumption, battery status, air quality, climate, and more
+- When creating automations via the API, use the standard YAML trigger types below
 
 ### State Trigger
 
@@ -504,6 +516,77 @@ automation:
     mode: single
     max_exceeded: silent  # No warning logged
 ```
+
+---
+
+## Continue on Error
+
+Any automation action can be set to continue execution even if it fails, using the `continue_on_error` key. Since 2026.3, this is also configurable in the visual editor (three-dots menu on any action).
+
+```yaml
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.patio
+    continue_on_error: true  # Automation proceeds even if this fails
+  - action: notify.mobile_app
+    data:
+      message: "Light action attempted"
+```
+
+**Use sparingly** — silently swallowing errors makes debugging harder. Best for non-critical actions (e.g., logging, optional notifications) where a failure shouldn't block the rest of the automation.
+
+---
+
+## Repeat Actions
+
+Four repeat variants are available:
+
+```yaml
+# Repeat N times
+- repeat:
+    count: 3
+    sequence:
+      - action: light.toggle
+        target:
+          entity_id: light.bedroom
+
+# Repeat while condition is true
+- repeat:
+    while:
+      - condition: state
+        entity_id: binary_sensor.door
+        state: "on"
+    sequence:
+      - action: notify.mobile_app
+        data:
+          message: "Door still open"
+      - delay:
+          minutes: 5
+
+# Repeat until condition is true
+- repeat:
+    until:
+      - condition: numeric_state
+        entity_id: sensor.temperature
+        below: 25
+    sequence:
+      - delay:
+          minutes: 1
+
+# Repeat for each item in a list
+- repeat:
+    for_each:
+      - "light.kitchen"
+      - "light.bedroom"
+      - "light.hallway"
+    sequence:
+      - action: light.turn_off
+        target:
+          entity_id: "{{ repeat.item }}"
+```
+
+Access `repeat.index` (1-based) and `repeat.item` (for `for_each`) inside the sequence.
 
 ---
 

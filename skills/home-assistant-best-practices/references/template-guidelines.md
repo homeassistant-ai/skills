@@ -600,6 +600,8 @@ automation:
 | `is_state('entity_id', 'state')` | Check if entity has state |
 | `is_state_attr('entity_id', 'attr', 'value')` | Check attribute value |
 | `has_value('entity_id')` | True if not unknown/unavailable |
+| `entity_name('entity_id')` | Get entity display name; preferred over `friendly_name` attribute (2026.4+) |
+| `state_attr_translated('entity_id', 'attr')` | Get translated attribute value, e.g., fan modes, HVAC actions (2026.4+) |
 
 ### Common Filters
 

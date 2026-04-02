@@ -168,6 +168,8 @@ triggers:
 
 ### Lights
 
+**Color temperature:** Always use `color_temp_kelvin` (e.g., `3000`). The legacy `color_temp` parameter (in mireds) was removed in 2026.3.
+
 ```yaml
 # Turn on with brightness and transition
 actions:
@@ -299,7 +301,25 @@ actions:
     target:
       entity_id: vacuum.roborock
 
-# Clean specific rooms (integration-specific)
+# Clean specific areas (2026.3+ — uses HA areas, not vendor room IDs)
+# Requires mapping vacuum segments to HA areas in entity settings first
+# Supported integrations include Matter, Ecovacs, Roborock (list may grow)
+actions:
+  - action: vacuum.clean_area
+    target:
+      entity_id: vacuum.roborock
+    data:
+      area_id:
+        - kitchen
+        - living_room
+```
+
+**Prefer `vacuum.clean_area`** when the user has mapped vacuum segments to HA areas (entity settings). It works across supported integrations without vendor lock-in.
+
+**Fallback:** When the integration doesn't support `clean_area` or segments aren't mapped, use `vacuum.send_command` with integration-specific parameters:
+
+```yaml
+# Integration-specific room cleaning (fallback)
 actions:
   - action: vacuum.send_command
     target:
@@ -307,9 +327,11 @@ actions:
     data:
       command: app_segment_clean
       params:
-        - 16  # Room ID
+        - 16  # Vendor-specific room ID
         - 17
 ```
+
+Suggest the user configure segment-to-area mapping when possible to avoid vendor lock-in.
 
 ---
 
