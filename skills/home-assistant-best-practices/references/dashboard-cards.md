@@ -1,10 +1,10 @@
 # Dashboard Card Types
 
-Home Assistant provides 37 built-in card types. For card-specific documentation, fetch from GitHub on demand.
+Home Assistant provides 38 built-in card types. For card-specific documentation, fetch from GitHub on demand.
 
 ## Available Card Types
 
-alarm-panel, area, button, calendar, clock, conditional, energy, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, media-control, picture-elements, picture-entity, picture-glance, picture, plant-status, sensor, shopping-list, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
+alarm-panel, area, button, calendar, clock, conditional, distribution, energy, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, media-control, picture-elements, picture-entity, picture-glance, picture, plant-status, sensor, shopping-list, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
 
 **Note:** The HA docs URL pattern also covers 4 view types (`masonry`, `panel`, `sections`, `sidebar`) — these are set at the view level via `"type"` in view config, NOT inside card arrays. See `references/dashboard-guide.md#view-types`.
 
@@ -30,6 +30,7 @@ If the MCP server registers resource URI templates for card docs, prefer those o
 | Room overview with controls | `area` |
 | Historical data graph | `history-graph` or `statistics-graph` |
 | Sensor value display | `sensor` or `gauge` |
+| Proportional data across entities | `distribution` |
 | Show/hide cards conditionally | `conditional` |
 | Embed external page | `iframe` |
 | Rich text / instructions | `markdown` |

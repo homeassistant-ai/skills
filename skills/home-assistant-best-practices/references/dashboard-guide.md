@@ -84,10 +84,10 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 | **Modern Primary** | tile, area, button, grid |
 | **Container** | vertical-stack, horizontal-stack, grid |
 | **Logic** | conditional, entity-filter |
-| **Display** | sensor, history-graph, statistics-graph, gauge, energy, calendar |
+| **Display** | sensor, history-graph, statistics-graph, gauge, energy, calendar, distribution |
 | **Legacy Control** | entity, entities, light, thermostat (use tile instead) |
 
-**Default:** Use `tile` card for most entities. Use `references/dashboard-cards.md` to look up all 37 card types or fetch card-specific docs.
+**Default:** Use `tile` card for most entities. Use `references/dashboard-cards.md` to look up all card types or fetch card-specific docs.
 
 ### Tile Card
 
@@ -133,7 +133,15 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 | Cover | `cover-open-close`, `cover-position`, `cover-tilt` |
 | Fan | `fan-speed`, `fan-direction`, `fan-oscillate` |
 | Media | `media-player-playback`, `media-player-volume-slider` |
-| Other | `toggle`, `button`, `alarm-modes`, `lock-commands`, `numeric-input` |
+| Valve | `valve-open-close`, `valve-position` |
+| Other | `toggle`, `button`, `alarm-modes`, `lock-commands`, `numeric-input`, `datetime-picker` |
+
+### Tile Card Extras (2025.9+)
+
+Tile cards support additional display features beyond controls:
+- **Trend graph**: 24-hour history sparkline for numeric entities (enabled in tile card config)
+- **Bar gauge**: Percentage-based bar display for numeric entities
+- **Action buttons**: Run automations/scripts directly from tile cards
 
 Feature `style` options: `"dropdown"` or `"icons"`
 
@@ -359,6 +367,15 @@ Search HACS for community cards by name/category, review repository details, the
 - Use **grid** cards for multi-column layouts within sections
 - Create **multiple views** with navigation paths (avoid single-view endless scrolling)
 - Use **area** cards with navigation for hierarchical organization
+
+### Recent Dashboard Features (2026.2–2026.4)
+
+| Feature | Version | Details |
+|---------|---------|---------|
+| **Distribution card** | 2026.2 | Proportional horizontal bars across multiple entities (power monitoring, storage usage) |
+| **Section background colors** | 2026.4 | Sections support custom `background_color` with adjustable opacity |
+| **Card favorites** | 2026.4 | Light color favorites and cover position favorites display on tile/light cards |
+| **Auto-height cards** | 2026.4 | Cards auto-adjust height based on content via the layout editor |
 
 **Legacy patterns to avoid:**
 - Single-view dashboards with all cards in one long scroll
