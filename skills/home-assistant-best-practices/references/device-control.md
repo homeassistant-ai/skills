@@ -314,7 +314,24 @@ actions:
         - living_room
 ```
 
-**Prefer `vacuum.clean_area` over `vacuum.send_command`** when the user has mapped vacuum segments to HA areas (entity settings). It works across supported integrations without vendor lock-in. Fall back to `vacuum.send_command` if the integration is unsupported or segments are not yet mapped — and suggest the user configure the mapping.
+**Prefer `vacuum.clean_area`** when the user has mapped vacuum segments to HA areas (entity settings). It works across supported integrations without vendor lock-in.
+
+**Fallback:** When the integration doesn't support `clean_area` or segments aren't mapped, use `vacuum.send_command` with integration-specific parameters:
+
+```yaml
+# Integration-specific room cleaning (fallback)
+actions:
+  - action: vacuum.send_command
+    target:
+      entity_id: vacuum.roborock
+    data:
+      command: app_segment_clean
+      params:
+        - 16  # Vendor-specific room ID
+        - 17
+```
+
+Suggest the user configure segment-to-area mapping when possible to avoid vendor lock-in.
 
 ---
 
