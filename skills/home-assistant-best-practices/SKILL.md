@@ -18,7 +18,7 @@ description: >
   - Agent modifies entity IDs without checking consumers
   - Agent chooses wrong automation mode (e.g., single for motion lights)
   - Agent hard-codes values or picks raw sensor over derived helper
-  - Agent searches for HA config files on disk or generates YAML snippets
+  - Agent edits `.storage/` files, writes raw YAML, or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI-configured integrations
 metadata:
   version: 2
@@ -100,7 +100,8 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Renaming members of Config-Entry-based groups (UI groups) without updating membership | Update group membership via Options Flow after the registry rename | The entity registry rename does not update `options.entities` in the Config Entry — group silently breaks | `references/safe-refactoring.md#config-entry-groups` |
 | Renaming entities used by Config-Entry integrations (Better/Generic Thermostat, Min/Max, Threshold) without patching Config-Entry data | Scan and patch `core.config_entries` `data`+`options` fields | These integrations store entity_ids in Config Entry — not updated by entity registry renames | `references/safe-refactoring.md#config-entry-data--blind-spots-for-entity-registry-renames` |
 | `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | `references/template-guidelines.md` |
-| Searching for or reading HA config files on disk | Use the HA REST/WebSocket API to manage config programmatically | HA is a remote system accessed via APIs; config files are not on the local filesystem | — |
+| Editing `.storage/` files or other HA internal state directly | Use the HA REST/WebSocket API to manage state and config entries | `.storage/` files are HA's internal state database; direct edits bypass validation, risk corruption, and can be silently overwritten by HA | — |
+| Writing raw YAML to `configuration.yaml` by hand for YAML-only integrations | Use managed YAML config editing with backup and validation | Unmanaged writes risk syntax errors, have no backup, and skip `check_config` — managed editing provides all three | `references/yaml-only-integrations.md` |
 | Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | `references/automation-patterns.md`, `references/examples.yaml` |
 | Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
 | Referring to HA "add-ons" | Use the term "Apps" | HA renamed add-ons to Apps in 2026.2 — "Apps are standalone applications that run alongside Home Assistant" | — |
@@ -119,6 +120,7 @@ Read these when you need detailed information:
 | `references/automation-patterns.md` | Writing triggers, conditions, waits, or choosing automation modes; disabling automations | `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#continue-on-error`, `#repeat-actions`, `#ifthen-vs-choose`, `#trigger-ids`, `#disabling-automations` |
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
+| `references/yaml-only-integrations.md` | Creating or editing YAML-only integrations that have no config flow (e.g. `command_line`, platform-based `mqtt`, `rest`) | `#yaml-only-integration-types`, `#post-edit-actions` |
 | `references/device-control.md` | Writing service calls, Zigbee button automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#zigbee-buttonremote-patterns`, `#domain-specific-patterns` |
 | `references/dashboard-guide.md` | Designing or modifying Lovelace dashboards — layout, view types, sections, custom cards, CSS styling, HACS | `#dashboard-structure`, `#view-types`, `#built-in-cards`, `#features`, `#custom-cards`, `#css-styling`, `#common-pitfalls` |
 | `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
