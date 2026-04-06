@@ -330,10 +330,10 @@ triggers:
     event_type: my_custom_event
 ```
 
-**Multi-trigger guard for `trigger.event`:** In automations mixing event and non-event triggers, `trigger.event` is `LoggingUndefined` for non-event triggers. Attribute access is silent, but `in` or `.split()` raise `UndefinedError`. Use `trigger.platform == 'event'` as a short-circuit guard:
+**Multi-trigger guard for `trigger.event`:** In automations mixing event and non-event triggers, `trigger.event` is `LoggingUndefined` for non-event triggers. Attribute access (`.data`, `.split()`) raises `UndefinedError`; `in` on a bare `LoggingUndefined` silently returns `False`. Use `trigger.platform == 'event'` as a short-circuit guard:
 
 ```yaml
-# AVOID — raises UndefinedError when triggered by a non-event trigger
+# AVOID — trigger.event.data raises UndefinedError when a non-event trigger fires
 conditions:
   - "{{ 'light.kitchen' in trigger.event.data.entity_id }}"
 
