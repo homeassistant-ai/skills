@@ -330,17 +330,6 @@ triggers:
     event_type: my_custom_event
 ```
 
-### MQTT Trigger
-
-Fires on MQTT messages.
-
-```yaml
-triggers:
-  - trigger: mqtt
-    topic: "zigbee2mqtt/button/action"
-    payload: "single"
-```
-
 > **Multi-trigger guard for `trigger.event`:** When an automation mixes event triggers
 > with other trigger types, `trigger.event` resolves to `LoggingUndefined` when a
 > non-event trigger fires. Attribute access is silent, but operators like `in` raise
@@ -355,6 +344,17 @@ triggers:
 > conditions:
 >   - "{{ trigger.platform == 'event' and 'light.kitchen' in trigger.event.data.entity_id }}"
 > ```
+
+### MQTT Trigger
+
+Fires on MQTT messages.
+
+```yaml
+triggers:
+  - trigger: mqtt
+    topic: "zigbee2mqtt/button/action"
+    payload: "single"
+```
 
 ### Device Trigger (Use Sparingly)
 
