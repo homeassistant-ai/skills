@@ -330,20 +330,17 @@ triggers:
     event_type: my_custom_event
 ```
 
-> **Multi-trigger guard for `trigger.event`:** When an automation mixes event triggers
-> with other trigger types, `trigger.event` resolves to `LoggingUndefined` when a
-> non-event trigger fires. Attribute access is silent, but operators like `in` raise
-> `UndefinedError`. Use `trigger.platform == 'event'` as a short-circuit guard:
->
-> ```yaml
-> # AVOID — raises UndefinedError when triggered by a non-event trigger
-> conditions:
->   - "{{ 'light.kitchen' in trigger.event.data.entity_id }}"
->
-> # CORRECT — guard prevents evaluating trigger.event on non-event triggers
-> conditions:
->   - "{{ trigger.platform == 'event' and 'light.kitchen' in trigger.event.data.entity_id }}"
-> ```
+**Multi-trigger guard for `trigger.event`:** In automations mixing event and non-event triggers, `trigger.event` is `LoggingUndefined` for non-event triggers. Attribute access is silent, but `in` or `.split()` raise `UndefinedError`. Use `trigger.platform == 'event'` as a short-circuit guard:
+
+```yaml
+# AVOID — raises UndefinedError when triggered by a non-event trigger
+conditions:
+  - "{{ 'light.kitchen' in trigger.event.data.entity_id }}"
+
+# CORRECT — guard prevents evaluating trigger.event on non-event triggers
+conditions:
+  - "{{ trigger.platform == 'event' and 'light.kitchen' in trigger.event.data.entity_id }}"
+```
 
 ### MQTT Trigger
 
