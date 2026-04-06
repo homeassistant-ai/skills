@@ -6,19 +6,36 @@ on:
     paths:
       - 'skills/**'
 
-# GitHub does not re-trigger workflows for pushes made with GITHUB_TOKEN — no
-# explicit loop guard is needed. Note: switching to a PAT or App token would
-# re-enable triggering and require an explicit guard (e.g. checking the committer).
 permissions:
-  contents: write
+  contents: read
+
+# Prevent overlapping runs if multiple skill PRs merge in quick succession
+concurrency:
+  group: auto-bump-version
+  cancel-in-progress: false
 
 jobs:
   auto-bump:
+    # Skip commits made by this workflow to prevent infinite loops.
+    # Needed because App token pushes (unlike GITHUB_TOKEN) re-trigger workflows.
+    if: github.actor != 'ha-mcp-release-bot[bot]'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+        continue-on-error: true
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          # Use app token to bypass branch protection ruleset
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
       - name: Detect changed skills
         id: changes
@@ -106,5 +123,5 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           read -ra files <<< "$BUMPED"
           git add -- "${files[@]}"
-          git commit -m "chore: auto-bump skill versions"
+          git commit -m "chore: auto-bump skill versions [skip ci]"
           git push
