@@ -341,6 +341,21 @@ triggers:
     payload: "single"
 ```
 
+> **Multi-trigger guard for `trigger.event`:** When an automation mixes event triggers
+> with other trigger types, `trigger.event` resolves to `LoggingUndefined` when a
+> non-event trigger fires. Attribute access is silent, but operators like `in` raise
+> `UndefinedError`. Use `trigger.platform == 'event'` as a short-circuit guard:
+>
+> ```yaml
+> # AVOID — raises UndefinedError when triggered by a non-event trigger
+> conditions:
+>   - "{{ 'light.kitchen' in trigger.event.data.entity_id }}"
+>
+> # CORRECT — guard prevents evaluating trigger.event on non-event triggers
+> conditions:
+>   - "{{ trigger.platform == 'event' and 'light.kitchen' in trigger.event.data.entity_id }}"
+> ```
+
 ### Device Trigger (Use Sparingly)
 
 Device triggers use device_id which is NOT persistent. Prefer state triggers.
