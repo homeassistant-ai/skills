@@ -367,7 +367,7 @@ triggers:
     subtype: single
 ```
 
-### Presence/Person Triggers — Removed in 2026.5
+### Presence and Person Triggers and Conditions (Removed in 2026.5)
 
 The `entered_home`/`left_home` device trigger types and `is_home`/`is_not_home` device condition types for `person` and `device_tracker` domains were **removed in 2026.5**. Use state triggers and conditions instead.
 
