@@ -52,7 +52,7 @@ The `home-assistant-best-practices` skill includes:
 | `references/safe-refactoring.md` | Safe workflow for renaming entities, replacing helpers, restructuring automations |
 | `references/automation-patterns.md` | Native conditions, triggers, waits, automation modes |
 | `references/helper-selection.md` | Built-in helpers vs template sensors (with decision matrix) |
-| `references/template-guidelines.md` | When templates are the right choice |
+| `references/template-guidelines.md` | When to use templates, when to avoid them, and sensor best practices |
 | `references/yaml-only-integrations.md` | YAML-only integration types, post-edit actions (reload vs restart) |
 | `references/device-control.md` | Service calls, entity_id vs device_id, Zigbee buttons |
 | `references/dashboard-guide.md` | Dashboard layout, view types, sections, custom cards, CSS styling |
