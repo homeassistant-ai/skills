@@ -48,6 +48,54 @@
           "description": "Response does NOT recommend a template sensor (YAML or UI helper) as the primary solution"
         }
       ]
+    },
+    {
+      "id": 4,
+      "eval_name": "arrive-home-automation",
+      "prompt": "create an automation that turns on the lights when I get home",
+      "expected_output": "Uses state trigger with to: home on a person entity. Does NOT use the removed entered_home device trigger type.",
+      "assertions": [
+        {
+          "id": "uses_state_trigger",
+          "description": "Response uses a state trigger (trigger: state) on a person or device_tracker entity, to: home"
+        },
+        {
+          "id": "no_entered_home_trigger",
+          "description": "Response does NOT use the entered_home device trigger type (removed in 2026.5)"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "timer-finished-automation",
+      "prompt": "make an automation that announces on my speaker when my kitchen timer finishes",
+      "expected_output": "Uses timer.finished event trigger. Does NOT use a polling template or state trigger workaround.",
+      "assertions": [
+        {
+          "id": "uses_timer_finished_event",
+          "description": "Response uses event trigger with event_type: timer.finished (or purpose-specific timer trigger)"
+        },
+        {
+          "id": "no_polling_workaround",
+          "description": "Response does NOT suggest polling or a wait_template workaround for detecting timer completion"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "assist-shortcut-card",
+      "prompt": "add a card to my dashboard to quickly launch Assist",
+      "expected_output": "Recommends the shortcut card (new in 2026.5) for launching Assist from a dashboard.",
+      "assertions": [
+        {
+          "id": "recommends_shortcut_card",
+          "description": "Response recommends the shortcut card type for launching Assist"
+        },
+        {
+          "id": "not_just_button_card",
+          "description": "Response does not exclusively recommend a button card with tap_action when shortcut is more appropriate"
+        }
+      ]
     }
   ]
 }

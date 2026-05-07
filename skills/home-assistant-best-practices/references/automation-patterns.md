@@ -367,6 +367,64 @@ triggers:
     subtype: single
 ```
 
+### Presence/Person Triggers — Removed in 2026.5
+
+The `entered_home`/`left_home` device trigger types and `is_home`/`is_not_home` device condition types for `person` and `device_tracker` domains were **removed in 2026.5**. Use state triggers and conditions instead.
+
+```yaml
+# AVOID (removed in 2026.5)
+triggers:
+  - trigger: device
+    domain: person
+    type: entered_home
+    entity_id: person.john
+
+# CORRECT — state trigger
+triggers:
+  - trigger: state
+    entity_id: person.john
+    to: "home"
+
+# CORRECT — state condition
+condition: state
+entity_id: person.john
+state: "home"
+```
+
+For non-home zone presence, see `#zone-condition`.
+
+### Timer Entity Triggers (2026.5+)
+
+Timer entities now expose lifecycle events as purpose-specific triggers in the UI editor. In YAML, use the `event` trigger with the corresponding `timer.*` event type.
+
+```yaml
+# Timer finished (also: timer.started, timer.paused, timer.restarted, timer.cancelled)
+triggers:
+  - trigger: event
+    event_type: timer.finished
+    event_data:
+      entity_id: timer.cooking
+```
+
+### Media Player Triggers/Conditions (2026.5+)
+
+Media player entities now have purpose-specific triggers and conditions in the UI editor covering play/pause state, mute status, and volume level. In YAML these map to standard state and numeric_state triggers.
+
+```yaml
+# Play/pause state — to: "playing", "paused", "idle", "off"
+triggers:
+  - trigger: state
+    entity_id: media_player.living_room
+    to: "playing"
+
+# Volume threshold
+triggers:
+  - trigger: numeric_state
+    entity_id: media_player.living_room
+    attribute: volume_level
+    above: 0.7
+```
+
 ---
 
 ## Wait Actions

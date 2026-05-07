@@ -107,6 +107,7 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Referring to HA "add-ons" | Use the term "Apps" | HA renamed add-ons to Apps in 2026.2 — "Apps are standalone applications that run alongside Home Assistant" | — |
 | `vacuum.send_command` with vendor room IDs | `vacuum.clean_area` with HA `area_id` (if segments are mapped) | Uses native HA areas, works across integrations — but requires segment-to-area mapping in entity settings first | `references/device-control.md#vacuum-control` |
 | Using `color_temp` (mireds) in light service calls | Use `color_temp_kelvin` | The `color_temp` parameter was removed in 2026.3; only Kelvin is supported | `references/device-control.md#lights` |
+| Person/Device Tracker `entered_home`/`left_home` device triggers or `is_home`/`is_not_home` conditions | `state` trigger `to: home` / `to: not_home`, or `zone` condition | These were removed in 2026.5 — state trigger is the correct replacement | `references/automation-patterns.md#presenceperson-triggers--removed-in-20265` |
 
 ---
 
