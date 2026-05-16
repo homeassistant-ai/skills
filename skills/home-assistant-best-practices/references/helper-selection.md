@@ -789,7 +789,9 @@ climate:
     min_cycle_duration: "00:05:00"
 ```
 
-**Required (config flow):** `name`, `heater` (switch or fan entity), `target_sensor` (temperature sensor), `ac_mode` (bool), `cold_tolerance` (default `0.3`), `hot_tolerance` (default `0.3`).
+**Required (must include):** `name`, `heater` (switch or fan entity), `target_sensor` (temperature sensor), `ac_mode` (bool).
+
+**Has default (can omit):** `cold_tolerance` (default `0.3`), `hot_tolerance` (default `0.3`).
 
 **Optional:** `min_cycle_duration`, `max_cycle_duration`, `cycle_cooldown`, `keep_alive`, `min_temp`, `max_temp`, plus a presets step (`away_temp`, `comfort_temp`, `eco_temp`, `home_temp`, `sleep_temp`, `activity_temp`).
 
@@ -821,7 +823,9 @@ humidifier:
     min_cycle_duration: "00:05:00"
 ```
 
-**Required (config flow):** `name`, `device_class` (`humidifier` or `dehumidifier`), `humidifier` (switch or fan entity), `target_sensor` (humidity sensor), `dry_tolerance` (default `3`), `wet_tolerance` (default `3`).
+**Required (must include):** `name`, `device_class` (`humidifier` or `dehumidifier`), `humidifier` (switch or fan entity), `target_sensor` (humidity sensor).
+
+**Has default (can omit):** `dry_tolerance` (default `3`), `wet_tolerance` (default `3`).
 
 **Optional:** `min_cycle_duration`.
 
