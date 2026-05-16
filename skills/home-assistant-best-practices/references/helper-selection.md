@@ -698,9 +698,20 @@ template:
 
 **Use for:** Smoothing noisy sensor data, throttling update frequency, or rejecting out-of-range values.
 
-**The UI config flow creates one filter per entry.** For chained pipelines (multiple filters applied in sequence) use YAML, which accepts a `filters:` list:
-
+**Instead of:**
 ```yaml
+# WRONG - Template sensor doing manual smoothing math
+template:
+  - sensor:
+      - name: "Smoothed Power"
+        state: >
+          {% set h = states('sensor.power_history') | from_json %}
+          {{ (h | sum / h | length) | round(2) }}
+```
+
+**Use this:**
+```yaml
+# RIGHT - Filter helper (UI creates one filter per entry; YAML supports chains)
 sensor:
   - platform: filter
     name: "Filtered Temperature"
@@ -715,6 +726,8 @@ sensor:
         window_size: "00:05"
         precision: 2
 ```
+
+**The UI config flow creates one filter per entry.** For chained pipelines (multiple filters applied in sequence), use YAML as above.
 
 **Filter types** (one per UI entry, or multiple in a YAML list):
 
@@ -737,6 +750,26 @@ All filters accept optional `precision` (default `2`).
 
 **Use for:** Generating random numeric or boolean values (for testing, demos, or simulated occupancy).
 
+**Instead of:**
+```yaml
+# WRONG - Template with range() / random()
+template:
+  - sensor:
+      - name: "Random Number"
+        state: "{{ range(0, 100) | random }}"
+```
+
+**Use this:**
+```yaml
+# RIGHT - Random helper (proper entity with state class, history, etc.)
+sensor:
+  - platform: random
+    name: "Random Percentage"
+    minimum: 0
+    maximum: 100
+    unit_of_measurement: "%"
+```
+
 Menu-based — pick `sensor` (numeric) or `binary_sensor` (boolean).
 
 **random → sensor**
@@ -747,14 +780,8 @@ Menu-based — pick `sensor` (numeric) or `binary_sensor` (boolean).
 - Required: `name`
 - Optional: `device_class`
 
+Binary-sensor variant (boolean coin-flip — no min/max needed):
 ```yaml
-sensor:
-  - platform: random
-    name: "Random Percentage"
-    minimum: 0
-    maximum: 100
-    unit_of_measurement: "%"
-
 binary_sensor:
   - platform: random
     name: "Random Boolean"
@@ -820,6 +847,29 @@ humidifier:
 ### switch_as_x
 
 **Use for:** Exposing a `switch.*` entity as a different domain so it integrates correctly with voice assistants, dashboards, and HVAC logic.
+
+**Instead of:**
+```yaml
+# WRONG - Template light wrapping a switch
+template:
+  - light:
+      - name: "Lamp"
+        turn_on:
+          action: switch.turn_on
+          target:
+            entity_id: switch.lamp_plug
+        turn_off:
+          action: switch.turn_off
+          target:
+            entity_id: switch.lamp_plug
+        state: "{{ is_state('switch.lamp_plug', 'on') }}"
+```
+
+**Use this** (UI / config flow — no YAML equivalent):
+- `entity_id: switch.lamp_plug`
+- `target_domain: light`
+
+`switch_as_x` hides the original switch and registers a proper `light.*` entity that voice assistants and dashboards treat correctly.
 
 **Parameters:**
 - Required: `entity_id` (must be a `switch.*` entity), `target_domain` (one of `cover`, `fan`, `light`, `lock`, `siren`, `valve`).
