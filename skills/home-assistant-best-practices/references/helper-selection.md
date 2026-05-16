@@ -791,7 +791,7 @@ climate:
 
 **Required (config flow):** `name`, `heater` (switch or fan entity), `target_sensor` (temperature sensor), `ac_mode` (bool), `cold_tolerance` (default `0.3`), `hot_tolerance` (default `0.3`).
 
-**Optional:** `min_cycle_duration`, `keep_alive`, `min_temp`, `max_temp`, plus a presets step (`away_temp`, `eco_temp`, `boost_temp`, `comfort_temp`, `home_temp`, `sleep_temp`, `activity_temp`).
+**Optional:** `min_cycle_duration`, `max_cycle_duration`, `cycle_cooldown`, `keep_alive`, `min_temp`, `max_temp`, plus a presets step (`away_temp`, `comfort_temp`, `eco_temp`, `home_temp`, `sleep_temp`, `activity_temp`).
 
 **Key behaviors:**
 - `ac_mode: true` inverts logic (heater output activates for cooling)
