@@ -1,6 +1,6 @@
 # Helper Selection Guide
 
-This document covers Home Assistant's built-in helpers and integrations that should be used instead of template sensors or complex automations.
+This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **template helper** (created via the UI / config-entry flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
 
 ## Table of Contents
 1. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
@@ -10,6 +10,22 @@ This document covers Home Assistant's built-in helpers and integrations that sho
 5. [Counting and Timing](#counting-and-timing) - counter, timer
 6. [Scheduling](#scheduling) - schedule, time of day (tod)
 7. [Entity Grouping](#entity-grouping) - group, binary sensor groups
+8. [Data Smoothing](#data-smoothing) - filter
+9. [Random Values](#random-values) - random
+10. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat
+11. [Domain Conversion](#domain-conversion) - switch_as_x
+12. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+
+## Menu-Based Helpers
+
+Two helper integrations — **`template`** and **`group`** — present a sub-type menu before showing fields. The field set isn't known until a sub-type is picked.
+
+| Helper | Sub-types (pick one first) |
+|--------|---------------------------|
+| `template` | `sensor`, `binary_sensor`, `button`, `switch`, `light`, `cover`, `fan`, `lock`, `select`, `number`, `image`, `vacuum`, `weather`, `alarm_control_panel`, `event`, `update` |
+| `group` | `binary_sensor`, `button`, `cover`, `event`, `fan`, `light`, `lock`, `media_player`, `notify`, `sensor`, `switch`, `valve` |
+
+When using the config-entry flow API, supply the sub-type as `next_step_id` (template) or `group_type` (group) in the first form submission; the second step's fields then become available.
 
 ---
 
@@ -654,6 +670,7 @@ group:
 - Groups inherit the domain of their members
 - Light groups can be controlled as a single entity
 - Binary sensor groups useful for "any door open" logic
+- Created via the config-entry flow API, `group` is **menu-based**: pick a sub-type first (`group_type: light | binary_sensor | sensor | switch | cover | fan | lock | media_player | notify | button | event | valve`), then provide `entities`. Sensor groups additionally require `type` (one of `last`, `first_available`, `max`, `mean`, `median`, `min`, `product`, `range`, `stdev`, `sum`).
 
 **Instead of:**
 ```yaml
@@ -671,6 +688,219 @@ template:
 - Any motion sensor active
 - All doors/windows closed
 - Group control in dashboards
+
+---
+
+## Data Smoothing
+
+### filter
+
+**Use for:** Smoothing noisy sensor data, throttling update frequency, or rejecting out-of-range values.
+
+```yaml
+sensor:
+  - platform: filter
+    name: "Filtered Temperature"
+    entity_id: sensor.outdoor_temp
+    filters:
+      - filter: outlier
+        window_size: 4
+        radius: 2.0
+      - filter: lowpass
+        time_constant: 10
+      - filter: time_simple_moving_average
+        window_size: "00:05"
+        precision: 2
+```
+
+**Filter types** (created one filter per config entry via the UI flow):
+
+| Filter | Required | Optional | Notes |
+|--------|----------|----------|-------|
+| `lowpass` | — | `window_size` (int, default 1), `time_constant` (int, default 10) | Suppresses high-frequency noise. |
+| `outlier` | — | `window_size` (int, default 1), `radius` (float, default 2.0) | Drops samples > `radius` standard deviations from the window mean. |
+| `range` | — | `lower_bound` (float), `upper_bound` (float) | Clamps to bounds. Supply at least one. |
+| `throttle` | — | `window_size` (int, default 1) | Sample-count throttle: emit every Nth value. |
+| `time_throttle` | `window_size` (duration) | — | Time-based throttle: emit at most once per window. |
+| `time_simple_moving_average` | `window_size` (duration) | `type` (`last`, default) | Time-windowed SMA. Duration: `HH:MM:SS`, no day component. |
+
+All filters accept optional `precision` (default `2`).
+
+**Common uses:**
+- Smoothing temperature/humidity for thermostat input
+- Rejecting power-meter spikes
+- Reducing dashboard graph noise
+
+---
+
+## Random Values
+
+### random
+
+**Use for:** Generating random numeric or boolean values (for testing, demos, or simulated occupancy).
+
+Menu-based — pick `sensor` (numeric) or `binary_sensor` (boolean).
+
+**random → sensor**
+- Required: `name`
+- Optional: `minimum` (default `0`), `maximum` (default `20`), `device_class`, `unit_of_measurement`
+
+**random → binary_sensor**
+- Required: `name`
+- Optional: `device_class`
+
+```yaml
+sensor:
+  - platform: random
+    name: "Random Percentage"
+    minimum: 0
+    maximum: 100
+    unit_of_measurement: "%"
+
+binary_sensor:
+  - platform: random
+    name: "Random Boolean"
+```
+
+**Common uses:**
+- Demo data for dashboards
+- Simulating sensors during development
+- Probabilistic automation triggers (combine with a schedule)
+
+---
+
+## Climate Control
+
+### generic_thermostat
+
+**Use for:** Turning a switch (or fan) into a thermostat that follows a temperature sensor.
+
+```yaml
+climate:
+  - platform: generic_thermostat
+    name: "Bedroom"
+    heater: switch.bedroom_heater
+    target_sensor: sensor.bedroom_temperature
+    ac_mode: false
+    cold_tolerance: 0.3
+    hot_tolerance: 0.3
+    min_temp: 15
+    max_temp: 25
+    min_cycle_duration: "00:05:00"
+```
+
+**Required (config flow):** `name`, `heater` (switch or fan entity), `target_sensor` (temperature sensor), `ac_mode` (bool), `cold_tolerance` (default `0.3`), `hot_tolerance` (default `0.3`).
+
+**Optional:** `min_cycle_duration`, `keep_alive`, `min_temp`, `max_temp`, plus a presets step (`away_temp`, `eco_temp`, `boost_temp`, `comfort_temp`, `home_temp`, `sleep_temp`, `activity_temp`).
+
+**Key behaviors:**
+- `ac_mode: true` inverts logic (heater output activates for cooling)
+- Tolerances prevent rapid cycling near the target
+- YAML platform supports `initial_hvac_mode`, `precision`, `target_temp_step` — not exposed by the UI flow
+
+**Common uses:**
+- Smart-plug-controlled space heaters
+- Window-AC automation via a switch
+- Fan-based cooling tied to a temperature sensor
+
+---
+
+### generic_hygrostat
+
+**Use for:** Turning a switch (or fan) into a humidifier/dehumidifier controller that follows a humidity sensor.
+
+```yaml
+humidifier:
+  - platform: generic_hygrostat
+    name: "Bathroom Dehumidifier"
+    device_class: dehumidifier
+    humidifier: switch.bathroom_fan
+    target_sensor: sensor.bathroom_humidity
+    dry_tolerance: 3
+    wet_tolerance: 3
+    min_cycle_duration: "00:05:00"
+```
+
+**Required (config flow):** `name`, `device_class` (`humidifier` or `dehumidifier`), `humidifier` (switch or fan entity), `target_sensor` (humidity sensor), `dry_tolerance` (default `3`), `wet_tolerance` (default `3`).
+
+**Optional:** `min_cycle_duration`.
+
+**Common uses:**
+- Bathroom exhaust fan tied to humidity
+- Whole-house dehumidifier control
+- Plant-room humidifier automation
+
+---
+
+## Domain Conversion
+
+### switch_as_x
+
+**Use for:** Exposing a `switch.*` entity as a different domain so it integrates correctly with voice assistants, dashboards, and HVAC logic.
+
+**Required:** `entity_id` (must be a `switch.*` entity), `target_domain` (one of `cover`, `fan`, `light`, `lock`, `siren`, `valve`).
+
+**Optional:** `invert` (bool, default `false`) — reverses on/off semantics (useful for normally-closed contacts).
+
+UI-only — no YAML equivalent. The original switch entity is hidden once converted; the new domain entity inherits the switch's state.
+
+**Common uses:**
+- Smart plug controlling a lamp → expose as `light`
+- Relay controlling a garage door → expose as `cover`
+- Switch behind a smart lock → expose as `lock`
+
+---
+
+## Template Helpers
+
+When no dedicated helper covers your need, use the **template helper** — created via the config-entry flow / UI, **not** YAML `template:` platform sensors. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
+
+### template
+
+**Use for:** Custom sensor/binary_sensor/switch/light/etc. logic that no dedicated helper (min_max, derivative, threshold, statistics, etc.) provides.
+
+Menu-based — pick a sub-type first, then configure fields.
+
+**Sub-types:** `sensor`, `binary_sensor`, `button`, `switch`, `light`, `cover`, `fan`, `lock`, `select`, `number`, `image`, `vacuum`, `weather`, `alarm_control_panel`, `event`, `update`.
+
+**template → sensor**
+- Required: `name`, `state` (Jinja template returning the sensor value)
+- Optional: `unit_of_measurement`, `device_class`, `state_class`, `device_id`, `availability` (template)
+
+**template → binary_sensor**
+- Required: `name`, `state` (Jinja template returning truthy/falsy)
+- Optional: `device_class`, `device_id`, `availability` (template)
+
+Other sub-types follow the same shape — a `state` template plus domain-appropriate metadata.
+
+**Equivalent YAML platform** (for reference; prefer the helper):
+```yaml
+template:
+  - sensor:
+      - name: "Solar Net"
+        state: "{{ states('sensor.solar_production') | float - states('sensor.house_consumption') | float }}"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+  - binary_sensor:
+      - name: "Someone Home"
+        state: "{{ is_state('person.alice','home') or is_state('person.bob','home') }}"
+        device_class: presence
+```
+
+**When to reach for the template helper:**
+- A computed value that combines multiple entities in a way no aggregation helper covers
+- A binary condition based on attributes (not just state)
+- Domain-specific entities (template `light`, `switch`, `cover`) that wrap underlying primitives
+
+**When NOT to use it** — a dedicated helper exists for these patterns and gives better behavior:
+- Averaging/summing/min/max across sensors → `min_max`
+- Rolling statistics over time → `statistics`
+- Rate of change → `derivative`
+- Above/below threshold → `threshold`
+- Time-of-day → `tod`
+- Weekly schedule → `schedule`
+- Any-on / all-on across entities → `group`
 
 ---
 
@@ -694,3 +924,11 @@ template:
 | Weekly schedule | `schedule` | Template with weekday checks |
 | Time of day mode | `tod` | Template with time checks |
 | Any-on / all-on | `group` | Template binary sensor |
+| Smooth noisy sensor | `filter` | Statistics with `mean` (filter is purpose-built for this) |
+| Throttle update rate | `filter` (`throttle`/`time_throttle`) | Custom automation with delays |
+| Reject out-of-range values | `filter` (`range`) | Template with bounds check |
+| Thermostat from switch + temp sensor | `generic_thermostat` | Automation with hysteresis logic |
+| Humidifier from switch + humidity sensor | `generic_hygrostat` | Automation with hysteresis logic |
+| Switch presented as light/cover/lock | `switch_as_x` | Template light/cover/lock |
+| Random sensor value | `random` | Template with `range()` |
+| Custom logic no other helper covers | `template` helper (via UI flow) | YAML `template:` platform sensor |
