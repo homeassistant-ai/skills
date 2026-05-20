@@ -45,10 +45,7 @@ Before writing any template, check `references/automation-patterns.md` for nativ
 
 **Common substitutions:**
 
-- `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
-- `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
-- `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
-- `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger (caveat: different behavior when state is already true — see `references/safe-refactoring.md#trigger-restructuring`)
+{{ states('x') | float > 25 }} -> numeric_state condition with above: 25, {{ is_state('x', 'on') and is_state('y', 'on') }} -> condition: and with state conditions, {{ now().hour >= 9 }} -> condition: time with after: "09:00:00", wait_template: "{{ is_state(...) }}" -> wait_for_trigger with state trigger (caveat: different behavior when state is already true — see references/safe-refactoring.md#trigger-restructuring)
 
 ### 2. Check for built-in helper or Template Helper
 
