@@ -488,7 +488,7 @@ def set_thermostat(self, temp):
 
 def verify_thermostat(self, kwargs):
     actual = self.get_state("climate.living_room", attribute="temperature")
-    if str(actual) != str(kwargs["expected"]):
+    if float(actual or 0) != float(kwargs["expected"]):
         self.log(
             f"Thermostat did not accept setpoint {kwargs['expected']} "
             f"(actual: {actual})",
