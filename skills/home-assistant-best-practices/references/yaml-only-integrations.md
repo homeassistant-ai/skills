@@ -4,10 +4,10 @@ Use managed YAML config editing (with backup, validation, and `check_config` ver
 
 This does NOT apply to:
 - Automations/scripts/scenes (use config APIs)
-- UI-configured integrations and helpers (config flow) — including `template` (Template Helper), groups (Group Helper), `input_*` helpers, and most modern notify integrations
+- UI-configured integrations and helpers (config flow) — including `template` (Template Helper), `group` (Group Helper), `input_*` helpers, and most modern notify integrations
 - `.storage/` files (use REST/WebSocket APIs)
 
-For sending notifications, prefer config-flow notify integrations (Mobile App, Pushover, Telegram, etc.) with the `notify.send_message` action from automations — not a YAML `notify:` platform definition.
+For sending notifications, prefer config-flow notify integrations (Mobile App, Pushover, Discord, etc.) with the `notify.send_message` action from automations — not a YAML `notify:` platform definition.
 
 ## YAML-Only Integration Types
 
