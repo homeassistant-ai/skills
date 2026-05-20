@@ -298,7 +298,8 @@ persistent state, use HA input helpers.
 
 ```python
 # Read
-count = int(self.get_state("input_number.motion_counter") or 0)
+raw_count = self.get_state("input_number.motion_counter")
+count = int(raw_count) if raw_count not in (None, "unavailable", "unknown") else 0
 
 # Write
 self.call_service(
