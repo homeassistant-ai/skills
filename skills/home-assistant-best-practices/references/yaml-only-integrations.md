@@ -6,7 +6,7 @@ This does NOT apply to:
 
 - Automations/scripts/scenes (use config APIs)
 - `.storage/` files (use REST/WebSocket APIs)
-- UI-configured integrations and helpers (config flow): `template` (Template Helper), `input_*` helpers, the UI Group Helper (Settings → Devices & Services → Helpers → Group), and most modern notify integrations
+- UI-configured integrations and helpers (config flow): `input_*` helpers, the UI Group Helper (Settings → Devices & Services → Helpers → Group), and most modern notify integrations
 
 Old-style YAML `group:` blocks are still YAML-only and appear in the table below — only the UI Group Helper is excluded.
 
@@ -16,6 +16,7 @@ For sending notifications, prefer config-flow notify integrations (Mobile App, T
 
 | Integration type | Post-edit action | Notes |
 |---|---|---|
+| `template` | `template.reload` | Simple template entities: prefer the UI Template Helper. Trigger-based templates and multi-entity blocks (shared triggers/variables) still require YAML. |
 | `command_line` | `command_line.reload` | Sensors, switches, binary sensors via shell commands |
 | `rest` | `rest.reload` | REST sensors, binary sensors |
 | `shell_command` | `shell_command.reload` | Named shell command definitions |
