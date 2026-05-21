@@ -11,6 +11,7 @@ description: >
   - Renaming entities or migrating device_id to entity_id
   - Configuring dashboard cards or picking helpers to feed them
   - Looking up card types or domain-specific documentation
+  - Writing or reviewing AppDaemon apps (Python-based HA automation)
 
   SYMPTOMS:
   - Agent uses Jinja2 templates where native conditions/triggers/helpers exist
