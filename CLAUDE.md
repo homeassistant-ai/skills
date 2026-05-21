@@ -30,6 +30,8 @@ description: >
 Constraints from CONTRIBUTING.md:
 - Max **500 lines** per SKILL.md
 - `metadata.version` must be `0` on new skills (do not edit manually)
+- `name` must match `[a-z0-9-]+` and be ≤64 characters
+- `description` frontmatter must be **≤1024 characters** (CI enforces this via `skills-ref validate`)
 - Reference files must be **one level deep** only (e.g. `references/example.yaml`)
 - Use **forward slashes** in all file paths
 - Optional subdirectories: `references/` (additional docs), `scripts/` (utility scripts), `assets/` (static resources)
