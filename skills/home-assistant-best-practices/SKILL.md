@@ -1,26 +1,26 @@
 ---
 name: home-assistant-best-practices
 description: >
-  Best practices for HA automations, helpers, scripts, device controls, and dashboards.
+  Best practices for HA automations, helpers, scripts, controls, and dashboards.
 
   TRIGGER THIS SKILL WHEN:
-  - Creating/editing automations, scripts, scenes, or dashboards
+  - Creating or editing automations, scripts, scenes, or dashboards
   - Choosing between template sensors and built-in helpers
-  - Writing or restructuring triggers, conditions, or automation modes
-  - Setting up Zigbee button/remote automations (ZHA or Zigbee2MQTT)
+  - Restructuring triggers, conditions, or automation modes
+  - Setting up Zigbee button/remote automations
   - Renaming entities or migrating device_id to entity_id
-  - Configuring dashboard cards or picking helpers to feed them
-  - Looking up card types or domain-specific documentation
-  - Writing or reviewing AppDaemon apps (Python-based HA automation)
+  - Configuring dashboard cards or selecting helpers
+  - Looking up card types or domain docs
+  - Writing or reviewing AppDaemon apps
 
   SYMPTOMS:
-  - Agent uses Jinja2 templates where native conditions/triggers/helpers exist
+  - Agent uses Jinja2 templates where native options exist
   - Agent uses device_id instead of entity_id
-  - Agent modifies entity IDs without checking consumers
-  - Agent chooses wrong automation mode (e.g., single for motion lights)
-  - Agent hard-codes values or picks raw sensor over derived helper
-  - Agent edits `.storage/` files, writes raw YAML, or generates YAML snippets
-  - Agent tells user to edit configuration.yaml for UI-configured integrations
+  - Agent changes entity IDs without checking consumers
+  - Wrong automation mode
+  - Agent hard-codes values or uses raw sensor over helper
+  - Agent edits .storage, writes YAML, or generates YAML snippets
+  - Agent tells user to edit configuration.yaml for UI integrations
 metadata:
   version: 6
 ---
