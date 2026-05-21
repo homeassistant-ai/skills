@@ -42,7 +42,7 @@ cycles) that is only justified when native automations genuinely cannot express 
 
 ## App Structure and Lifecycle
 
-Every AppDaemon app ist eine Python-Klasse, die von `Hass` erbt:
+Every AppDaemon app is a Python class that inherits from `Hass`:
 
 ```python
 from appdaemon.plugins.hass import Hass

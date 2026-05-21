@@ -109,6 +109,10 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | `vacuum.send_command` with vendor room IDs | `vacuum.clean_area` with HA `area_id` (if segments are mapped) | Uses native HA areas, works across integrations — but requires segment-to-area mapping in entity settings first | `references/device-control.md#vacuum-control` |
 | Using `color_temp` (mireds) in light service calls | Use `color_temp_kelvin` | The `color_temp` parameter was removed in 2026.3; only Kelvin is supported | `references/device-control.md#lights` |
 | Person/Device Tracker `entered_home`/`left_home` device triggers or `is_home`/`is_not_home` conditions | `state` trigger `to: home` / `to: not_home`, or `state` condition | These were removed in 2026.5 — state triggers and conditions are the correct replacements | `references/automation-patterns.md#presence-and-person-triggers-and-conditions-removed-in-20265` |
+| Registering callbacks or calling `self.turn_on()`/`self.get_state()` in `__init__()` | Register everything in `initialize()` | Plugin connection not established during `__init__` — calls fail silently | `references/appdaemon.md#app-structure-and-lifecycle` |
+| Calling `run_in` on repeated triggers without cancelling the previous handle | `cancel_timer(self._off_handle)` before each new `run_in` | Every trigger stacks an independent timer — devices toggle unpredictably | `references/appdaemon.md#scheduling-and-timers` |
+| Storing persistent state in instance variables | Use HA `input_number`, `input_boolean`, or `input_text` helpers | Instance variables reset on app reload or daemon restart | `references/appdaemon.md#state-management-and-inter-app-communication` |
+| Hardcoding entity IDs inside the class body | Pass entity IDs via `self.args` in `apps.yaml` | Hardcoded IDs prevent reuse and require code edits per installation | `references/appdaemon.md#apps.yaml-configuration` |
 
 ---
 
@@ -128,4 +132,4 @@ Read these when you need detailed information:
 | `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
 | `references/domain-docs.md` | Looking up integration or domain documentation for service calls, entity attributes, or configuration | — |
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
-| `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact | — | 
+| `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact | — |
