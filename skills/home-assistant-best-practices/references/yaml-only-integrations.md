@@ -2,20 +2,27 @@
 
 Use managed YAML config editing (with backup, validation, and `check_config` verification) for integrations that have no config flow and no REST/WebSocket API for creation.
 
-This does NOT apply to automations/scripts/scenes (use config APIs), UI-configured integrations, `.storage/` files (use REST/WebSocket APIs), or helpers like input_number/input_boolean (these have config flow).
+This does NOT apply to:
+
+- Automations/scripts/scenes (use config APIs)
+- `.storage/` files (use REST/WebSocket APIs)
+- UI-configured integrations and helpers (config flow): `input_*` helpers, the UI Group Helper (Settings → Devices & Services → Helpers → Group), and most modern notify integrations
+
+Old-style YAML `group:` blocks are still YAML-only and appear in the table below — only the UI Group Helper is excluded.
+
+For sending notifications, prefer config-flow notify integrations (Mobile App, Telegram, etc.) and invoke them via their `notify.<integration_name>` action (e.g. `notify.mobile_app_phone`) from automations — not a YAML `notify:` platform definition.
 
 ## YAML-Only Integration Types
 
 | Integration type | Post-edit action | Notes |
 |---|---|---|
-| `template` | Reload available | Prefer Template Helper (UI) when possible |
-| `mqtt` (platform-based) | Reload available | Platform-style `mqtt:` sensors/switches; MQTT devices via config entry are separate |
-| `group` (YAML-defined) | Reload available | Groups defined in YAML; UI groups use config entries |
-| `command_line` | Restart required | Sensors, switches, binary sensors via shell commands |
-| `rest` | Restart required | REST sensors, binary sensors |
-| `shell_command` | Restart required | Named shell command definitions |
-| `notify` (legacy platform-based) | Restart required | Most notify platforms now use config entries; only legacy platform-based definitions are YAML-only |
-| `sensor` / `binary_sensor` | Restart required | Platform-style YAML definitions (e.g. `sensor: platform: xyz`) |
-| `switch` / `light` / `fan` / `cover` / `climate` | Restart required | Platform-based YAML definitions |
+| `template` | `template.reload` | Simple template entities: prefer the UI Template Helper. Trigger-based templates and multi-entity blocks (shared triggers/variables) still require YAML. |
+| `command_line` | `command_line.reload` | Sensors, switches, binary sensors via shell commands |
+| `rest` | `rest.reload` | REST sensors, binary sensors |
+| `shell_command` | `shell_command.reload` | Named shell command definitions |
+| `mqtt` (platform-based) | `mqtt.reload` | Platform-style `mqtt:` sensors/switches. MQTT Discovery and MQTT device config entries are non-YAML alternatives for auto-published devices |
+| `group` (YAML-defined) | `group.reload` | Old-style YAML groups. Prefer the UI Group Helper (Settings → Devices & Services → Helpers → Group) for new groups |
+| `sensor` / `binary_sensor` (platform-style) | `homeassistant.restart` | Platform-style YAML — a top-level `sensor:` (or `binary_sensor:`) key with a block sequence of `- platform: <name>` entries — for platforms without a config flow. Many platforms now have config flows — check the integration's docs before assuming YAML is required |
+| `switch` / `light` / `fan` / `cover` / `climate` (platform-style) | `homeassistant.restart` | Platform-style YAML — a top-level `switch:` / `light:` / etc. key with a block sequence of `- platform: <name>` entries — only for platforms that have no config flow. Check the integration's docs before assuming YAML is required |
 
-Confirm with the user before triggering a restart — it briefly interrupts all automations and integrations.
+Confirm with the user before triggering `homeassistant.restart` — it briefly interrupts all automations and integrations.
