@@ -283,7 +283,7 @@ persistent state, use HA input helpers.
 ```python
 # Read
 raw_count = self.get_state("input_number.motion_counter")
-count = int(raw_count) if raw_count not in (None, "unavailable", "unknown") else 0
+count = int(float(raw_count)) if raw_count not in (None, "unavailable", "unknown") else 0
 
 # Write
 self.call_service(
@@ -357,6 +357,11 @@ from appdaemon.plugins.hass import Hass
 class MotionLight(Hass):
 
     def initialize(self):
+        # Ensure required args are present
+        for required in ("entity_light", "entity_motion"):
+            if required not in self.args:
+                self.log(f"{required} is required in apps.yaml", level="ERROR")
+                return
         self._light   = self.args["entity_light"]
         self._timeout = self.args.get("timeout", 180)
         self._off_handle = None
@@ -456,22 +461,32 @@ AppDaemon does not raise exceptions for failed service calls. Verify critical
 outcomes by reading entity state after a short delay:
 
 ```python
+def initialize(self):
+    # ...existing code...
+    self._verify_handle = None
+
 def set_thermostat(self, temp):
     self.call_service(
         "climate/set_temperature",
         entity_id="climate.living_room",
         temperature=temp
     )
-    self.run_in(self.verify_thermostat, 5, expected=temp)
+    if hasattr(self, "_verify_handle") and self._verify_handle:
+        self.cancel_timer(self._verify_handle)
+    self._verify_handle = self.run_in(self.verify_thermostat, 5, expected=temp)
 
 def verify_thermostat(self, **kwargs):
     actual = self.get_state("climate.living_room", attribute="temperature")
     if actual in (None, "unavailable", "unknown"):
         self.log("Could not verify thermostat — sensor unavailable", level="WARNING")
         return
-    if abs(float(actual) - float(kwargs["expected"])) > 0.5:
+    expected = kwargs.get("expected")
+    if expected is None:
+        self.log("verify_thermostat called without expected — cannot verify", level="ERROR")
+        return
+    if abs(float(actual) - float(expected)) > 0.5:
         self.log(
-            f"Thermostat did not accept setpoint {kwargs['expected']} "
+            f"Thermostat did not accept setpoint {expected} "
             f"(actual: {actual})",
             level="WARNING"
         )

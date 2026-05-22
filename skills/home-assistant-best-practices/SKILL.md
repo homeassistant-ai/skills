@@ -112,7 +112,7 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Registering callbacks or calling `self.turn_on()`/`self.get_state()` in `__init__()` | Register everything in `initialize()` | Plugin connection not established during `__init__` — calls fail silently | `references/appdaemon.md#app-structure-and-lifecycle` |
 | Calling `run_in` on repeated triggers without cancelling the previous handle | `cancel_timer(self._off_handle)` before each new `run_in` | Every trigger stacks an independent timer — devices toggle unpredictably | `references/appdaemon.md#scheduling-and-timers` |
 | Storing persistent state in instance variables | Use HA `input_number`, `input_boolean`, or `input_text` helpers | Instance variables reset on app reload or daemon restart | `references/appdaemon.md#state-management-and-inter-app-communication` |
-| Hardcoding entity IDs inside the class body | Pass entity IDs via `self.args` in `apps.yaml` | Hardcoded IDs prevent reuse and require code edits per installation | `references/appdaemon.md#apps.yaml-configuration` |
+| Hardcoding entity IDs inside the class body | Pass entity IDs via `self.args` in `apps.yaml` | Hardcoded IDs prevent reuse and require code edits per installation | `references/appdaemon.md#appsyaml-configuration` |
 
 ---
 
