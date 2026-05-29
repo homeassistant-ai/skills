@@ -8,9 +8,10 @@
 
 Home Assistant 2026.5 ships 200+ template functions, filters, and tests, each
 with its own canonical page at `https://www.home-assistant.io/template-functions/<name>/`.
-This file is an editorial selection of functions commonly seen in automations
-and scripts — it
-is a discovery aid, not a replacement for the canonical pages.
+When a template is genuinely the right tool, this file is a quick index into a
+subset of those pages — Home Assistant's own documentation is the authority; the
+one-line summaries here only help you find the right page. It is not a reason to
+reach for templates over a native automation or UI flow.
 
 - **Full catalog (all categories):** <https://www.home-assistant.io/template-functions/>
 - **Descriptions here are one-line summaries.** Parameters, return types, and
