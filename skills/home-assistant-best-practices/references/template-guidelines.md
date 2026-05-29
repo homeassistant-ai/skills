@@ -591,6 +591,10 @@ automation:
 
 ## Quick Reference: Functions and Filters
 
+> For the full curated catalog of functions, filters, and tests — each linked to
+> its canonical Home Assistant reference page — see
+> [`template-functions.md`](template-functions.md).
+
 ### State Functions
 
 | Function | Purpose |
