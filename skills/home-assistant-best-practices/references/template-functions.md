@@ -8,7 +8,8 @@
 
 Home Assistant 2026.5 ships 200+ template functions, filters, and tests, each
 with its own canonical page at `https://www.home-assistant.io/template-functions/<name>/`.
-This file curates the ones most used when writing automations and scripts — it
+This file is an editorial selection of functions commonly seen in automations
+and scripts — it
 is a discovery aid, not a replacement for the canonical pages.
 
 - **Full catalog (all categories):** <https://www.home-assistant.io/template-functions/>
@@ -33,7 +34,7 @@ is a discovery aid, not a replacement for the canonical pages.
 
 ## States
 
-Core state access — the most common template need in automations and scripts.
+Core state access — a common template need in automations and scripts.
 
 | Name | Type | Purpose |
 |------|------|---------|
