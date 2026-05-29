@@ -91,7 +91,7 @@ is genuinely needed.
 | [`as_timedelta`](https://www.home-assistant.io/template-functions/as_timedelta/) | fn | Parse an ISO-8601 duration into a timedelta |
 | [`timedelta`](https://www.home-assistant.io/template-functions/timedelta/) | fn | Build a timedelta from numeric components |
 | [`strptime`](https://www.home-assistant.io/template-functions/strptime/) | fn | Parse a time string with a format into a datetime |
-| [`timestamp_custom`](https://www.home-assistant.io/template-functions/timestamp_custom/) | fn | Format a UNIX timestamp with a custom format |
+| [`timestamp_custom`](https://www.home-assistant.io/template-functions/timestamp_custom/) | filter | Format a UNIX timestamp with a custom format |
 | [`time_since`](https://www.home-assistant.io/template-functions/time_since/) | fn | Human-readable time elapsed since a datetime |
 | [`time_until`](https://www.home-assistant.io/template-functions/time_until/) | fn | Human-readable time remaining until a datetime |
 
@@ -126,8 +126,8 @@ Iterating and filtering lists of entities/states.
 | [`sum`](https://www.home-assistant.io/template-functions/sum/) | filter | Sum values, optionally by attribute |
 | [`first`](https://www.home-assistant.io/template-functions/first/) | filter | First item of a list |
 | [`last`](https://www.home-assistant.io/template-functions/last/) | filter | Last item of a list |
-| [`from_json`](https://www.home-assistant.io/template-functions/from_json/) | fn | Parse a JSON string into an object |
-| [`to_json`](https://www.home-assistant.io/template-functions/to_json/) | fn | Serialize a value to a JSON string |
+| [`from_json`](https://www.home-assistant.io/template-functions/from_json/) | filter | Parse a JSON string into an object |
+| [`to_json`](https://www.home-assistant.io/template-functions/to_json/) | filter | Serialize a value to a JSON string |
 
 ## Strings
 
@@ -150,5 +150,5 @@ For notification messages, titles, and dynamic text — never for logic position
 |------|------|---------|
 | [`regex_match`](https://www.home-assistant.io/template-functions/regex_match/) | filter | True if a string matches a pattern at the start |
 | [`regex_search`](https://www.home-assistant.io/template-functions/regex_search/) | filter | True if a pattern occurs anywhere in a string |
-| [`regex_replace`](https://www.home-assistant.io/template-functions/regex_replace/) | fn | Replace all matches of a pattern |
-| [`regex_findall`](https://www.home-assistant.io/template-functions/regex_findall/) | fn | All matches of a pattern in a string |
+| [`regex_replace`](https://www.home-assistant.io/template-functions/regex_replace/) | filter | Replace all matches of a pattern |
+| [`regex_findall`](https://www.home-assistant.io/template-functions/regex_findall/) | filter | All matches of a pattern in a string |
