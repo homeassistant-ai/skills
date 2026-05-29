@@ -15,8 +15,9 @@ is a discovery aid, not a replacement for the canonical pages.
 - **Descriptions here are one-line summaries.** Parameters, return types, and
   examples live on each linked page — follow the link before relying on exact
   signatures.
-- **Type** column: `fn` = function/global, `filter` = `value | name`, `test` =
-  `value is name`.
+- **Type** column shows the idiomatic call form: `fn` = function/global, `filter`
+  = `value | name`, `test` = `value is name`. Many `fn` entries (e.g. `area_id`,
+  `device_id`) also work as filters (`value | area_id`).
 
 ## Table of Contents
 
@@ -121,8 +122,8 @@ Iterating and filtering lists of entities/states.
 | [`sort`](https://www.home-assistant.io/template-functions/sort/) | filter | Sort a list, optionally by attribute |
 | [`unique`](https://www.home-assistant.io/template-functions/unique/) | filter | Remove duplicates |
 | [`sum`](https://www.home-assistant.io/template-functions/sum/) | filter | Sum values, optionally by attribute |
-| [`first`](https://www.home-assistant.io/template-functions/first/) | fn | First item of a list |
-| [`last`](https://www.home-assistant.io/template-functions/last/) | fn | Last item of a list |
+| [`first`](https://www.home-assistant.io/template-functions/first/) | filter | First item of a list |
+| [`last`](https://www.home-assistant.io/template-functions/last/) | filter | Last item of a list |
 | [`from_json`](https://www.home-assistant.io/template-functions/from_json/) | fn | Parse a JSON string into an object |
 | [`to_json`](https://www.home-assistant.io/template-functions/to_json/) | fn | Serialize a value to a JSON string |
 
@@ -145,7 +146,7 @@ For notification messages, titles, and dynamic text — never for logic position
 
 | Name | Type | Purpose |
 |------|------|---------|
-| [`regex_match`](https://www.home-assistant.io/template-functions/regex_match/) | test | True if a string matches a pattern at the start |
-| [`regex_search`](https://www.home-assistant.io/template-functions/regex_search/) | test | True if a pattern occurs anywhere in a string |
+| [`regex_match`](https://www.home-assistant.io/template-functions/regex_match/) | filter | True if a string matches a pattern at the start |
+| [`regex_search`](https://www.home-assistant.io/template-functions/regex_search/) | filter | True if a pattern occurs anywhere in a string |
 | [`regex_replace`](https://www.home-assistant.io/template-functions/regex_replace/) | fn | Replace all matches of a pattern |
 | [`regex_findall`](https://www.home-assistant.io/template-functions/regex_findall/) | fn | All matches of a pattern in a string |
