@@ -31,7 +31,7 @@ Run each command separately inside Claude Code:
 /plugin marketplace add homeassistant-ai/skills
 ```
 ```
-/plugin install home-assistant-skills@homeassistant-ai-skills
+/plugin install home-assistant-skills@home-assistant-skills
 ```
 
 Run `/reload-plugins` or restart Claude Code for the skill to take effect.
