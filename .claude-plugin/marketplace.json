@@ -2,7 +2,7 @@
   "name": "home-assistant-skills",
   "owner": {
     "name": "homeassistant-ai",
-    "email": ""
+    "email": "homeassistant-mcp@qc-h.net"
   },
   "metadata": {
     "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, device control, and dashboards",
