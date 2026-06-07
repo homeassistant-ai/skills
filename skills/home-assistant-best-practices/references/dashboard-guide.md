@@ -6,15 +6,17 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 
 - [Dashboard Structure](#dashboard-structure)
 - [View Types](#view-types)
+- [Dashboard Strategies](#dashboard-strategies)
 - [Built-in Cards](#built-in-cards)
 - [Features](#features)
+- [Badges](#badges)
 - [Actions](#actions)
 - [Custom Cards](#custom-cards)
 - [CSS Styling](#css-styling)
 - [HACS Integration](#hacs-integration)
 - [Complete Example: Multi-View Dashboard](#complete-example-multi-view-dashboard)
 - [Common Pitfalls](#common-pitfalls)
-- [Modern Best Practices (2024+)](#modern-best-practices-2024)
+- [Modern Best Practices](#modern-best-practices)
 - [Visual Iteration Workflow](#visual-iteration-workflow)
 
 ---
@@ -77,6 +79,29 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 
 ---
 
+## Dashboard Strategies
+
+A **strategy** generates a dashboard (or a single view) from code instead of a static card list. The default Overview/Home dashboard an agent first encounters **is** a strategy dashboard — its raw config is just:
+
+```yaml
+strategy:
+  type: original-states   # built-in strategy; auto-generates views from current entities/areas
+views: []
+```
+
+A strategy can be set at dashboard level (`strategy:` at the top) or per view (`views: - strategy: {type: ...}`). Custom strategies use the `custom:` prefix; any extra keys are strategy-specific options. The only universal key is `type`.
+
+```yaml
+strategy:
+  type: custom:my-area-dashboard
+  # extra keys here are passed to the custom strategy
+views: []
+```
+
+**"Take control":** to convert an auto-generated strategy dashboard into a static, hand-editable one, use the dashboard's three-dots menu → **Take control**. This is **one-way** — once taken over, the dashboard no longer auto-updates as new entities/areas appear. Editing its cards directly without taking control is a common failure mode — take control first, or edit the strategy options.
+
+---
+
 ## Built-in Cards
 
 | Category | Cards |
@@ -120,6 +145,54 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 }
 ```
 
+### Heading Card
+
+The official way to label a section, replacing a bare section `title`. Supports a title/subtitle style, an icon, a tap action, and inline entity/button badges.
+
+```json
+{
+  "type": "heading",
+  "heading": "Kitchen",
+  "heading_style": "title",
+  "icon": "mdi:fridge",
+  "tap_action": {"action": "navigate", "navigation_path": "/lovelace/kitchen"},
+  "badges": [
+    {"type": "entity", "entity": "sensor.kitchen_temperature", "show_state": true},
+    {"type": "button", "icon": "mdi:lightbulb-off", "tap_action": {"action": "perform-action", "perform_action": "light.turn_off"}}
+  ]
+}
+```
+
+Use `"heading_style": "subtitle"` for sub-headers.
+
+### Markdown Card
+
+The only built-in card that renders Jinja2 templates — the go-to for computed/composite status text without a custom card.
+
+```json
+{
+  "type": "markdown",
+  "content": "Temp {{ states('sensor.living_room') }}°. Door {{ 'open' if is_state('binary_sensor.door','on') else 'closed' }}.",
+  "entity_id": ["sensor.living_room", "binary_sensor.door"]
+}
+```
+
+The card auto-detects entities referenced in the template; `entity_id` (a list) is an optional fallback for when that analysis misses some, forcing a re-render on those. `text_only: true` strips the card chrome for inline labels.
+
+### Card Sizing in Sections (grid_options)
+
+In a `sections` view each section is a 12-column grid. Size or span any card with `grid_options` — this replaces nested `vertical-stack`/`horizontal-stack` hacks.
+
+```json
+{
+  "type": "tile",
+  "entity": "light.kitchen",
+  "grid_options": {"columns": 6, "rows": "auto"}
+}
+```
+
+`columns`: 1–12, or `"full"` for full width. `rows`: an integer or `"auto"`.
+
 ---
 
 ## Features
@@ -147,6 +220,31 @@ Feature `style` options: `"dropdown"` or `"icons"`
 
 ---
 
+## Badges
+
+Badges appear at the top of a view. The simple form is a list of entity IDs, but the **object form** unlocks more:
+
+```json
+{
+  "badges": [
+    "person.john",
+    {
+      "type": "entity",
+      "entity": "sensor.kitchen_temperature",
+      "show_name": true,
+      "show_state": true,
+      "color": "amber",
+      "state_content": ["state", "last_changed"]
+    }
+  ]
+}
+```
+
+- `type: entity` options: `show_name`, `show_state`, `show_icon`, `show_entity_picture`, `state_content` (`state`/`last_changed`/`last_updated`/an attribute), and per-badge `visibility`.
+- **`color` accepts a color token or hex only — not a Jinja template.**
+
+---
+
 ## Actions
 
 ```json
@@ -157,18 +255,26 @@ Feature `style` options: `"dropdown"` or `"icons"`
 }
 ```
 
-Action types: `toggle`, `call-service`, `more-info`, `navigate`, `url`, `none`
+Action types: `more-info`, `toggle`, `perform-action` (the service-call action), `navigate`, `url`, `assist`, `none`
 
 ### Visibility Conditions
+
+Any card or badge accepts a `visibility` list (all conditions must pass to show). Condition types: `state`, `numeric_state`, `screen` (responsive — a CSS media query), `user`, `time`, `location`, and the `and`/`or`/`not` wrappers.
 
 ```json
 {
   "visibility": [
-    {"condition": "user", "users": ["user_id_hex"]},
-    {"condition": "state", "entity": "sun.sun", "state": "above_horizon"}
+    {"condition": "screen", "media_query": "(min-width: 1280px)"},
+    {"condition": "numeric_state", "entity": "sensor.temperature", "above": 20},
+    {"condition": "and", "conditions": [
+      {"condition": "state", "entity": "sun.sun", "state": "above_horizon"},
+      {"condition": "user", "users": ["user_id_hex"]}
+    ]}
   ]
 }
 ```
+
+`screen` is the canonical way to show/hide cards by viewport (desktop vs. mobile).
 
 ---
 
@@ -360,7 +466,7 @@ Search HACS for community cards by name/category, review repository details, the
 
 ---
 
-## Modern Best Practices (2024+)
+## Modern Best Practices
 
 - Use **sections** view type with grid-based layouts
 - Use **tile** cards as primary card type (replaces legacy entity/light/climate cards)

@@ -8,10 +8,14 @@ This document covers native Home Assistant automation constructs that should be 
 3. [Wait Actions](#wait-actions)
 4. [Automation Modes](#automation-modes)
 5. [Continue on Error](#continue-on-error)
-6. [Repeat Actions](#repeat-actions)
-7. [if/then vs choose](#ifthen-vs-choose)
-8. [Trigger IDs](#trigger-ids)
-9. [Disabling Automations](#disabling-automations)
+6. [Stopping a Sequence](#stopping-a-sequence)
+7. [Variables](#variables)
+8. [Capturing Action Responses](#capturing-action-responses)
+9. [Repeat Actions](#repeat-actions)
+10. [if/then vs choose](#ifthen-vs-choose)
+11. [Parallel Actions](#parallel-actions)
+12. [Trigger IDs](#trigger-ids)
+13. [Disabling Automations](#disabling-automations)
 
 ---
 
@@ -201,6 +205,18 @@ conditions:
     value_template: "{{ trigger.to_state.attributes.brightness > 100 }}"
 ```
 
+### Trigger Condition
+
+Matches *which* trigger started the run, by trigger `id` — the clean way to branch on the trigger (see [Trigger IDs](#trigger-ids)) instead of templating `trigger.id`. Only true when the run was started by a trigger (false in scripts and manual runs).
+
+```yaml
+condition: trigger
+id: motion_on        # a single id, or a list (OR semantics):
+# id:
+#   - motion_on
+#   - motion_off
+```
+
 ---
 
 ## Trigger Types
@@ -342,6 +358,16 @@ conditions:
   - "{{ trigger.platform == 'event' and 'light.kitchen' in trigger.event.data.entity_id }}"
 ```
 
+**Firing an event** (the action counterpart of this trigger) — useful for decoupling automations (one fires `my_event`, several others trigger on it):
+
+```yaml
+actions:
+  - event: my_custom_event
+    event_data:
+      source: kitchen
+      value: "{{ states('sensor.power') }}"   # templates work directly; event_data_template is no longer needed
+```
+
 ### MQTT Trigger
 
 Fires on MQTT messages.
@@ -365,6 +391,121 @@ triggers:
     device_id: abc123
     type: action
     subtype: single
+```
+
+A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same caveats — `device_id` is not persistent; prefer a `state`/`numeric_state` condition.
+
+### Zone Trigger
+
+Fires when a person or device tracker enters or leaves a zone.
+
+```yaml
+triggers:
+  - trigger: zone
+    entity_id: person.john
+    zone: zone.home
+    event: enter   # "enter" or "leave"
+```
+
+To *check* zone membership in a condition rather than trigger on the transition, see [Zone Condition](#zone-condition).
+
+### Template Trigger
+
+Fires when a Jinja template renders truthy. Prefer `state`/`numeric_state` whenever the change can be expressed natively — reach for the template trigger only for cross-entity or derived conditions.
+
+```yaml
+triggers:
+  - trigger: template
+    value_template: "{{ states('sensor.temp') | float > 25 and is_state('binary_sensor.window', 'on') }}"
+    for: "00:05:00"   # optional: template must stay true this long before firing
+```
+
+### Calendar Trigger
+
+Fires at the start or end of a calendar event, with an optional offset. Prefer this over a `state` trigger on the calendar entity, which only tracks one event at a time.
+
+```yaml
+triggers:
+  - trigger: calendar
+    entity_id: calendar.work
+    event: start          # "start" or "end"
+    offset: "-00:15:00"   # optional: fire 15 min before the event
+```
+
+Exposes `trigger.calendar_event` with `.summary`, `.start`, `.end`, `.description`, `.location` for filtering by event details.
+
+### Webhook Trigger
+
+Fires when an HTTP request hits `/api/webhook/<webhook_id>`. The canonical way to trigger HA from external systems (scripts, IFTTT, other servers).
+
+```yaml
+triggers:
+  - trigger: webhook
+    webhook_id: "my-secret-hook-id"
+    allowed_methods: [POST, PUT]   # optional; default POST + PUT
+    local_only: true               # optional; default true — set false for external callers
+```
+
+Read the payload via `trigger.json`, `trigger.data` (form-encoded), `trigger.query`, or `trigger.headers`.
+
+### Home Assistant Trigger
+
+Fires when HA finishes starting or begins shutting down.
+
+```yaml
+triggers:
+  - trigger: homeassistant
+    event: start   # "start" or "shutdown"
+```
+
+Use `start` for boot-time setup (restore state, resync devices). `shutdown` handlers get only ~20 seconds before HA stops — keep them short.
+
+### Conversation Trigger
+
+Fires when a voice/Assist sentence matches. The match syntax supports `[optional]` words, `(a|b)` alternatives, and `{slot}` wildcards.
+
+```yaml
+triggers:
+  - trigger: conversation
+    command:
+      - "party time"
+      - "play {album} by {artist}"
+```
+
+Captured wildcards are available as `trigger.slots.<name>`; the full text is `trigger.sentence`. To make the assistant speak a dynamic reply, use the `set_conversation_response` action (`- set_conversation_response: "Done"`; `~` clears a previously set response).
+
+### Tag Trigger
+
+Fires when an NFC/QR tag is scanned.
+
+```yaml
+triggers:
+  - trigger: tag
+    tag_id: "A7-6B-90-5F"
+    device_id: 0e19cd3c...   # optional: limit to one scanner (device_id is not persistent — omit unless scoping)
+```
+
+### Geolocation Trigger
+
+Fires when a transient entity from a geolocation feed (NWS alerts, GDACS, fire-service feeds, USGS quakes) enters or leaves a zone. Keyed by the feed `source`, not a fixed `entity_id`.
+
+```yaml
+triggers:
+  - trigger: geo_location
+    source: nsw_rural_fire_service_feed
+    zone: zone.fire_alert
+    event: enter   # "enter" or "leave"
+```
+
+### Persistent Notification Trigger
+
+Fires on persistent-notification lifecycle changes (e.g. react to an integration posting an error notice).
+
+```yaml
+triggers:
+  - trigger: persistent_notification
+    update_type: [added, removed]     # any of: added, removed, updated, current; omit for all
+    notification_id: invalid_config   # optional: filter to one notification
 ```
 
 ### Presence and Person Triggers and Conditions (Removed in 2026.5)
@@ -489,6 +630,16 @@ Both waits set `wait.completed` and `wait.remaining`:
         message: "Door still open after 5 minutes!"
 ```
 
+### delay
+
+Pauses the sequence for a fixed time. Accepts a time string, a units dict, or a template. Prefer `wait_for_trigger` when waiting for an *event* rather than a fixed duration.
+
+```yaml
+- delay: "00:01:30"                 # HH:MM:SS
+- delay: {minutes: 1, seconds: 30}  # units dict (combinable)
+- delay: "{{ states('input_number.delay_seconds') | int }}"   # template → seconds
+```
+
 ---
 
 ## Automation Modes
@@ -608,6 +759,63 @@ actions:
 
 ---
 
+## Stopping a Sequence
+
+`stop:` halts the rest of the sequence cleanly — clearer than nesting everything inside a `choose`/`if` guard.
+
+```yaml
+- stop: "reason shown in the trace"
+
+# Mark the run as failed (red in the trace, propagates to callers):
+- stop: "unexpected state"
+  error: true
+
+# Return a value from a script and halt:
+- stop: "done"
+  response_variable: my_result
+```
+
+---
+
+## Variables
+
+Compute a value once and reuse it — keeps sequences DRY and avoids repeating long templates.
+
+```yaml
+# Mid-sequence (scoped to the remaining steps of this run):
+- variables:
+    brightness: 100
+    targets:
+      - light.kitchen
+      - light.living_room
+
+# Automation/script top level (full templates; usable in conditions and actions):
+variables:
+  threshold: 25
+```
+
+`trigger_variables:` is a separate top-level key evaluated **before** triggers fire — it supports **limited templates only** (no `states()`/`state_attr()`), mainly for passing a blueprint `!input` into trigger options. Don't put state-based templates there.
+
+---
+
+## Capturing Action Responses
+
+`response_variable` captures the data a service returns (e.g. `weather.get_forecasts`, `calendar.get_events`, `todo.get_items`) into a variable for later steps — the only native mechanism for response-aware service calls.
+
+```yaml
+- action: weather.get_forecasts
+  target:
+    entity_id: weather.home
+  data:
+    type: daily
+  response_variable: forecast
+- action: notify.mobile_app
+  data:
+    message: "High today: {{ forecast['weather.home'].forecast[0].temperature }}°"
+```
+
+---
+
 ## Repeat Actions
 
 Four repeat variants are available:
@@ -709,6 +917,26 @@ actions:
       - action: light.turn_off
         target:
           area_id: living_room
+```
+
+---
+
+## Parallel Actions
+
+The `parallel:` action runs a group of actions **concurrently** within one sequence. This is distinct from `mode: parallel` (see [Automation Modes](#automation-modes)), which controls concurrency of whole automation *runs*. Steps inside a nested `sequence:` still run in order.
+
+```yaml
+actions:
+  - parallel:
+      - action: notify.person1
+        data:
+          message: "Sent at the same time"
+      - sequence:
+          - wait_for_trigger:
+              - trigger: state
+                entity_id: binary_sensor.motion
+                to: "on"
+          - action: notify.person2
 ```
 
 ---
@@ -816,4 +1044,21 @@ Disabling an automation via *Settings → Automations → open automation → �
 # CORRECT — disable permanently via entity registry (Method 2)
 # UI: Settings → Automations → open automation → ⋮ → Settings → Enabled toggle
 # Or via WebSocket API: config/entity_registry/update (disabled_by: user)
+```
+
+### `enabled:` on individual triggers, conditions, and actions
+
+While `enabled:` is not valid as a *top-level* automation key (above), it **is** valid on any individual trigger, condition, or action — as a boolean or a blueprint `!input`. A disabled element is skipped without disabling the whole automation. It also accepts a **limited template** (variables / blueprint inputs only — no `states()`), evaluated **once when the automation loads**.
+
+```yaml
+triggers:
+  - trigger: sun
+    event: sunset
+    enabled: false                       # statically disabled
+  - trigger: time
+    at: "15:30:00"
+    enabled: "{{ enable_afternoon }}"    # limited template over a variable/!input; evaluated once at load
+actions:
+  - action: notify.notify
+    enabled: false
 ```

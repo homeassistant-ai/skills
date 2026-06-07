@@ -4,17 +4,25 @@ This document covers Home Assistant's built-in helpers and integrations that sho
 
 ## Table of Contents
 1. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
-2. [Rate and Change](#rate-and-change) - derivative, threshold
+2. [Rate and Change](#rate-and-change) - derivative, threshold, trend
 3. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
 4. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
 5. [Counting and Timing](#counting-and-timing) - counter, timer
 6. [Scheduling](#scheduling) - schedule, time of day (tod)
 7. [Entity Grouping](#entity-grouping) - group, binary sensor groups
-8. [Data Smoothing](#data-smoothing) - filter
-9. [Random Values](#random-values) - random
-10. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat
-11. [Domain Conversion](#domain-conversion) - switch_as_x
-12. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+8. [Probabilistic Inference](#probabilistic-inference) - bayesian
+9. [Data Smoothing](#data-smoothing) - filter
+10. [Random Values](#random-values) - random
+11. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
+12. [Domain Conversion](#domain-conversion) - switch_as_x
+13. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+
+## How Helpers Are Created
+
+Helpers reach Home Assistant through two different creation mechanisms — which one a helper uses determines whether you submit flat fields in a single step or step through a config flow:
+
+- **Storage-collection helpers** — created via a per-domain WebSocket collection command (`<domain>/create`, e.g. `input_boolean/create`, `counter/create`) with flat, structured fields: `input_boolean`, `input_number`, `input_select`, `input_text`, `input_datetime`, `input_button`, `counter`, `timer`, `schedule`, `zone`, `person`, `tag`. (`schedule` additionally offers an optional YAML mode.)
+- **Config-entry-flow helpers** — created through the generic config-entry flow (`config_entries/flow`, handler = the helper domain), often a multi-step flow that begins with a sub-type menu (see [Menu-Based Helpers](#menu-based-helpers)): `template`, `group`, `utility_meter`, `derivative`, `min_max`, `threshold`, `integration`, `statistics`, `trend`, `random`, `filter`, `tod`, `generic_thermostat`, `generic_hygrostat`, `switch_as_x`, `bayesian`, `mold_indicator`.
 
 ## Menu-Based Helpers
 
@@ -207,6 +215,45 @@ With upper: 25 and hysteresis: 1:
 - High humidity alert
 - Air quality threshold alerts
 - Detect temperature rising/falling (use with derivative)
+
+---
+
+### trend
+
+**Use for:** A binary sensor that turns on when a numeric sensor is trending up (or down) over time — directly, without chaining `derivative` → `threshold`.
+
+**Instead of:**
+```yaml
+# WRONG - Template comparing against a stored previous value
+template:
+  - binary_sensor:
+      - name: "Temperature Rising"
+        state: "{{ states('sensor.temp') | float > state_attr('sensor.temp', 'prev') | float(0) }}"
+```
+
+**Use this:**
+```yaml
+# RIGHT - Trend helper. NOTE: `sensors:` is a MAPPING keyed by a slug (not a list)
+binary_sensor:
+  - platform: trend
+    sensors:
+      temp_rising:
+        entity_id: sensor.temperature
+        sample_duration: 1800    # seconds of history to consider
+        min_gradient: 0.001      # units per SECOND to count as a trend
+        max_samples: 120        # cap on samples kept (independent of sample_duration)
+        invert: false            # true = detect a downward trend
+```
+
+**Key behaviors:**
+- `min_gradient` is units **per second** (0.001 °/s ≈ 3.6 °/h).
+- `invert: true` detects a *downward* trend.
+- `sensors:` is a slug-keyed mapping (not a list), unlike most other `binary_sensor` platforms.
+
+**Common uses:**
+- Temperature/pressure rising or falling
+- Battery draining
+- A value drifting before it crosses a hard threshold
 
 ---
 
@@ -692,6 +739,43 @@ template:
 
 ---
 
+## Probabilistic Inference
+
+### bayesian
+
+**Use for:** Inferring an unmeasurable state (someone cooking, showering, room occupied) from several probabilistic signals — instead of hand-tuning a template with stacked `and`/`or`/threshold logic.
+
+**Use this:**
+```yaml
+binary_sensor:
+  - platform: bayesian
+    name: "Kitchen In Use"
+    prior: 0.3                  # baseline probability before any observation
+    probability_threshold: 0.5  # turns on when posterior probability exceeds this
+    observations:
+      - entity_id: binary_sensor.kitchen_motion
+        platform: state         # or numeric_state / template
+        to_state: "on"
+        prob_given_true: 0.95
+        prob_given_false: 0.33
+      - entity_id: sensor.kitchen_power
+        platform: numeric_state
+        above: 50
+        prob_given_true: 0.8
+        prob_given_false: 0.05
+```
+
+**Key behaviors:**
+- Each observation contributes `prob_given_true` / `prob_given_false`; the sensor turns on when the combined posterior probability exceeds `probability_threshold`.
+- Observation `platform` is `state`, `numeric_state` (uses `above`/`below`), or `template` (uses `value_template`).
+- **YAML uses probabilities `0..1`; the UI config flow uses percentages `0..100`** — a common mismatch.
+
+**Common uses:**
+- "Someone is cooking" / "shower running" from motion + power + humidity
+- Occupancy inference from several weak presence signals
+
+---
+
 ## Data Smoothing
 
 ### filter
@@ -842,6 +926,23 @@ humidifier:
 
 ---
 
+### mold_indicator
+
+**Use for:** Estimating mold/condensation risk from indoor temperature + humidity vs. a cold-surface (outdoor) temperature — instead of hand-rolling a dew-point template.
+
+```yaml
+sensor:
+  - platform: mold_indicator
+    indoor_temp_sensor: sensor.indoor_temp
+    indoor_humidity_sensor: sensor.indoor_humidity
+    outdoor_temp_sensor: sensor.outdoor_temp
+    calibration_factor: 2.0
+```
+
+Outputs an estimated humidity-at-cold-surface percentage; mold risk rises above ~70%. **`calibration_factor` must be physically calibrated** to a known condensation point — it is not a value to guess.
+
+---
+
 ## Domain Conversion
 
 ### switch_as_x
@@ -927,6 +1028,7 @@ See the [Decision Matrix](#decision-matrix) for when the template helper is the 
 | Average over time | `statistics` | Template tracking history |
 | Rate of change | `derivative` | Template calculating delta |
 | On/off at threshold | `threshold` | Template binary sensor |
+| Sensor trending up/down | `trend` | Template with derivative + threshold |
 | Consumption per period | `utility_meter` | Counter with reset automation |
 | Time in state | `history_stats` | Template tracking timestamps |
 | Power to energy | `integration` | Template approximating |
@@ -943,6 +1045,8 @@ See the [Decision Matrix](#decision-matrix) for when the template helper is the 
 | Reject out-of-range values | `filter` (`range`) | Template with bounds check |
 | Thermostat from switch + temp sensor | `generic_thermostat` | Automation with hysteresis logic |
 | Humidifier from switch + humidity sensor | `generic_hygrostat` | Automation with hysteresis logic |
+| Mold/condensation risk from temp + humidity | `mold_indicator` | Dew-point template |
+| Infer an unmeasurable state from several signals | `bayesian` | Template with stacked and/or logic |
 | Switch presented as light/cover/lock | `switch_as_x` | Template light/cover/lock |
 | Random sensor value | `random` | Template with `range()` |
 | Custom logic no other helper covers | `template` helper (via UI flow) | YAML `template:` platform sensor |
