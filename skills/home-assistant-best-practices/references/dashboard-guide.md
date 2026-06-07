@@ -77,6 +77,17 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 }
 ```
 
+A `sections` view also supports a `header` (a markdown card plus badge positioning) and a `footer`:
+
+```json
+{
+  "header": {"layout": "responsive", "badges_position": "top", "card": {"type": "markdown", "content": "# Welcome home"}},
+  "footer": {"max_width": 600}
+}
+```
+
+`header.layout`: `start` / `center` / `responsive`; `badges_position`: `top` / `bottom`.
+
 ---
 
 ## Dashboard Strategies
@@ -193,6 +204,22 @@ In a `sections` view each section is a 12-column grid. Size or span any card wit
 
 `columns`: 1–12, or `"full"` for full width. `rows`: an integer or `"auto"`.
 
+### Per-Entity Graph Colors
+
+`history-graph` and `statistics-graph` cards accept a per-entity `color` via the entity object form:
+
+```json
+{
+  "type": "history-graph",
+  "entities": [
+    {"entity": "sensor.living_room_temp", "name": "Living Room", "color": "red"},
+    {"entity": "sensor.bedroom_temp", "color": "#1f77b4"}
+  ]
+}
+```
+
+`color` accepts a named color (`red`), hex (`'#ff0000'`), or `rgb(255, 0, 0)`.
+
 ---
 
 ## Features
@@ -201,20 +228,35 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 
 | Domain | Feature types |
 |--------|--------------|
-| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `target-temperature` |
+| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `climate-swing-modes`, `target-temperature` |
 | Light | `light-brightness`, `light-color-temp` |
 | Cover | `cover-open-close`, `cover-position`, `cover-tilt` |
 | Fan | `fan-speed`, `fan-direction`, `fan-oscillate` |
-| Media | `media-player-playback`, `media-player-volume-slider` |
+| Media | `media-player-playback`, `media-player-volume-slider`, `media-player-volume-buttons`, `media-player-source`, `media-player-sound-mode` |
+| Weather | `temperature-forecast`, `precipitation-forecast` |
 | Valve | `valve-open-close`, `valve-position` |
-| Other | `toggle`, `button`, `alarm-modes`, `lock-commands`, `numeric-input`, `datetime-picker` |
+| Lock | `lock-commands`, `lock-open-door` |
+| Humidifier | `humidifier-modes`, `humidifier-toggle` |
+| Water heater | `water-heater-operation-modes` |
+| Select | `select-options` |
+| Update | `update-actions` |
+| Counter | `counter-actions` |
+| Date | `date-set` |
+| Lawn mower | `lawn-mower-commands` |
+| Area card | `area-controls` |
+| Favorites | `light-color-favorites`, `cover-position-favorite`, `cover-tilt-favorite`, `valve-position-favorite` |
+| Other | `toggle`, `button`, `alarm-modes`, `numeric-input` |
 
-### Tile Card Extras (2025.9+)
+**Weather features (2026.6):** `forecast_type` (`daily`/`twice_daily`/`hourly`), `days_to_show`/`hours_to_show`, `show_labels`; `precipitation-forecast` also takes `precipitation_type` (`amount`/`probability`).
 
-Tile cards support additional display features beyond controls:
-- **Trend graph**: 24-hour history sparkline for numeric entities (enabled in tile card config)
-- **Bar gauge**: Percentage-based bar display for numeric entities
-- **Action buttons**: Run automations/scripts directly from tile cards
+**Media features:** `media-player-volume-slider` / `media-player-volume-buttons` accept `show_mute_button` (volume-buttons also `step`); `media-player-playback` `controls:` accepts transport buttons plus `volume_up`, `volume_down`, `volume_mute`, `shuffle`, `repeat`; `media-player-source` takes a `sources:` filter list and `media-player-sound-mode` a `sound_modes:` filter list.
+
+### Tile Card Extras
+
+Additional tile feature types beyond controls:
+- `trend-graph` — 24-hour history sparkline for numeric entities
+- `bar-gauge` — percentage bar for numeric entities
+- `button` — a `perform-action` tap action runs automations/scripts directly from the tile
 
 Feature `style` options: `"dropdown"` or `"icons"`
 
@@ -242,6 +284,18 @@ Badges appear at the top of a view. The simple form is a list of entity IDs, but
 
 - `type: entity` options: `show_name`, `show_state`, `show_icon`, `show_entity_picture`, `state_content` (`state`/`last_changed`/`last_updated`/an attribute), and per-badge `visibility`.
 - **`color` accepts a color token or hex only — not a Jinja template.**
+
+A **`type: shortcut`** badge (2026.5) is the badge-row counterpart of the shortcut card — a labelled action chip:
+
+```json
+{
+  "type": "shortcut",
+  "text": "Good night",
+  "icon": "mdi:weather-night",
+  "color": "indigo",
+  "tap_action": {"action": "perform-action", "perform_action": "script.good_night"}
+}
+```
 
 ---
 
@@ -474,14 +528,19 @@ Search HACS for community cards by name/category, review repository details, the
 - Create **multiple views** with navigation paths (avoid single-view endless scrolling)
 - Use **area** cards with navigation for hierarchical organization
 
-### Recent Dashboard Features (2026.2–2026.4)
+### Recent Dashboard Features (2026.2–2026.6)
 
 | Feature | Version | Details |
 |---------|---------|---------|
 | **Distribution card** | 2026.2 | Proportional horizontal bars across multiple entities (power monitoring, storage usage) |
+| **Heading-card button badges** | 2026.2 | Inline `button` badges in heading cards for quick actions |
 | **Section background colors** | 2026.4 | Sections support custom `background_color` with adjustable opacity |
-| **Card favorites** | 2026.4 | Light color favorites and cover position favorites display on tile/light cards |
+| **Card favorites** | 2026.4 | Light color and cover/valve position favorites on tile/light cards (see the Favorites row in the Features table) |
 | **Auto-height cards** | 2026.4 | Cards auto-adjust height based on content via the layout editor |
+| **Shortcut badge** | 2026.5 | `type: shortcut` action chip in the badge row |
+| **Media source / sound-mode features** | 2026.5 | `media-player-source`, `media-player-sound-mode` tile features |
+| **Weather forecast features** | 2026.6 | `temperature-forecast`, `precipitation-forecast` tile features |
+| **Per-entity graph color** | 2026.6 | `color` on each entity of `history-graph` / `statistics-graph` |
 
 **Legacy patterns to avoid:**
 - Single-view dashboards with all cards in one long scroll

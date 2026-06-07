@@ -30,7 +30,7 @@ Several helper integrations — most prominently **`template`**, **`group`**, an
 
 | Helper | Sub-types (pick one first) |
 |--------|---------------------------|
-| `template` | `sensor`, `binary_sensor`, `button`, `switch`, `light`, `cover`, `fan`, `lock`, `select`, `number`, `image`, `vacuum`, `weather`, `alarm_control_panel`, `event`, `update` |
+| `template` | `sensor`, `binary_sensor`, `button`, `switch`, `light`, `cover`, `fan`, `lock`, `select`, `number`, `image`, `vacuum`, `weather`, `alarm_control_panel`, `event`, `update`, `device_tracker` |
 | `group` | `binary_sensor`, `button`, `cover`, `event`, `fan`, `light`, `lock`, `media_player`, `notify`, `sensor`, `switch`, `valve` |
 | `random` | `sensor`, `binary_sensor` |
 
@@ -997,6 +997,11 @@ Menu-based — pick a sub-type first (see [Menu-Based Helpers](#menu-based-helpe
 **template → binary_sensor**
 - Required: `name`, `state` (Jinja template returning truthy/falsy)
 - Optional: `device_class`, `device_id`, `availability` (template)
+
+**template → device_tracker** (the native replacement for the legacy `device_tracker.see` action)
+- Required: **either** `in_zones` (a list of zone entity_ids the device is considered in) **or** both `latitude` and `longitude` (templates)
+- Optional: `location_accuracy`, plus the common `name`/`unique_id`/`icon`/`picture`/`availability`/`attributes`
+- Not valid here: `location_name`, `battery_level`, `source_type`, `host_name`, `mac_address`, `gps_accuracy`
 
 Other sub-types follow the same shape — a `state` template plus domain-appropriate metadata.
 

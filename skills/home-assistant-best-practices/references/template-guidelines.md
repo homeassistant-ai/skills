@@ -526,16 +526,17 @@ template:
 Templates in `value_template` for sensors update on EVERY state change of the source entity.
 
 ```yaml
-# EXPENSIVE - Runs on every source sensor update
-sensor:
-  - platform: template
-    sensors:
-      expensive_sensor:
-        value_template: >
+# EXPENSIVE - Runs on every source state change
+template:
+  - sensor:
+      - name: "Expensive Sensor"
+        state: >
           {% for entity in states %}  {# Iterates ALL entities #}
             ...
           {% endfor %}
 ```
+
+> The legacy per-domain template-sensor form (`sensor:` → `- platform:` → `sensors:` → `value_template:`, i.e. a `template` platform nested under a domain key) was **removed in HA 2026.6** and no longer loads. Use the top-level `template:` integration key with `state:`, as above.
 
 ### Use Trigger-Based Templates for Complex Logic
 

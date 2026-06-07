@@ -15,7 +15,8 @@ This document covers native Home Assistant automation constructs that should be 
 10. [if/then vs choose](#ifthen-vs-choose)
 11. [Parallel Actions](#parallel-actions)
 12. [Trigger IDs](#trigger-ids)
-13. [Disabling Automations](#disabling-automations)
+13. [Documenting Automations & Scripts](#documenting-automations--scripts)
+14. [Disabling Automations](#disabling-automations)
 
 ---
 
@@ -226,10 +227,10 @@ id: motion_on        # a single id, or a list (OR semantics):
 The HA visual automation editor offers **purpose-specific triggers and conditions** organized by real-world concepts (door opened, motion detected, temperature threshold, battery low, etc.) rather than by technical entity domain. These work across entity types — e.g., "when a door opens" fires whether the door is a contact sensor or a motorized cover.
 
 **Key points:**
-- This is a **UI editor feature** — under the hood, it generates standard `state`, `numeric_state`, and other trigger types
-- No new YAML trigger syntax — the YAML output uses the same triggers documented below
+- **Most** are a UI-editor convenience — under the hood they generate standard `state`, `numeric_state`, etc., so the YAML output uses the same triggers documented below
+- **Exceptions (2026.6, Labs):** the native zone trigger/condition family serializes as new YAML (see [Native Zone Triggers & Conditions](#native-zone-triggers--conditions-20266-labs)), and the step-level `note:` field is new additive syntax (see [Documenting Automations & Scripts](#documenting-automations--scripts)).
 - Available concepts: door/window/gate open/close, motion/occupancy detection, temperature/humidity/illuminance thresholds, power consumption, battery status, air quality, climate, and more
-- When creating automations via the API, use the standard YAML trigger types below
+- When creating automations via the API, use the standard YAML trigger types below (plus the zone family above where you want the native any-zone primitives)
 
 ### State Trigger
 
@@ -408,6 +409,29 @@ triggers:
 ```
 
 To *check* zone membership in a condition rather than trigger on the transition, see [Zone Condition](#zone-condition).
+
+### Native Zone Triggers & Conditions (2026.6, Labs)
+
+2026.6 adds native, **any-zone** zone primitives (not just home). They are **Labs-gated** in the editor (Settings → System → Labs) but use the standard core config schema, so they round-trip through the config API regardless of the Labs toggle. Unlike most purpose-specific triggers, these serialize as a *new* `<domain>.<subtype>` YAML shape with `options:` and `target:` blocks:
+
+- **Triggers:** `zone.entered`, `zone.left`, `zone.occupancy_detected`, `zone.occupancy_cleared`
+- **Conditions:** `zone.in_zone`, `zone.not_in_zone`, `zone.occupancy_is_detected`, `zone.occupancy_is_not_detected`
+
+```yaml
+# Trigger — fires when a tracked person/device enters a zone
+triggers:
+  - trigger: zone.entered
+    target:
+      entity_id: person.john      # person or device_tracker
+    options:
+      zone: zone.office
+      behavior: each              # "each" (default), "all", or "first"
+      # for: "00:05:00"           # optional dwell time
+```
+
+Triggers take `behavior: each` (default), `all`, or `first`; the matching **conditions** use a *different* enum — `behavior: any` (default) or `all`. These are Labs keys and may change before they stabilize, so verify against the current schema. The classic flat [Zone Trigger](#zone-trigger) / [Zone Condition](#zone-condition) and plain `state` triggers remain the stable, non-Labs fallback.
+
+> The `entered_home`/`left_home`/`is_home`/`is_not_home` device automations were removed in **2026.5** (see [below](#presence-and-person-triggers-and-conditions-removed-in-20265)) — 2026.6 only *adds* these any-zone primitives as the native successor.
 
 ### Template Trigger
 
@@ -981,6 +1005,30 @@ automation:
 ```
 
 Access trigger info in templates with `trigger.id`, `trigger.entity_id`, `trigger.to_state`, etc.
+
+---
+
+## Documenting Automations & Scripts
+
+Two fields document *intent* (the why, not the what):
+
+- **`description:`** — a top-level automation/script field for the overall purpose.
+- **`note:`** (2026.6) — a per-block annotation on any individual trigger, condition, or action (including `wait_*`, `choose` branches, `if`/`then`/`else`, `parallel`, `repeat`, and nested `sequence` steps). Scripts have no triggers, so notes there apply to sequence steps and conditions only.
+
+```yaml
+description: "Turn on the porch light at dusk; skip if already on."
+triggers:
+  - trigger: sun
+    event: sunset
+    note: "Dusk, not full dark — sunset event is ~civil twilight."
+actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.porch
+    note: "Brightness intentionally left at last value."
+```
+
+`note:` is **stored documentation only** — it persists in the saved/edited config but is stripped from the running automation object at runtime, so don't rely on reading it back. Keep notes concise (intent, assumptions, why a threshold/mode/entity was chosen).
 
 ---
 
