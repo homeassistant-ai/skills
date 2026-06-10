@@ -6,6 +6,7 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 
 - [Dashboard Structure](#dashboard-structure)
 - [View Types](#view-types)
+- [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout)
 - [Built-in Cards](#built-in-cards)
 - [Features](#features)
 - [Actions](#actions)
@@ -33,14 +34,22 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
         "type": "sections",
         "max_columns": 4,
         "sections": [
-          {"title": "Climate", "cards": [...]},
-          {"title": "Lights", "cards": [...]}
+          {"type": "grid", "cards": [
+            {"type": "heading", "heading": "Climate", "icon": "mdi:thermometer"},
+            ...
+          ]},
+          {"type": "grid", "cards": [
+            {"type": "heading", "heading": "Lights", "icon": "mdi:lightbulb"},
+            ...
+          ]}
         ]
       }
     ]
   }
 }
 ```
+
+Section `title` is deprecated (frontend source marks it `@deprecated Use heading card instead`) — start each section with a `heading` card. Heading cards support `heading_style` (`"title"` or `"subtitle"`), `icon`, `tap_action`, and entity `badges`.
 
 **url_path rules:**
 - New dashboards must contain a hyphen: `my-dashboard` (not `mydashboard`)
@@ -71,9 +80,25 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
   "sections": [...],
   "subview": false,
   "badges": ["sensor.entity_id"],
-  "background": {"image": "url(/local/background.jpg)", "opacity": 0.3}
+  "background": {"image": "/local/background.jpg", "opacity": 30, "size": "cover"}
 }
 ```
+
+`background.image` is a plain path or media-source reference (the `url(...)` wrapper belongs only to the legacy string form of `background`); `opacity` is an integer 0–100. Badges also accept full objects: `{"type": "entity", "entity": "person.jane", "show_name": true, "color": "accent", "visibility": [...]}`.
+
+---
+
+## Card Sizing and Responsive Layout
+
+How sections views lay out — required background for sizing cards across screen sizes:
+
+- Each section is a **12-column grid** (cell height 56px, gap 8px). Cards default to the full 12 columns.
+- Size cards with `grid_options`: `{"columns": 6, "rows": 2}`. `columns` accepts 1–12 or `"full"`; `rows` accepts a number or `"auto"`. The older `layout_options` (`grid_columns`/`grid_rows`) is deprecated — still parsed, never write it.
+- Section columns reflow by available width (viewport minus sidebar; minimum section column width is 320px), clamped to the view's `max_columns` (default 4): roughly 1 column on phones, 2 around 700px, 3 around 1050px, more as width allows. Cards never reflow *within* a section — a card's `columns` value is fixed; what changes with width is the number of section columns shown, and the grid width of spanned sections (next point).
+- A spanned section's grid widens with it: a `column_span: 2` section has a **24-column grid** (span × 12) on wide screens, but is 12 columns again once the layout collapses to one section column. Pick values that degrade well: in a `column_span: 2` section, `"columns": 6` gives 4-up on desktop and 2-up on phones; `"columns": 12` gives 2-up on desktop and full-width on phones; `"columns": "full"` is always a full row.
+- Give graph/map cards explicit `grid_options` (`"columns": "full"` plus fixed `rows`) so they are never squeezed unreadable in a shared row.
+- Responsive show/hide uses the `screen` visibility condition with any CSS media query: `{"condition": "screen", "media_query": "(max-width: 767px)"}`. Common breakpoints: phone `(max-width: 767px)`, tablet `(min-width: 768px) and (max-width: 1023px)`, desktop `(min-width: 1024px)`; `(pointer: coarse)` targets touch devices.
+- View badges wrap to multiple lines on narrow screens by default; the view `header` supports `"badges_wrap": "scroll"` for a single scrollable row.
 
 ---
 
@@ -120,6 +145,8 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 }
 ```
 
+In sections views, prefer per-card `grid_options` on the section's own 12-column grid (see [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout)) — it's what the drag-and-drop editor writes. A nested grid card is still useful when a group must stay N-up at every viewport width.
+
 ---
 
 ## Features
@@ -128,22 +155,16 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 
 | Domain | Feature types |
 |--------|--------------|
-| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `target-temperature` |
-| Light | `light-brightness`, `light-color-temp` |
-| Cover | `cover-open-close`, `cover-position`, `cover-tilt` |
-| Fan | `fan-speed`, `fan-direction`, `fan-oscillate` |
-| Media | `media-player-playback`, `media-player-volume-slider` |
-| Valve | `valve-open-close`, `valve-position` |
-| Other | `toggle`, `button`, `alarm-modes`, `lock-commands`, `numeric-input`, `datetime-picker` |
+| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `climate-swing-modes`, `climate-swing-horizontal-modes`, `target-temperature`, `target-humidity` |
+| Light | `light-brightness`, `light-color-temp`, `light-color-favorites` |
+| Cover/Valve | `cover-open-close`, `cover-position`, `cover-position-favorite`, `cover-tilt`, `cover-tilt-position`, `cover-tilt-favorite`, `valve-open-close`, `valve-position`, `valve-position-favorite` |
+| Fan | `fan-speed`, `fan-preset-modes`, `fan-direction`, `fan-oscillate` |
+| Media | `media-player-playback` (configurable `controls`), `media-player-volume-slider`, `media-player-volume-buttons`, `media-player-source`, `media-player-sound-mode` |
+| Generic display | `trend-graph` (history sparkline; `hours_to_show`), `bar-gauge` (`min`/`max`) |
+| Generic control | `toggle`, `button` (run an action), `numeric-input` (`style`: `"buttons"`/`"slider"`), `select-options`, `counter-actions`, `date-set` |
+| Domain-specific | `alarm-modes`, `lock-commands`, `lock-open-door`, `vacuum-commands`, `lawn-mower-commands`, `humidifier-modes`, `humidifier-toggle`, `update-actions`, `water-heater-operation-modes` |
 
-### Tile Card Extras (2025.9+)
-
-Tile cards support additional display features beyond controls:
-- **Trend graph**: 24-hour history sparkline for numeric entities (enabled in tile card config)
-- **Bar gauge**: Percentage-based bar display for numeric entities
-- **Action buttons**: Run automations/scripts directly from tile cards
-
-Feature `style` options: `"dropdown"` or `"icons"`
+Mode-list features accept `style`: `"dropdown"` or `"icons"`. Tile cards also support `features_position`: `"bottom"` (default) or `"inline"`.
 
 ---
 
@@ -157,15 +178,32 @@ Feature `style` options: `"dropdown"` or `"icons"`
 }
 ```
 
-Action types: `toggle`, `call-service`, `more-info`, `navigate`, `url`, `none`
+Action types: `toggle`, `perform-action`, `more-info`, `navigate`, `url`, `assist`, `none`. (`call-service` is the deprecated pre-2024.8 name for `perform-action`.)
+
+```json
+{
+  "tap_action": {
+    "action": "perform-action",
+    "perform_action": "light.turn_on",
+    "target": {"entity_id": "light.kitchen"},
+    "data": {"brightness_pct": 40},
+    "confirmation": {"text": "Turn on the kitchen?"}
+  }
+}
+```
+
+Templates are not allowed inside actions — call a script instead.
 
 ### Visibility Conditions
+
+Cards, sections, and badges all accept `visibility` (a list of conditions, implicitly AND-ed). Supported condition types: `state` (`state`/`state_not`), `numeric_state` (`above`/`below`), `screen` (`media_query`), `user` (`users`), `time` (`after`/`before`/`weekdays`), `location`, and nestable `and`/`or`/`not`.
 
 ```json
 {
   "visibility": [
     {"condition": "user", "users": ["user_id_hex"]},
-    {"condition": "state", "entity": "sun.sun", "state": "above_horizon"}
+    {"condition": "numeric_state", "entity": "sensor.co2", "above": 1000},
+    {"condition": "screen", "media_query": "(min-width: 1024px)"}
   ]
 }
 ```
@@ -227,20 +265,26 @@ Use the HA dashboard resource API to convert inline code to a hosted URL, then r
 
 ## CSS Styling
 
-### Theme Overrides
+### Themes
 
-```css
-:root {
-  --primary-color: #03a9f4;
-  --ha-card-background: rgba(26, 26, 46, 0.9);
-  --ha-card-border-radius: 16px;
-  --ha-card-box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
+Global styling is done with HA **themes** (YAML maps of CSS variables), not raw CSS. Themes are defined under `frontend: themes:` in YAML or installed via HACS, and selected per user (profile) or per view/card with the `theme` option. Define both modes so OS dark/light switching applies cleanly to both:
+
+```yaml
+frontend:
+  themes:
+    my_theme:
+      modes:
+        dark:
+          ha-card-border-radius: "16px"
+          primary-color: "#03a9f4"
+        light:
+          ha-card-border-radius: "16px"
+          primary-color: "#0288d1"
 ```
 
 ### Card-mod (Per-Card Styling)
 
-Requires the `card-mod` HACS component:
+Requires the `card-mod` HACS component. Use sparingly: it patches frontend internals via shadow-DOM selectors, which makes it a frequent source of breakage after HA upgrades — prefer native options and theme variables where they exist, and re-test card-mod styling after every HA update:
 
 ```yaml
 type: entities
@@ -271,12 +315,14 @@ Search HACS for community cards by name/category, review repository details, the
 
 ### Popular HACS Cards
 
-- **mushroom** — Modern, clean card collection
-- **button-card** — Highly customizable buttons
-- **mini-graph-card** — Compact graphs
-- **card-mod** — CSS styling for any card
-- **layout-card** — Advanced layout control
-- **apexcharts-card** — Professional charts
+- **mushroom** — Modern, clean card collection (v5+ aligns with the native tile card; its template card covers Jinja-driven icon/color/content)
+- **button-card** — Highly customizable buttons with JS templating
+- **mini-graph-card** — Compact graphs; lighter-weight than apexcharts-card
+- **card-mod** — CSS styling for any card (see upgrade caveat above)
+- **apexcharts-card** — Professional charts; heavy (ships a full charting library), best kept to dedicated analytics views
+- **layout-card** — Pre-sections layout control; superseded by sections views for new dashboards, still useful for legacy masonry views
+
+Custom cards predating sections views (early 2024) that haven't updated since are often dormant or superseded by native equivalents — check a repository's release activity before recommending it.
 
 ---
 
@@ -293,8 +339,12 @@ Search HACS for community cards by name/category, review repository details, the
       "badges": ["person.john", "person.jane"],
       "sections": [
         {
-          "title": "Quick Actions",
+          "type": "grid",
           "cards": [{
+            "type": "heading",
+            "heading": "Quick Actions",
+            "icon": "mdi:gesture-tap-button"
+          }, {
             "type": "grid",
             "columns": 4,
             "square": false,
@@ -307,17 +357,13 @@ Search HACS for community cards by name/category, review repository details, the
           }]
         },
         {
-          "title": "Favorites",
-          "cards": [{
-            "type": "grid",
-            "columns": 3,
-            "square": false,
-            "cards": [
-              {"type": "tile", "entity": "light.living_room", "features": [{"type": "light-brightness"}]},
-              {"type": "tile", "entity": "climate.bedroom", "features": [{"type": "target-temperature"}]},
-              {"type": "tile", "entity": "lock.front_door"}
-            ]
-          }]
+          "type": "grid",
+          "cards": [
+            {"type": "heading", "heading": "Favorites", "icon": "mdi:star"},
+            {"type": "tile", "entity": "light.living_room", "features": [{"type": "light-brightness"}], "grid_options": {"columns": 6}},
+            {"type": "tile", "entity": "climate.bedroom", "features": [{"type": "target-temperature"}], "grid_options": {"columns": 6}},
+            {"type": "tile", "entity": "lock.front_door", "grid_options": {"columns": 6}}
+          ]
         }
       ]
     },
@@ -329,16 +375,13 @@ Search HACS for community cards by name/category, review repository details, the
       "max_columns": 3,
       "sections": [
         {
-          "title": "Living Room",
-          "cards": [{
-            "type": "grid",
-            "columns": 3,
-            "cards": [
-              {"type": "tile", "entity": "light.overhead", "features": [{"type": "light-brightness"}]},
-              {"type": "tile", "entity": "light.lamp", "features": [{"type": "light-brightness"}]},
-              {"type": "tile", "entity": "light.accent", "features": [{"type": "light-color-temp"}]}
-            ]
-          }]
+          "type": "grid",
+          "cards": [
+            {"type": "heading", "heading": "Living Room", "icon": "mdi:sofa"},
+            {"type": "tile", "entity": "light.overhead", "features": [{"type": "light-brightness"}], "grid_options": {"columns": 4}},
+            {"type": "tile", "entity": "light.lamp", "features": [{"type": "light-brightness"}], "grid_options": {"columns": 4}},
+            {"type": "tile", "entity": "light.accent", "features": [{"type": "light-color-temp"}], "grid_options": {"columns": 4}}
+          ]
         }
       ]
     }
@@ -357,6 +400,11 @@ Search HACS for community cards by name/category, review repository details, the
 | Features not working | Match feature type to entity domain (e.g., `light-brightness` only works on `light.*`) |
 | Custom card not loading | Check resource type is `module` and verify URL is accessible |
 | Card too large for inline | Use HACS or filesystem instead |
+| Section title ignored/flagged | Section `title` is deprecated — use a `heading` card as the section's first card |
+| Cards sized with `layout_options` | Deprecated — use `grid_options` (`columns`/`rows`) |
+| Map card markers show entity-name initials instead of values | `label_mode` is a **per-entity** option, not card-level: `"entities": [{"entity": "sensor.x", "label_mode": "state"}]` |
+| Cards lay out differently in spanned sections | A spanned section's grid widens with it (24 columns in a `column_span: 2` section) but is 12 when collapsed — see [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout) |
+| Map entities missing from map card | Only entities with `latitude`/`longitude` attributes are plotted — use template sensors carrying coordinates as attributes for fixed locations |
 
 ---
 
@@ -364,18 +412,22 @@ Search HACS for community cards by name/category, review repository details, the
 
 - Use **sections** view type with grid-based layouts
 - Use **tile** cards as primary card type (replaces legacy entity/light/climate cards)
-- Use **grid** cards for multi-column layouts within sections
-- Create **multiple views** with navigation paths (avoid single-view endless scrolling)
+- Size cards with per-card **`grid_options`** on the section's 12-column grid; reserve nested grid cards for groups that must stay N-up at every width
+- Create **multiple views** with explicit `path` slugs (deep-linkable; avoid single-view endless scrolling); use `subview: true` with an explicit `back_path` for drill-down views
 - Use **area** cards with navigation for hierarchical organization
+- Start sections with **heading** cards (`title`/`subtitle` styles); subtitle headings work well for inline caveats
 
-### Recent Dashboard Features (2026.2–2026.4)
+### Recent Dashboard Features (2026.2–2026.5)
 
 | Feature | Version | Details |
 |---------|---------|---------|
 | **Distribution card** | 2026.2 | Proportional horizontal bars across multiple entities (power monitoring, storage usage) |
-| **Section background colors** | 2026.4 | Sections support custom `background_color` with adjustable opacity |
+| **Heading button badges** | 2026.2 | `{"type": "button"}` badges on heading cards run actions inline |
+| **Section background colors** | 2026.4 | Section `background` accepts `{"color": ..., "opacity": ...}` (or `true`) |
 | **Card favorites** | 2026.4 | Light color favorites and cover position favorites display on tile/light cards |
 | **Auto-height cards** | 2026.4 | Cards auto-adjust height based on content via the layout editor |
+| **Shortcut card + badge** | 2026.5 | One-tap navigate (dashboard/view/area/device), URL, Assist, or action with smart defaults |
+| **Media player tile features** | 2026.5 | `media-player-source`, `media-player-sound-mode`, configurable playback `controls` |
 
 **Legacy patterns to avoid:**
 - Single-view dashboards with all cards in one long scroll
@@ -420,3 +472,8 @@ For iterative dashboard design with visual feedback, add a browser automation MC
 - Catch visual issues (card overlap, responsive breakpoints)
 - Verify custom card styling
 - Test on different viewport sizes
+
+### Screenshot Caveats
+
+- Test at least one viewport per breakpoint class (phone < 768px, tablet, desktop ≥ 1024px) — sections views lay out differently at each, and `screen` visibility conditions only prove out at the widths they target.
+- History-backed cards (graphs, statistics) hydrate **asynchronously over the websocket** after page load. On instances with slow recorder queries a screenshot can capture charts half-drawn — wait several seconds, or reload and re-shoot, before concluding a chart is broken. A later screenshot that renders fully means the config is fine.
