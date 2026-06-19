@@ -191,7 +191,7 @@ In a `sections` view each section is a 12-column grid. Size or span any card wit
 }
 ```
 
-`columns`: 1–12, or `"full"` for full width. `rows`: an integer or `"auto"`.
+`columns`: 1–12, or `"full"` for full width. `rows`: an integer (fixed height) or `"auto"` (size to content — the default).
 
 ---
 
@@ -256,6 +256,8 @@ Badges appear at the top of a view. The simple form is a list of entity IDs, but
 ```
 
 Action types: `more-info`, `toggle`, `perform-action` (the service-call action), `navigate`, `url`, `assist`, `none`
+
+`perform-action` is the renamed `call-service` — existing `action: call-service` configs (and the older `service`/`service_data` keys) still work, so don't flag them as broken; write new ones with `perform-action`.
 
 ### Visibility Conditions
 
