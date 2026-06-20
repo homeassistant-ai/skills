@@ -49,7 +49,7 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 }
 ```
 
-Section `title` is deprecated (frontend source marks it `@deprecated Use heading card instead`) — start each section with a `heading` card. Heading cards support `heading_style` (`"title"` or `"subtitle"`), `icon`, `tap_action`, and entity `badges`.
+Section `title` is soft-deprecated (frontend source marks it `@deprecated Use heading card instead`). It still parses and renders: the frontend converts a section `title` into a prepended `heading` card on **every config load** (`checkLovelaceConfig`), in YAML mode as well as storage mode, so existing configs are not broken — don't reject or flag a user's `title`. Prefer starting each section with an explicit `heading` card for new configs. Heading cards support `heading_style` (`"title"` or `"subtitle"`), `icon`, `tap_action`, and entity `badges`.
 
 **url_path rules:**
 - New dashboards must contain a hyphen: `my-dashboard` (not `mydashboard`)
@@ -97,7 +97,7 @@ How sections views lay out — required background for sizing cards across scree
 - Section columns reflow by available width (viewport minus sidebar; minimum section column width is 320px), clamped to the view's `max_columns` (default 4): roughly 1 column on phones, 2 around 700px, 3 around 1050px, more as width allows. Cards never reflow *within* a section — a card's `columns` value is fixed; what changes with width is the number of section columns shown, and the grid width of spanned sections (next point).
 - A spanned section's grid widens with it: a `column_span: 2` section has a **24-column grid** (span × 12) on wide screens, but is 12 columns again once the layout collapses to one section column. Pick values that degrade well: in a `column_span: 2` section, `"columns": 6` gives 4-up on desktop and 2-up on phones; `"columns": 12` gives 2-up on desktop and full-width on phones; `"columns": "full"` is always a full row.
 - Give graph/map cards explicit `grid_options` (`"columns": "full"` plus fixed `rows`) so they are never squeezed unreadable in a shared row.
-- Responsive show/hide uses the `screen` visibility condition with any CSS media query: `{"condition": "screen", "media_query": "(max-width: 767px)"}`. Common breakpoints: phone `(max-width: 767px)`, tablet `(min-width: 768px) and (max-width: 1023px)`, desktop `(min-width: 1024px)`; `(pointer: coarse)` targets touch devices.
+- Responsive show/hide uses the `screen` visibility condition with any CSS media query: `{"condition": "screen", "media_query": "(max-width: 767px)"}`. These are **visibility-targeting examples you choose**, *not* section-reflow thresholds — sections reflow on content width (previous bullet), not on these fixed viewport widths. Convenient values: `(max-width: 767px)`, `(min-width: 768px) and (max-width: 1023px)`, `(min-width: 1024px)`; `(pointer: coarse)` targets touch devices.
 - View badges wrap to multiple lines on narrow screens by default; the view `header` supports `"badges_wrap": "scroll"` for a single scrollable row.
 
 ---
@@ -475,5 +475,5 @@ For iterative dashboard design with visual feedback, add a browser automation MC
 
 ### Screenshot Caveats
 
-- Test at least one viewport per breakpoint class (phone < 768px, tablet, desktop ≥ 1024px) — sections views lay out differently at each, and `screen` visibility conditions only prove out at the widths they target.
+- Test at widths that cross section-column reflow points. Sections views have no fixed pixel breakpoints — column count is computed as `floor((content_width − padding + gap) / (column_min_width + gap))`, clamped to `max_columns`, where `column_min_width` defaults to 320px. So transitions land at roughly 360px (1-col), 700px (2-col), and 1050px (3-col) of **content** width (viewport minus sidebar and padding — add ~256px for an expanded sidebar to get the viewport width). Separately, any `screen` visibility conditions only prove out at the specific widths they target, so also shoot at those.
 - History-backed cards (graphs, statistics) hydrate **asynchronously over the websocket** after page load. On instances with slow recorder queries a screenshot can capture charts half-drawn — wait several seconds, or reload and re-shoot, before concluding a chart is broken. A later screenshot that renders fully means the config is fine.
