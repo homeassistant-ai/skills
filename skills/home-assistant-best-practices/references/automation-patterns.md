@@ -382,10 +382,10 @@ triggers:
 
 ### Device Trigger (Use Sparingly)
 
-Device triggers use device_id which is NOT persistent. Prefer state triggers.
+Device triggers key off an opaque `device_id` rather than a readable `entity_id`. Prefer entity-based `state` triggers where practical — they're self-documenting and easier to maintain.
 
 ```yaml
-# Avoid when possible - device_id changes on re-add
+# Prefer a state trigger on a readable entity_id where practical
 triggers:
   - trigger: device
     domain: mqtt
@@ -394,7 +394,7 @@ triggers:
     subtype: single
 ```
 
-A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same caveats — `device_id` is not persistent; prefer a `state`/`numeric_state` condition.
+A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same trade-off — prefer a `state`/`numeric_state` condition on a readable `entity_id` where practical.
 
 ### Zone Trigger
 
@@ -506,7 +506,7 @@ Fires when an NFC/QR tag is scanned.
 triggers:
   - trigger: tag
     tag_id: "A7-6B-90-5F"
-    device_id: 0e19cd3c...   # optional: limit to one scanner (device_id is not persistent — omit unless scoping)
+    device_id: 0e19cd3c...   # optional: limit to one specific scanner device
 ```
 
 ### Geolocation Trigger
