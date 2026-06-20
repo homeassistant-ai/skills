@@ -1013,7 +1013,7 @@ Access trigger info in templates with `trigger.id`, `trigger.entity_id`, `trigge
 Two fields document *intent* (the why, not the what):
 
 - **`description:`** — a top-level automation/script field for the overall purpose.
-- **`note:`** (2026.6) — a per-block annotation on any individual trigger, condition, or action (including `wait_*`, `choose` branches, `if`/`then`/`else`, `parallel`, `repeat`, and nested `sequence` steps). Scripts have no triggers, so notes there apply to sequence steps and conditions only.
+- **`note:`** (2026.6) — a per-block annotation on any individual trigger, condition, or action (including `wait_*`, `choose` branches, `if`/`then`/`else`, `parallel`, `repeat`, and nested `sequence` steps). Scripts have no triggers, so notes there apply to sequence steps and conditions only. The YAML key is the **singular `note:`** (not `notes:`) — the editor surfaces it as a "Notes" field, but the docs never show the key string, so don't guess the plural.
 
 ```yaml
 description: "Turn on the porch light at dusk; skip if already on."
