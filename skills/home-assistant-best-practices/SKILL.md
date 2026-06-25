@@ -22,7 +22,7 @@ description: >
   - Agent edits .storage, writes YAML, or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI integrations
 metadata:
-  version: 9
+  version: 10
 ---
 
 # Home Assistant Best Practices
