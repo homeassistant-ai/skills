@@ -398,6 +398,11 @@ sensor:
 
 ## State Storage
 
+**Pitfall — `initial` resets state on every restart:** `input_boolean`, `input_number`, and `input_select` all accept an `initial` field. If `initial` is present in the config (any value, including `false` or `0`), HA forces that value on every restart instead of restoring the last saved state.
+- Omit `initial` to preserve state across restarts.
+- Use `initial` only when the helper must always start at a fixed value.
+- To remove `initial` from an existing helper, delete and recreate it — the HA UI has no option to clear it.
+
 ### input_boolean
 
 **Use for:** Toggle switches for modes, flags, and conditions.
