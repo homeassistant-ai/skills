@@ -332,7 +332,7 @@ actions:
 
 # 2. Elsewhere, test elapsed time — the timestamp attribute is restart- and unavailable-proof:
 conditions:
-  - "{{ now().timestamp() - state_attr('input_datetime.cooling_started', 'timestamp') >= 10800 }}"
+  - "{{ state_attr('input_datetime.cooling_started', 'timestamp') is not none and now().timestamp() - state_attr('input_datetime.cooling_started', 'timestamp') >= 10800 }}"
 ```
 
 An `input_datetime` restores its value across restarts and is untouched by `unavailable` blips, so
