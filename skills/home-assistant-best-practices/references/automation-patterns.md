@@ -112,6 +112,13 @@ weekday:
   - fri
 ```
 
+> **A one-sided window anchors at midnight — it does not carve a slot out of the day.**
+> A `condition: time` with only `before: "21:00:00"` is true from **00:00 to 21:00**, so it still
+> matches 01:00, 04:00 and 06:00; with only `after: "21:00:00"` it is true from 21:00 to midnight.
+> To restrict to daytime, give **both** bounds (`after: "06:00:00"` *and* `before: "21:00:00"`).
+> A window spans midnight only when `after` is later than `before` (e.g. `after: "22:00:00"`,
+> `before: "06:00:00"`).
+
 ### Sun Condition
 
 For sunrise/sunset-based logic with optional offsets.
@@ -290,6 +297,50 @@ triggers:
     for:
       minutes: 5
 ```
+
+### `for:` duration resets on restart and on `unavailable`
+
+A `for:` clause (on `state` / `numeric_state` triggers, and on the `state` condition) measures
+**continuous** time the entity has held the matching state. The clock resets to zero whenever that
+continuity breaks — including two cases that are easy to miss:
+
+- **Every Home Assistant restart.** On restart the state is *restored* but `last_changed` is
+  re-stamped to start-up time, so the duration clock restarts from zero. The same applies to
+  `{{ now() - x.last_changed }}` duration math in templates.
+- **A momentary `unavailable`.** Cloud-, Wi-Fi- and hub-backed entities routinely flick to
+  `unavailable` for a few seconds; each blip resets the clock.
+
+So a long `for:` (e.g. several hours) is **unreliable as a safety backstop** — frequent restarts or
+blips keep knocking it back and it may never reach the threshold.
+
+**Robust pattern:** stamp a persistent `input_datetime` on the *genuine* transition you care about,
+then gate on elapsed time since the stamp:
+
+```yaml
+# 1. On the real transition, record when it happened:
+triggers:
+  - trigger: state
+    entity_id: climate.bedroom
+    from: "off"
+    to: "cool"
+actions:
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.cooling_started
+    data:
+      datetime: "{{ now() }}"
+
+# 2. Elsewhere, test elapsed time — the timestamp attribute is restart- and unavailable-proof:
+conditions:
+  - "{{ now().timestamp() - state_attr('input_datetime.cooling_started', 'timestamp') >= 10800 }}"
+```
+
+An `input_datetime` restores its value across restarts and is untouched by `unavailable` blips, so
+only the real start/stop events move it.
+
+**Diagnosing:** if a `last_changed` looks wrong, compare it against a stable entity such as `sun.sun`.
+When several entities' `last_changed` all jumped to the same time — one that isn't sunrise/sunset —
+that was a restart re-stamp, not a real state change.
 
 ### Time Trigger
 
@@ -483,6 +534,11 @@ triggers:
 ```
 
 Use `start` for boot-time setup (restore state, resync devices). `shutdown` handlers get only ~20 seconds before HA stops — keep them short.
+
+> **Don't recompute a user-settable value on `start`.** A boot-time recompute (e.g. re-deriving a
+> mode from sensors) overwrites any manual override on every restart. For user-settable state, let
+> the helper restore its value (omit `initial:` — see `helper-selection.md`) and only *re-sync
+> dependent flags* from the restored value on start.
 
 ### Conversation Trigger
 
