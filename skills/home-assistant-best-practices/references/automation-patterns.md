@@ -229,15 +229,58 @@ id: motion_on        # a single id, or a list (OR semantics):
 
 ## Trigger Types
 
-### Purpose-Specific Triggers (2026.2+)
+### Purpose-Specific Triggers & Conditions (default since 2026.7)
 
-The HA visual automation editor offers **purpose-specific triggers and conditions** organized by real-world concepts (door opened, motion detected, temperature threshold, battery low, etc.) rather than by technical entity domain. These work across entity types — e.g., "when a door opens" fires whether the door is a contact sensor or a motorized cover.
+HA organizes triggers and conditions by real-world intent (motion detected, door opened, battery low, temperature crossed threshold) rather than by technical entity domain. Introduced in 2026.2 and expanded each release, this family **left Labs and became the default automation-building experience in 2026.7**. It is not UI-only sugar: these are first-class config — `trigger: <domain>.<name>` / `condition: <domain>.<name>` with `target:` and `options:` blocks — and round-trip through the config API like any other automation config. (The step-level `note:` field is separate additive syntax — see [Documenting Automations & Scripts](#documenting-automations--scripts).)
 
-**Key points:**
-- **Most** are a UI-editor convenience — under the hood they generate standard `state`, `numeric_state`, etc., so the YAML output uses the same triggers documented below
-- **Exceptions (2026.6, Labs):** the native zone trigger/condition family serializes as new YAML (see [Native Zone Triggers & Conditions](#native-zone-triggers--conditions-20266-labs)), and the step-level `note:` field is new additive syntax (see [Documenting Automations & Scripts](#documenting-automations--scripts)).
-- Available concepts: door/window/gate open/close, motion/occupancy detection, temperature/humidity/illuminance thresholds, power consumption, battery status, air quality, climate, and more
-- When creating automations via the API, use the standard YAML trigger types below (plus the zone family above where you want the native any-zone primitives)
+```yaml
+triggers:
+  - trigger: motion.detected
+    target:
+      area_id: living_room        # entity_id / device_id / area_id / floor_id / label_id
+    options:
+      behavior: each              # multi-target semantics: each (default) / first / all
+      for: "00:00:30"             # optional dwell time
+conditions:
+  - condition: battery.is_low
+    target:
+      label_id: critical_devices
+    options:
+      behavior: any               # conditions combine with any (default) / all
+```
+
+**Prefer these over the generic triggers below when one matches the intent:**
+
+- **Targets, not entity lists.** Target an area/floor/label ("motion in the living room") and the automation follows area membership as sensors are added, swapped, or removed — no entity list to maintain. This also replaces most remaining legitimate uses of device triggers.
+- **No `unavailable`/`unknown` traps.** Each block handles unavailable states and event-entity re-fire quirks internally.
+- **Cross-entity-type.** "Door opened" fires whether the door is a contact sensor or a motorized cover.
+- **Integration-extensible.** Integrations register their own (e.g. `zwave_js.*`), so the catalog grows over time.
+
+**Multi-target `behavior` enums differ between triggers and conditions:**
+
+- Triggers: `each` (default) / `first` / `all`. The pre-2026.7 values `any` and `last` were renamed to `each` and `all` — they still work but raise a repair issue and face removal. Never emit them (some official doc pages still show the old values mid-migration).
+- Conditions: `any` (default) / `all` — unchanged.
+
+**Keys renamed in 2026.7 — old keys no longer work:**
+
+| Old | New |
+|-----|-----|
+| `battery.low` | `battery.became_low` |
+| `battery.not_low` | `battery.no_longer_low` |
+| `lawn_mower.docked` | `lawn_mower.returned_to_dock` |
+| `schedule.turned_on` | `schedule.block_started` |
+| `schedule.turned_off` | `schedule.block_ended` |
+| `timer.time_remaining` | `timer.remaining_time_reached` |
+| `update.update_became_available` | `update.became_available` |
+| `vacuum.docked` | `vacuum.returned_to_dock` |
+| `climate.target_temperature` (condition) | `climate.is_target_temperature` |
+| `climate.target_humidity` (condition) | `climate.is_target_humidity` |
+
+**Discovering what exists:** every purpose-specific trigger and condition (and every service action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see `domain-docs.md#fetching-trigger-condition-and-action-docs`. The trees span 50+ domains (~190 trigger and ~145 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, and more. 2026.7 added the sun family (`sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers).
+
+Since 2026.7, `options.for` durations on **conditions** are primed from recorded history, so a freshly created or reloaded condition does not restart its duration clock from zero. Trigger `for:` clocks still reset as described in [`for:` duration resets](#for-duration-resets-on-restart-and-on-unavailable).
+
+The generic triggers below remain fully supported and are the right choice when no purpose-specific block matches the intent (attribute changes, template-derived conditions, webhooks, MQTT, etc.). As with everything in this file, create and update automations through the config API — the YAML shows the config shape, not a file to hand-edit.
 
 ### State Trigger
 
@@ -341,6 +384,10 @@ only the real start/stop events move it.
 **Diagnosing:** if a `last_changed` looks wrong, compare it against a stable entity such as `sun.sun`.
 When several entities' `last_changed` all jumped to the same time — one that isn't sunrise/sunset —
 that was a restart re-stamp, not a real state change.
+
+> 2026.7+ primes `options.for` duration tracking for purpose-specific **conditions** from recorded
+> history, so those don't restart from zero on creation/reload. The resets described here still
+> apply to trigger `for:` clauses and to `last_changed`-based template math.
 
 ### Time Trigger
 
@@ -461,9 +508,9 @@ triggers:
 
 To *check* zone membership in a condition rather than trigger on the transition, see [Zone Condition](#zone-condition).
 
-### Native Zone Triggers & Conditions (2026.6, Labs)
+### Native Zone Triggers & Conditions (2026.6+)
 
-2026.6 adds native, **any-zone** zone primitives (not just home). They are **Labs-gated** in the editor (Settings → System → Labs) but use the standard core config schema, so they round-trip through the config API regardless of the Labs toggle. Unlike most purpose-specific triggers, these serialize as a *new* `<domain>.<subtype>` YAML shape with `options:` and `target:` blocks:
+2026.6 added native, **any-zone** zone primitives (not just home); with the rest of the purpose-specific family they became default (non-Labs) in 2026.7. They serialize as the standard `<domain>.<name>` shape with `options:` and `target:` blocks:
 
 - **Triggers:** `zone.entered`, `zone.left`, `zone.occupancy_detected`, `zone.occupancy_cleared`
 - **Conditions:** `zone.in_zone`, `zone.not_in_zone`, `zone.occupancy_is_detected`, `zone.occupancy_is_not_detected`
@@ -480,7 +527,7 @@ triggers:
       # for: "00:05:00"           # optional dwell time
 ```
 
-Triggers take `behavior: each` (default), `all`, or `first`; the matching **conditions** use a *different* enum — `behavior: any` (default) or `all`. These are Labs keys and may change before they stabilize, so verify against the current schema. The classic flat [Zone Trigger](#zone-trigger) / [Zone Condition](#zone-condition) and plain `state` triggers remain the stable, non-Labs fallback.
+Triggers take `behavior: each` (default), `all`, or `first`; the matching **conditions** use a *different* enum — `behavior: any` (default) or `all` (see [Purpose-Specific Triggers & Conditions](#purpose-specific-triggers--conditions-default-since-20267)). The classic flat [Zone Trigger](#zone-trigger) / [Zone Condition](#zone-condition) and plain `state` triggers remain supported.
 
 > The `entered_home`/`left_home`/`is_home`/`is_not_home` device automations were removed in **2026.5** (see [below](#presence-and-person-triggers-and-conditions-removed-in-20265)) — 2026.6 only *adds* these any-zone primitives as the native successor.
 
@@ -612,39 +659,43 @@ entity_id: person.john
 state: "home"
 ```
 
-For non-home zone presence, see `#zone-condition`.
+2026.7 presence semantics to keep in mind:
+
+- A person located by a home presence scanner (router/Bluetooth) may report **no latitude/longitude** — don't read coordinates to infer home presence; use the state or the `in_zones` attribute.
+- Person and device_tracker entities expose `in_zones` (all zones containing them, smallest first). Zone entity states (person counts) are derived from it, so a person counts in **every** overlapping zone they're inside, not just one.
+- A position-aware device_tracker's state is the **smallest** containing zone (previously: the zone whose center is closest).
+
+For non-home zone presence, prefer the native zone family (see [Native Zone Triggers & Conditions](#native-zone-triggers--conditions-20266)) or `#zone-condition`.
 
 ### Timer Entity Triggers (2026.5+)
 
-Timer entities now expose lifecycle events as purpose-specific triggers in the UI editor. In YAML, use the `event` trigger with the corresponding `timer.*` event type.
+Timer lifecycle events are purpose-specific triggers: `timer.started`, `timer.finished`, `timer.paused`, `timer.restarted`, `timer.cancelled`, plus `timer.remaining_time_reached` (renamed from `timer.time_remaining` in 2026.7), which fires at a set remaining time.
 
 ```yaml
-# Timer finished (also: timer.started, timer.paused, timer.restarted, timer.cancelled)
 triggers:
-  - trigger: event
-    event_type: timer.finished
-    event_data:
+  - trigger: timer.remaining_time_reached
+    target:
       entity_id: timer.cooking
+    options:
+      remaining: "00:05:00"
 ```
+
+The legacy `event`-trigger form (`event_type: timer.finished` with `event_data: {entity_id: ...}`) still works, but the purpose-specific form supports targets and is preferred.
 
 ### Media Player Triggers/Conditions (2026.5+)
 
-Media player entities now have purpose-specific triggers and conditions in the UI editor covering play/pause state, mute status, and volume level. In YAML these map to standard state and numeric_state triggers.
+Media players have purpose-specific triggers (`media_player.started_playing`, `paused_playing`, `stopped_playing`, `turned_on`, `turned_off`, `muted`, `unmuted`, `volume_changed`, `volume_crossed_threshold`) and matching conditions (`media_player.is_playing`, `is_paused`, `is_not_playing`, `is_on`, `is_off`, `is_muted`, `is_unmuted`, `is_volume`).
 
 ```yaml
-# Play/pause state — to: "playing", "paused", "idle", "off"
 triggers:
-  - trigger: state
-    entity_id: media_player.living_room
-    to: "playing"
-
-# Volume threshold
-triggers:
-  - trigger: numeric_state
-    entity_id: media_player.living_room
-    attribute: volume_level
-    above: 0.7
+  - trigger: media_player.started_playing
+    target:
+      entity_id: media_player.living_room
+    options:
+      for: "00:00:30"   # optional: playback must continue this long
 ```
+
+The generic forms still apply where no purpose-specific block fits (e.g. `state` with `to: "idle"`, or `numeric_state` on `attribute: volume_level`).
 
 ---
 
