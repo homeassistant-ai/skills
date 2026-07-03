@@ -261,7 +261,7 @@ conditions:
 - Triggers: `each` (default) / `first` / `all`. The pre-2026.7 values `any` and `last` were renamed to `each` and `all` — they still work but raise a repair issue and face removal. Never emit them (some official doc pages still show the old values mid-migration).
 - Conditions: `any` (default) / `all` — unchanged.
 
-**Keys renamed in 2026.7 — old keys no longer work:**
+**Keys renamed in 2026.7 (trigger keys unless marked *(condition)*) — old keys no longer work:**
 
 | Old | New |
 |-----|-----|
@@ -684,7 +684,7 @@ The legacy `event`-trigger form (`event_type: timer.finished` with `event_data: 
 
 ### Media Player Triggers/Conditions (2026.5+)
 
-Media players have purpose-specific triggers (`media_player.started_playing`, `paused_playing`, `stopped_playing`, `turned_on`, `turned_off`, `muted`, `unmuted`, `volume_changed`, `volume_crossed_threshold`) and matching conditions (`media_player.is_playing`, `is_paused`, `is_not_playing`, `is_on`, `is_off`, `is_muted`, `is_unmuted`, `is_volume`).
+Media players have purpose-specific triggers (`media_player.started_playing`, `media_player.paused_playing`, `media_player.stopped_playing`, `media_player.turned_on`, `media_player.turned_off`, `media_player.muted`, `media_player.unmuted`, `media_player.volume_changed`, `media_player.volume_crossed_threshold`) and matching conditions (`media_player.is_playing`, `media_player.is_paused`, `media_player.is_not_playing`, `media_player.is_on`, `media_player.is_off`, `media_player.is_muted`, `media_player.is_unmuted`, `media_player.is_volume`).
 
 ```yaml
 triggers:
