@@ -24,7 +24,7 @@ description: >
   - Agent tells user to edit configuration.yaml for UI integrations
   - Agent hardcodes entities in a Blueprint or uses free-text input over a selector
 metadata:
-  version: 14
+  version: 15
 ---
 
 # Home Assistant Best Practices
