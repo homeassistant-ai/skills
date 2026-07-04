@@ -63,6 +63,7 @@ The `home-assistant-best-practices` skill includes:
 | `references/domain-docs.md` | Integration and domain documentation for service calls, entity attributes |
 | `references/examples.yaml` | Compound examples combining multiple best practices |
 | `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact |
+| `references/blueprint-guide.md` | Blueprint authoring: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, `!input` templating, versioning |
 
 ## Contributing
 

@@ -12,6 +12,7 @@ description: >
   - Configuring dashboard cards or selecting helpers
   - Looking up card types or domain docs
   - Writing or reviewing AppDaemon apps
+  - Authoring or editing reusable Blueprints
 
   SYMPTOMS:
   - Agent uses Jinja2 templates where native options exist
@@ -21,6 +22,7 @@ description: >
   - Agent hard-codes values or uses raw sensor over helper
   - Agent edits .storage, writes YAML, or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI integrations
+  - Agent hardcodes entities in a Blueprint or uses free-text input over a selector
 metadata:
   version: 14
 ---
@@ -116,6 +118,10 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Calling `run_in` on repeated triggers without cancelling the previous handle | `cancel_timer(self._off_handle)` before each new `run_in` | Every trigger stacks an independent timer — devices toggle unpredictably | `references/appdaemon.md#scheduling-and-timers` |
 | Storing persistent state in instance variables | Use HA `input_number`, `input_boolean`, or `input_text` helpers | Instance variables reset on app reload or daemon restart | `references/appdaemon.md#state-management-and-inter-app-communication` |
 | Hardcoding entity IDs inside the class body | Pass entity IDs via `self.args` in `apps.yaml` | Hardcoded IDs prevent reuse and require code edits per installation | `references/appdaemon.md#appsyaml-configuration` |
+| Hardcoding entity IDs in a Blueprint body | Expose them as `!input` with a selector | Hardcoding defeats a blueprint's purpose — it can't be reused | `references/blueprint-guide.md#inputs-and-selectors` |
+| Free-text input for an entity/device in a Blueprint | Typed `entity`/`target`/`device` selector | Text lets typos through and fails silently; selectors validate the choice | `references/blueprint-guide.md#inputs-and-selectors` |
+| `!input` used directly inside a template | Bind it to a `variables:` entry, use the variable | `!input` is a YAML tag, not a template value — the template errors or ignores it | `references/blueprint-guide.md#referencing-inputs-input-and-templating` |
+| Publishing a Blueprint without `source_url` | Set `source_url` to the file's canonical URL | Without it users can't re-import updates and sharing is awkward | `references/blueprint-guide.md#blueprint-metadata` |
 
 ---
 
@@ -137,3 +143,4 @@ Read these when you need detailed information:
 | `references/domain-docs.md` | Looking up integration/domain documentation, or the dedicated doc page for a specific trigger, condition, or action | `#fetching-trigger-condition-and-action-docs` |
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
 | `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact | — |
+| `references/blueprint-guide.md` | Authoring reusable blueprints: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, input sections, `!input` templating, versioning | `#when-to-author-a-blueprint`, `#blueprint-metadata`, `#inputs-and-selectors`, `#target-selector-vs-entity-selector`, `#defaults`, `#input-sections`, `#referencing-inputs-input-and-templating`, `#versioning-and-updates`, `#common-pitfalls` |
