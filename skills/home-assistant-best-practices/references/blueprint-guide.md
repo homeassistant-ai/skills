@@ -39,7 +39,7 @@ blueprint:
   author: Your Name                     # optional
   source_url: https://github.com/you/ha-blueprints/blob/main/motion_light.yaml
   homeassistant:
-    min_version: "2024.6.0"             # optional; gate version-specific features
+    min_version: "2024.10.0"           # optional; gate version-specific features (see note below)
   input:
     # ... see below
 ```
@@ -193,7 +193,7 @@ blueprint:
   author: Your Name
   source_url: https://github.com/you/ha-blueprints/blob/main/motion_light.yaml
   homeassistant:
-    min_version: "2024.6.0"                 # required for the input sections below
+    min_version: "2024.10.0"                # modern triggers/actions syntax (input sections alone need only 2024.6.0)
   input:
     devices:
       name: Devices
