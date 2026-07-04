@@ -45,7 +45,7 @@ blueprint:
 ```
 
 - **`source_url`** — the canonical URL of the blueprint file. Always set it. It enables **"Re-import blueprint"** (in-place updates when you publish a fix), provides attribution, and is what the *Import Blueprint* dialog stores. A blueprint without `source_url` can't be updated from source and is awkward to share.
-- **`min_version`** — set it when the blueprint uses a feature added in a specific release (e.g. input sections need `2024.6.0`, `trigger:`/`action:`/`condition:` singular keys need `2024.10.0`). HA refuses to import the blueprint on older versions instead of failing mysteriously at runtime.
+- **`min_version`** — set it when the blueprint uses a feature added in a specific release (e.g. input sections need `2024.6.0`; the in-item `action:` key replacing `service:` needs `2024.8.0`; the plural `triggers:`/`conditions:`/`actions:` keys and the in-item `trigger:` key replacing `platform:` need `2024.10.0`). HA refuses to import the blueprint on older versions instead of failing mysteriously at runtime.
 - **`domain`** must match the body: an `automation` blueprint has `triggers:`/`actions:`, a `script` blueprint has a `sequence:`, a `template` blueprint defines template entities.
 
 ## Inputs and Selectors
@@ -59,7 +59,7 @@ Common selectors:
 | Selector | Yields | Use for |
 |----------|--------|---------|
 | `entity` | entity_id(s) | Picking specific entities; filter with `domain`, `device_class`, `integration` |
-| `target` | a target dict (entities/devices/areas) | Anything you pass straight to a service call's `target:` |
+| `target` | a target dict (entities/devices/areas/floors/labels) | Anything you pass straight to a service call's `target:` |
 | `device` | device_id(s) | Device triggers, or device-level actions (rare — prefer entities) |
 | `area` / `floor` / `label` | area/floor/label id(s) | Scoping actions to a whole area/floor/label |
 | `number` | number | Timeouts, brightness, thresholds; set `min`/`max`/`step`/`mode`/`unit_of_measurement` |
@@ -88,7 +88,7 @@ Add `multiple: true` to accept a list. Filter by `integration:` when the bluepri
 The issue this guide most often resolves. Both point at "what to control," but they produce different shapes:
 
 - **`entity` selector → `entity_id`(s).** Use it when you need the id itself — for a `state` trigger's `entity_id`, a `states(...)` lookup in a template, or an action that specifically wants an entity.
-- **`target` selector → a target dict** (`{entity_id, device_id, area_id}`). Use it when the value flows straight into a service call's `target:`. It lets the user target entities, whole devices, or entire areas — more flexible for "act on these lights," where the user might prefer to say "all lights in the living room area."
+- **`target` selector → a target dict** (`{entity_id, device_id, area_id, floor_id, label_id}`). Use it when the value flows straight into a service call's `target:`. It lets the user target entities, whole devices, or entire areas/floors/labels — more flexible for "act on these lights," where the user might prefer to say "all lights in the living room area."
 
 ```yaml
 # target selector — pass directly to target:
