@@ -7,15 +7,17 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 - [Dashboard Structure](#dashboard-structure)
 - [View Types](#view-types)
 - [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout)
+- [Dashboard Strategies](#dashboard-strategies)
 - [Built-in Cards](#built-in-cards)
 - [Features](#features)
+- [Badges](#badges)
 - [Actions](#actions)
 - [Custom Cards](#custom-cards)
 - [CSS Styling](#css-styling)
 - [HACS Integration](#hacs-integration)
 - [Complete Example: Multi-View Dashboard](#complete-example-multi-view-dashboard)
 - [Common Pitfalls](#common-pitfalls)
-- [Modern Best Practices (2024+)](#modern-best-practices-2024)
+- [Modern Best Practices](#modern-best-practices)
 - [Visual Iteration Workflow](#visual-iteration-workflow)
 
 ---
@@ -86,6 +88,17 @@ Section `title` is soft-deprecated (frontend source marks it `@deprecated Use he
 
 `background.image` is a plain path or media-source reference (the `url(...)` wrapper belongs only to the legacy string form of `background`); `opacity` is an integer 0–100. Badges also accept full objects: `{"type": "entity", "entity": "person.jane", "show_name": true, "color": "accent", "visibility": [...]}`.
 
+A `sections` view also supports a `header` (a markdown card plus badge positioning) and a `footer`:
+
+```json
+{
+  "header": {"layout": "responsive", "badges_position": "top", "card": {"type": "markdown", "content": "# Welcome home"}},
+  "footer": {"max_width": 600}
+}
+```
+
+`header.layout`: `start` / `center` / `responsive`; `badges_position`: `top` / `bottom`.
+
 ---
 
 ## Card Sizing and Responsive Layout
@@ -99,6 +112,29 @@ How sections views lay out — required background for sizing cards across scree
 - Give graph/map cards explicit `grid_options` (`"columns": "full"` plus fixed `rows`) so they are never squeezed unreadable in a shared row.
 - Responsive show/hide uses the `screen` visibility condition with any CSS media query: `{"condition": "screen", "media_query": "(max-width: 767px)"}`. These are **visibility-targeting examples you choose**, *not* section-reflow thresholds — sections reflow on content width (previous bullet), not on these fixed viewport widths. Convenient values: `(max-width: 767px)`, `(min-width: 768px) and (max-width: 1023px)`, `(min-width: 1024px)`; `(pointer: coarse)` targets touch devices.
 - View badges wrap to multiple lines on narrow screens by default; the view `header` supports `"badges_wrap": "scroll"` for a single scrollable row.
+
+---
+
+## Dashboard Strategies
+
+A **strategy** generates a dashboard (or a single view) from code instead of a static card list. The default Overview/Home dashboard an agent first encounters **is** a strategy dashboard — its raw config is just:
+
+```yaml
+strategy:
+  type: original-states   # built-in strategy; auto-generates views from current entities/areas
+views: []
+```
+
+A strategy can be set at dashboard level (`strategy:` at the top) or per view (`views: - strategy: {type: ...}`). Custom strategies use the `custom:` prefix; any extra keys are strategy-specific options. The only universal key is `type`.
+
+```yaml
+strategy:
+  type: custom:my-area-dashboard
+  # extra keys here are passed to the custom strategy
+views: []
+```
+
+**"Take control":** to convert an auto-generated strategy dashboard into a static, hand-editable one, use the dashboard's three-dots menu → **Take control**. This is **one-way** — once taken over, the dashboard no longer auto-updates as new entities/areas appear. Editing its cards directly without taking control is a common failure mode — take control first, or edit the strategy options.
 
 ---
 
@@ -147,6 +183,56 @@ How sections views lay out — required background for sizing cards across scree
 
 In sections views, prefer per-card `grid_options` on the section's own 12-column grid (see [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout)) — it's what the drag-and-drop editor writes. A nested grid card is still useful when a group must stay N-up at every viewport width.
 
+### Heading Card
+
+The official way to label a section, replacing a bare section `title`. Supports a title/subtitle style, an icon, a tap action, and inline entity/button badges.
+
+```json
+{
+  "type": "heading",
+  "heading": "Kitchen",
+  "heading_style": "title",
+  "icon": "mdi:fridge",
+  "tap_action": {"action": "navigate", "navigation_path": "/lovelace/kitchen"},
+  "badges": [
+    {"type": "entity", "entity": "sensor.kitchen_temperature", "show_state": true},
+    {"type": "button", "icon": "mdi:lightbulb-off", "tap_action": {"action": "perform-action", "perform_action": "light.turn_off"}}
+  ]
+}
+```
+
+Use `"heading_style": "subtitle"` for sub-headers.
+
+### Markdown Card
+
+The only built-in card that renders Jinja2 templates — the go-to for computed/composite status text without a custom card.
+
+```json
+{
+  "type": "markdown",
+  "content": "Temp {{ states('sensor.living_room') }}°. Door {{ 'open' if is_state('binary_sensor.door','on') else 'closed' }}.",
+  "entity_id": ["sensor.living_room", "binary_sensor.door"]
+}
+```
+
+The card auto-detects entities referenced in the template; `entity_id` (a list) is an optional fallback for when that analysis misses some, forcing a re-render on those. `text_only: true` strips the card chrome for inline labels.
+
+### Per-Entity Graph Colors
+
+`history-graph` and `statistics-graph` cards accept a per-entity `color` via the entity object form:
+
+```json
+{
+  "type": "history-graph",
+  "entities": [
+    {"entity": "sensor.living_room_temp", "name": "Living Room", "color": "red"},
+    {"entity": "sensor.bedroom_temp", "color": "#1f77b4"}
+  ]
+}
+```
+
+`color` accepts a named color (`red`), hex (`'#ff0000'`), or `rgb(255, 0, 0)`.
+
 ---
 
 ## Features
@@ -160,11 +246,54 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 | Cover/Valve | `cover-open-close`, `cover-position`, `cover-position-favorite`, `cover-tilt`, `cover-tilt-position`, `cover-tilt-favorite`, `valve-open-close`, `valve-position`, `valve-position-favorite` |
 | Fan | `fan-speed`, `fan-preset-modes`, `fan-direction`, `fan-oscillate` |
 | Media | `media-player-playback` (configurable `controls`), `media-player-volume-slider`, `media-player-volume-buttons`, `media-player-source`, `media-player-sound-mode` |
+| Weather | `temperature-forecast`, `precipitation-forecast` |
 | Generic display | `trend-graph` (history sparkline; `hours_to_show`), `bar-gauge` (`min`/`max`) |
 | Generic control | `toggle`, `button` (run an action), `numeric-input` (`style`: `"buttons"`/`"slider"`), `select-options`, `counter-actions`, `date-set` |
+| Area card | `area-controls` |
 | Domain-specific | `alarm-modes`, `lock-commands`, `lock-open-door`, `vacuum-commands`, `lawn-mower-commands`, `humidifier-modes`, `humidifier-toggle`, `update-actions`, `water-heater-operation-modes` |
 
 Mode-list features accept `style`: `"dropdown"` or `"icons"`. Tile cards also support `features_position`: `"bottom"` (default) or `"inline"`.
+
+**Weather features (2026.6):** `forecast_type` (`daily`/`twice_daily`/`hourly`), `days_to_show`/`hours_to_show`, `show_labels`; `precipitation-forecast` also takes `precipitation_type` (`amount`/`probability`).
+
+**Media features:** `media-player-volume-slider` / `media-player-volume-buttons` accept `show_mute_button` (volume-buttons also `step`); `media-player-playback` `controls:` accepts transport buttons plus `volume_up`, `volume_down`, `volume_mute`, `shuffle`, `repeat`; `media-player-source` takes a `sources:` filter list and `media-player-sound-mode` a `sound_modes:` filter list.
+
+---
+
+## Badges
+
+Badges appear at the top of a view. The simple form is a list of entity IDs, but the **object form** unlocks more:
+
+```json
+{
+  "badges": [
+    "person.john",
+    {
+      "type": "entity",
+      "entity": "sensor.kitchen_temperature",
+      "show_name": true,
+      "show_state": true,
+      "color": "amber",
+      "state_content": ["state", "last_changed"]
+    }
+  ]
+}
+```
+
+- `type: entity` options: `show_name`, `show_state`, `show_icon`, `show_entity_picture`, `state_content` (`state`/`last_changed`/`last_updated`/an attribute), and per-badge `visibility`.
+- **`color` accepts a color token or hex only — not a Jinja template.**
+
+A **`type: shortcut`** badge (2026.5) is the badge-row counterpart of the shortcut card — a labelled action chip:
+
+```json
+{
+  "type": "shortcut",
+  "text": "Good night",
+  "icon": "mdi:weather-night",
+  "color": "indigo",
+  "tap_action": {"action": "perform-action", "perform_action": "script.good_night"}
+}
+```
 
 ---
 
@@ -178,7 +307,9 @@ Mode-list features accept `style`: `"dropdown"` or `"icons"`. Tile cards also su
 }
 ```
 
-Action types: `toggle`, `perform-action`, `more-info`, `navigate`, `url`, `assist`, `none`. (`call-service` is the deprecated pre-2024.8 name for `perform-action`.)
+Action types: `toggle`, `perform-action`, `more-info`, `navigate`, `url`, `assist`, `none`.
+
+`perform-action` is the renamed `call-service` — existing `action: call-service` configs (and the older `service`/`service_data` keys) still work, so don't flag them as broken; write new ones with `perform-action`.
 
 ```json
 {
@@ -207,6 +338,8 @@ Cards, sections, and badges all accept `visibility` (a list of conditions, impli
   ]
 }
 ```
+
+`screen` is the canonical way to show/hide cards by viewport (desktop vs. mobile).
 
 ---
 
@@ -408,7 +541,7 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 
 ---
 
-## Modern Best Practices (2024+)
+## Modern Best Practices
 
 - Use **sections** view type with grid-based layouts
 - Use **tile** cards as primary card type (replaces legacy entity/light/climate cards)
@@ -417,7 +550,7 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 - Use **area** cards with navigation for hierarchical organization
 - Start sections with **heading** cards (`title`/`subtitle` styles); subtitle headings work well for inline caveats
 
-### Recent Dashboard Features (2026.2–2026.5)
+### Recent Dashboard Features (2026.2–2026.6)
 
 | Feature | Version | Details |
 |---------|---------|---------|
@@ -428,6 +561,8 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 | **Auto-height cards** | 2026.4 | Cards auto-adjust height based on content via the layout editor |
 | **Shortcut card + badge** | 2026.5 | One-tap navigate (dashboard/view/area/device), URL, Assist, or action with smart defaults |
 | **Media player tile features** | 2026.5 | `media-player-source`, `media-player-sound-mode`, configurable playback `controls` |
+| **Weather forecast features** | 2026.6 | `temperature-forecast`, `precipitation-forecast` tile features |
+| **Per-entity graph color** | 2026.6 | `color` on each entity of `history-graph` / `statistics-graph` |
 
 **Legacy patterns to avoid:**
 - Single-view dashboards with all cards in one long scroll

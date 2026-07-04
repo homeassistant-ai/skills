@@ -57,6 +57,7 @@ The `home-assistant-best-practices` skill includes:
 | `references/template-guidelines.md` | When to use templates, when to avoid them, and sensor best practices |
 | `references/yaml-only-integrations.md` | YAML-only integration types, post-edit actions (reload vs restart) |
 | `references/device-control.md` | Service calls, entity_id vs device_id, Zigbee buttons |
+| `references/scenes.md` | Scene authoring: config shape, snapshot/restore, snapshot-vs-script distinction |
 | `references/dashboard-guide.md` | Dashboard layout, view types, sections, custom cards, CSS styling |
 | `references/dashboard-cards.md` | Card type lookup and card-specific documentation |
 | `references/domain-docs.md` | Integration and domain documentation for service calls, entity attributes |
