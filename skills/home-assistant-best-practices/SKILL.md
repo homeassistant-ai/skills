@@ -22,7 +22,7 @@ description: >
   - Agent edits .storage, writes YAML, or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI integrations
 metadata:
-  version: 12
+  version: 13
 ---
 
 # Home Assistant Best Practices
@@ -39,10 +39,11 @@ If your change affects entity IDs or cross-component references — renaming ent
 
 Steps 1-5 below apply to new config or pattern evaluation.
 
-### 1. Check for native condition/trigger
-Before writing any template, check `references/automation-patterns.md` for native alternatives.
+### 1. Check for a purpose-specific, then generic native, trigger/condition
+Since 2026.7 the default building blocks are purpose-specific triggers/conditions — `<domain>.<name>` keys (motion detected, battery low, door opened) with area/floor/label targets. Check for one that matches the intent first, then a generic native trigger/condition, and only then a template. See `references/automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267`.
 
 **Common substitutions:**
+- List of individual sensor entities in a trigger → one purpose-specific trigger with an area/floor/label `target:`
 - `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
 - `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
 - `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
@@ -109,6 +110,8 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | `vacuum.send_command` with vendor room IDs | `vacuum.clean_area` with HA `area_id` (if segments are mapped) | Uses native HA areas, works across integrations — but requires segment-to-area mapping in entity settings first | `references/device-control.md#vacuum-control` |
 | Using `color_temp` (mireds) in light service calls | Use `color_temp_kelvin` | The `color_temp` parameter was removed in 2026.3; only Kelvin is supported | `references/device-control.md#lights` |
 | Person/Device Tracker `entered_home`/`left_home` device triggers or `is_home`/`is_not_home` conditions | `state` trigger `to: home` / `to: not_home`, or `state` condition | These were removed in 2026.5 — state triggers and conditions are the correct replacements | `references/automation-patterns.md#presence-and-person-triggers-and-conditions-removed-in-20265` |
+| Entity list in a trigger where an area/floor/label target fits | Purpose-specific trigger with `target: {area_id: ...}` | Automation follows area membership as devices change — no stale entity lists | `references/automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267` |
+| Old purpose-specific keys (`battery.low`, `vacuum.docked`, `timer.time_remaining`, ...) or trigger `behavior: any`/`last` | Renamed 2026.7 keys (`battery.became_low`, ...) and `behavior: each`/`all` | Old keys no longer load; old behavior values raise a repair issue and face removal | `references/automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267` |
 | Registering callbacks or calling `self.turn_on()`/`self.get_state()` in `__init__()` | Register everything in `initialize()` | Plugin connection not established during `__init__` — calls fail silently | `references/appdaemon.md#app-structure-and-lifecycle` |
 | Calling `run_in` on repeated triggers without cancelling the previous handle | `cancel_timer(self._off_handle)` before each new `run_in` | Every trigger stacks an independent timer — devices toggle unpredictably | `references/appdaemon.md#scheduling-and-timers` |
 | Storing persistent state in instance variables | Use HA `input_number`, `input_boolean`, or `input_text` helpers | Instance variables reset on app reload or daemon restart | `references/appdaemon.md#state-management-and-inter-app-communication` |
@@ -123,7 +126,7 @@ Read these when you need detailed information:
 | File | When to read | Key sections |
 |------|--------------|--------------|
 | `references/safe-refactoring.md` | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config | `#universal-workflow`, `#entity-renames`, `#helper-replacements`, `#trigger-restructuring`, `#config-entry-data--blind-spots-for-entity-registry-renames`, `#storage-mode-dashboards-storagelovelace` |
-| `references/automation-patterns.md` | Writing triggers, conditions, waits, variables, or choosing automation modes; capturing action responses; documenting/annotating steps; disabling automations | `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#continue-on-error`, `#stopping-a-sequence`, `#variables`, `#capturing-action-responses`, `#repeat-actions`, `#ifthen-vs-choose`, `#parallel-actions`, `#trigger-ids`, `#documenting-automations--scripts`, `#disabling-automations` |
+| `references/automation-patterns.md` | Writing triggers, conditions, waits, variables, or choosing automation modes; capturing action responses; documenting/annotating steps; disabling automations | `#purpose-specific-triggers--conditions-default-since-20267`, `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#continue-on-error`, `#stopping-a-sequence`, `#variables`, `#capturing-action-responses`, `#repeat-actions`, `#ifthen-vs-choose`, `#parallel-actions`, `#trigger-ids`, `#documenting-automations--scripts`, `#disabling-automations` |
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#how-helpers-are-created`, `#menu-based-helpers`, `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#probabilistic-inference`, `#data-smoothing`, `#random-values`, `#climate-control`, `#domain-conversion`, `#template-helpers`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
 | `references/yaml-only-integrations.md` | Creating or editing YAML-only integrations that have no config flow (e.g. `command_line`, platform-based `mqtt`, `rest`) | `#yaml-only-integration-types`, `#post-edit-actions` |
@@ -131,6 +134,6 @@ Read these when you need detailed information:
 | `references/scenes.md` | Authoring or activating scenes; snapshot/restore patterns; snapshot-vs-script distinction | `#scene-config-shape`, `#activating-a-scene`, `#snapshot--restore-scenecreate`, `#apply-states-without-storing-sceneapply` |
 | `references/dashboard-guide.md` | Designing or modifying Lovelace dashboards — layout, view types, strategies, sections, cards, badges, CSS styling, HACS | `#dashboard-structure`, `#view-types`, `#dashboard-strategies`, `#built-in-cards`, `#features`, `#badges`, `#custom-cards`, `#css-styling`, `#common-pitfalls` |
 | `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
-| `references/domain-docs.md` | Looking up integration or domain documentation for service calls, entity attributes, or configuration | — |
+| `references/domain-docs.md` | Looking up integration/domain documentation, or the dedicated doc page for a specific trigger, condition, or action | `#fetching-trigger-condition-and-action-docs` |
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
 | `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact | — |
