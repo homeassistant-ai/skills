@@ -113,6 +113,39 @@ jobs:
           echo "any_bumped=${any_bumped}" >> "$GITHUB_OUTPUT"
           echo "bumped_skills=${bumped_skills}" >> "$GITHUB_OUTPUT"
 
+      - name: Sync plugin and marketplace version to skill version
+        if: steps.bump.outputs.any_bumped == 'true'
+        run: |
+          set -euo pipefail
+
+          # Plugin version tracks the highest metadata.version across all bundled
+          # skills, as 0.<max skill version>.0, so `/plugin update` in Claude Code
+          # actually picks up content changes instead of silently no-op'ing.
+          max_version=0
+          for skill_md in skills/*/SKILL.md; do
+            [ -f "$skill_md" ] || continue
+            v=$(awk '
+              /^---/{fd++; next}
+              fd==1 && /^metadata:/{m=1; next}
+              fd==1 && m && /^[[:space:]]+version:/{match($0,/[0-9]+/); print substr($0,RSTART,RLENGTH)+0; exit}
+            ' "$skill_md")
+            [ -n "$v" ] || continue
+            [ "$v" -gt "$max_version" ] && max_version="$v"
+          done
+          new_version="0.${max_version}.0"
+
+          sync_version() {
+            local file="$1" jq_path="$2" current
+            current=$(jq -r "$jq_path" "$file")
+            if [ "$current" != "$new_version" ]; then
+              jq --indent 2 "${jq_path} = \$v" --arg v "$new_version" "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
+              echo "Synced ${file} (${jq_path}): ${current} -> ${new_version}"
+            fi
+          }
+
+          sync_version ".claude-plugin/plugin.json" ".version"
+          sync_version ".claude-plugin/marketplace.json" ".metadata.version"
+
       - name: Commit and push
         if: steps.bump.outputs.any_bumped == 'true'
         env:
@@ -122,6 +155,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           read -ra files <<< "$BUMPED"
-          git add -- "${files[@]}"
+          git add -- "${files[@]}" .claude-plugin/plugin.json .claude-plugin/marketplace.json
           git commit -m "chore: auto-bump skill versions [skip ci]"
           git push
