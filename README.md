@@ -38,11 +38,23 @@ Run `/reload-plugins` or restart Claude Code for the skill to take effect.
 
 ### Claude Desktop / claude.ai
 
-1. Download or clone this repository
-2. Zip the skill folder: `cd skills && zip -r home-assistant-best-practices.zip home-assistant-best-practices/`
-3. Upload to:
-   - **Claude Desktop:** Customize (left sidebar) → Skills → + → Create skill
-   - **claude.ai:** [claude.ai/customize/skills](https://claude.ai/customize/skills) → Upload
+Both apps share the same Customize UI, reached via the left sidebar (Claude Desktop) or [claude.ai/customize](https://claude.ai/customize) (browser).
+
+1. Enable code execution: Settings → Capabilities → turn on **Cloud code execution and file creation** (required for skills)
+2. Customize → Plugins → Add → Add marketplace → Add from a repository
+3. Enter `homeassistant-ai/skills` (or the full URL, `https://github.com/homeassistant-ai/skills`) → Sync
+
+This installs the skill as a plugin synced from this repo — no download or zip needed. To update later, revisit Plugins and sync again.
+
+<details>
+<summary>Alternative: upload the skill manually as a zip</summary>
+
+1. Enable code execution: Settings → Capabilities → turn on **Cloud code execution and file creation**
+2. Download or clone this repository
+3. Zip the skill folder: `cd skills && zip -r home-assistant-best-practices.zip home-assistant-best-practices/`
+4. Customize → Skills → Add → Upload a skill
+
+</details>
 
 ## Skill Contents
 
