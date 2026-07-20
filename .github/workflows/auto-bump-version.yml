@@ -31,6 +31,11 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
         continue-on-error: true
 
+      - name: Warn if app token unavailable
+        if: steps.app-token.outcome == 'failure'
+        run: |
+          echo "::warning::GitHub App token generation failed — falling back to GITHUB_TOKEN. If branch protection requires the app identity, the commit-and-push step will fail; check the RELEASE_APP_ID / RELEASE_APP_PRIVATE_KEY secrets."
+
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
@@ -71,9 +76,11 @@ jobs:
             skill_md="${skill_dir}/SKILL.md"
             [ -f "$skill_md" ] || continue
 
-            # Skip if the only diff is the version field itself (e.g. a standalone format migration)
+            # Skip if the only diff is the version field itself (e.g. a standalone format migration).
+            # Anchor the version filter to the frontmatter field so substrings like `min_version:`
+            # in skill content aren't mistaken for the version line and dropped from the diff.
             content_diff=$(git diff "$BEFORE_SHA" HEAD -- "$skill_dir" \
-              | grep '^[+-]' | grep -v '^[+-][+-][+-]' | grep -v 'version:' || true)
+              | grep '^[+-]' | grep -v '^[+-][+-][+-]' | grep -vE '^[+-][[:space:]]*version:' || true)
             if [ -z "$content_diff" ]; then
               echo "Skipping ${skill_dir}: no content changes beyond version field"
               continue
@@ -104,7 +111,10 @@ jobs:
                 m=0
               }
               {print}
-            ' "$skill_md" > "${skill_md}.tmp" && mv "${skill_md}.tmp" "$skill_md"
+            ' "$skill_md" > "${skill_md}.tmp"
+            # Separate statement (not `awk && mv`) so a failing awk trips `set -e`
+            # instead of silently skipping the mv and reporting a false "Bumped".
+            mv "${skill_md}.tmp" "$skill_md"
 
             echo "Bumped ${skill_md}: ${current} -> ${new_version}"
             any_bumped=true
