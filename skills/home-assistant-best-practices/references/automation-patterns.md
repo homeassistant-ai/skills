@@ -927,6 +927,32 @@ variables:
 
 `trigger_variables:` is a separate top-level key evaluated **before** triggers fire — it supports **limited templates only** (no `states()`/`state_attr()`), mainly for passing a blueprint `!input` into trigger options. Don't put state-based templates there.
 
+### Keys render in order, one at a time
+
+A `variables:` block renders one key at a time, each rendered result feeding the context for the next. A key that reads a name declared **further down the same block** reads it while it is still undefined.
+
+```yaml
+# Broken — `total` is still undefined when `msg` renders
+variables:
+  msg: "Total: {{ total }}"
+  total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
+
+# Fixed — declare before use, or split into consecutive `variables:` steps
+variables:
+  total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
+  msg: "Total: {{ total }}"
+```
+
+What the forward read costs depends on how the template uses the name:
+
+- **Aborts the step** — attribute or item access, arithmetic, ordering comparisons and casts such as `| int` raise `UndefinedError` and log at ERROR. A default like `| int(0)` does not save it — the default covers an unconvertible value, not an undefined name.
+- **Renders empty, with a logged warning** — a bare `{{ }}`, `{% if %}`, `~` concatenation and iteration. The value is empty and falsy, so the automation runs on and takes the else branch.
+- **Returns a real value and logs nothing at all** — `| length` gives `0`, `==` gives `False`, `!=` gives `True`. Watch the last one: `{% if later != 'x' %}` on a name that is not defined yet takes the **then** branch, and leaves no warning and no trace entry behind to explain why.
+
+Not a problem when the name also exists in an enclosing scope — the reference then resolves outward to that value.
+
+When an automation declares both `trigger_variables:` and `variables:`, the two render as one sequential mapping with `trigger_variables:` first, so a `variables:` key may read a `trigger_variables:` key but not the reverse. `trigger_variables:` is additionally rendered on its own, as limited templates, when the triggers attach — before any `variables:` key exists.
+
 ---
 
 ## Capturing Action Responses
