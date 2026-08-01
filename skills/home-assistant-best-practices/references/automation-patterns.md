@@ -927,6 +927,36 @@ variables:
 
 `trigger_variables:` is a separate top-level key evaluated **before** triggers fire — it supports **limited templates only** (no `states()`/`state_attr()`), mainly for passing a blueprint `!input` into trigger options. Don't put state-based templates there.
 
+### Keys render in order, one at a time
+
+A `variables:` block renders one key at a time, each rendered result feeding the context for the next. A key that reads a name declared **further down the same block** reads it while it is still undefined.
+
+```yaml
+# AVOID — `total` is still undefined when `msg` renders
+variables:
+  msg: "Total: {{ total }}"
+  total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
+
+# CORRECT — declare before use
+variables:
+  total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
+  msg: "Total: {{ total }}"
+```
+
+What the forward read costs depends on how the template uses the name (behavior as of 2026.7):
+
+| Use of the undefined name | Result |
+|---|---|
+| `x.attr`, `x['k']`, arithmetic, `<`/`>`/`<=`/`>=`, `\| int`, `\| float` | Raises `UndefinedError`, logs ERROR — **aborts the run** |
+| `{{ x }}`, `{% if x %}`, `{% for i in x %}`, `'p' ~ x` | Empty and falsy, logs WARNING — runs on into the else branch |
+| `x \| length`, `x == y`, `x != y` | `0` / `False` / `True` — **no log and no trace entry** |
+
+For the aborting row, [`continue_on_error:`](#continue-on-error) is no escape — it is an action option, a top-level block is not an action, and on a mid-sequence step it cannot suppress a render error. A default like `| int(0)` does not save it either: the default covers an unconvertible value, not an undefined name. In the silent row, watch `!=`: `{% if later != 'x' %}` on a name that is not defined yet takes the **then** branch, leaving nothing behind to explain why.
+
+Not a problem when the name also exists in an enclosing scope — the reference then resolves outward to that value. The two placements diverge on that collision, though: a top-level `variables:` block **skips** a key already present in the incoming scope, so the incoming value stands and the block's own definition never takes effect for that run, while a mid-sequence `- variables:` step renders and **overwrites** it. Staging a computation across consecutive `variables:` steps is therefore mid-sequence only.
+
+When an automation declares both `trigger_variables:` and `variables:`, the two render as one sequential mapping with `trigger_variables:` first, so a `variables:` key may read a `trigger_variables:` key but not the reverse. That holds for names declared in only one of the two: a name in both merges into a single entry that keeps the `trigger_variables:` position but takes the `variables:` template, so it renders early — before any `trigger_variables:` key declared after it. The separate attach-time render noted above happens before any `variables:` key exists.
+
 ---
 
 ## Capturing Action Responses
