@@ -39,7 +39,7 @@ jobs:
             echo "skills_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         if: steps.changes.outputs.skills_changed == 'true'
         with:
           python-version: "3.12"
