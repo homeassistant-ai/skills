@@ -932,26 +932,26 @@ variables:
 A `variables:` block renders one key at a time, each rendered result feeding the context for the next. A key that reads a name declared **further down the same block** reads it while it is still undefined.
 
 ```yaml
-# Broken — `total` is still undefined when `msg` renders
+# AVOID — `total` is still undefined when `msg` renders
 variables:
   msg: "Total: {{ total }}"
   total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
 
-# Fixed — declare before use, or split into consecutive `variables:` steps
+# CORRECT — declare before use
 variables:
   total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
   msg: "Total: {{ total }}"
 ```
 
-What the forward read costs depends on how the template uses the name:
+What the forward read costs depends on how the template uses the name (behavior as of 2026.7):
 
-- **Aborts the step** — attribute or item access, arithmetic, ordering comparisons and casts such as `| int` raise `UndefinedError` and log at ERROR. A default like `| int(0)` does not save it — the default covers an unconvertible value, not an undefined name.
+- **Aborts the run** — attribute or item access, arithmetic, ordering comparisons and casts such as `| int` raise `UndefinedError` and log at ERROR. [`continue_on_error:`](#continue-on-error) is no escape: it is not a valid key on a top-level block, and on a mid-sequence step it cannot suppress a render error. A default like `| int(0)` does not save it either — the default covers an unconvertible value, not an undefined name.
 - **Renders empty, with a logged warning** — a bare `{{ }}`, `{% if %}`, `~` concatenation and iteration. The value is empty and falsy, so the automation runs on and takes the else branch.
 - **Returns a real value and logs nothing at all** — `| length` gives `0`, `==` gives `False`, `!=` gives `True`. Watch the last one: `{% if later != 'x' %}` on a name that is not defined yet takes the **then** branch, and leaves no warning and no trace entry behind to explain why.
 
-Not a problem when the name also exists in an enclosing scope — the reference then resolves outward to that value.
+Not a problem when the name also exists in an enclosing scope — the reference then resolves outward to that value. The two placements diverge on that collision, though: a top-level `variables:` block **skips** a key already present in the incoming scope, so the incoming value stands and the block's own definition never takes effect for that run, while a mid-sequence `- variables:` step renders and **overwrites** it. Staging a computation across consecutive `variables:` steps is therefore mid-sequence only.
 
-When an automation declares both `trigger_variables:` and `variables:`, the two render as one sequential mapping with `trigger_variables:` first, so a `variables:` key may read a `trigger_variables:` key but not the reverse. `trigger_variables:` is additionally rendered on its own, as limited templates, when the triggers attach — before any `variables:` key exists.
+When an automation declares both `trigger_variables:` and `variables:`, the two render as one sequential mapping with `trigger_variables:` first, so a `variables:` key may read a `trigger_variables:` key but not the reverse. That holds for names declared in only one of the two: a name in both merges into a single entry that keeps the `trigger_variables:` position but takes the `variables:` template, so it renders early — before any `trigger_variables:` key declared after it. `trigger_variables:` is additionally rendered on its own when the triggers attach (see above), at a point where no `variables:` key exists yet.
 
 ---
 
