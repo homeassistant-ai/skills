@@ -55,3 +55,9 @@ To validate locally:
 ```bash
 uvx skills-ref validate skills/<skill-name>
 ```
+
+## Reviewing Skill PRs
+
+- Judge prose as agent-consumed context, not human docs — the Skill Authoring Principles above are the review bar (e.g. an operator→result lookup table beats narrative bullets, because agents land here holding one case to resolve)
+- Skills make version-pinned claims about HA behavior — verify against source at the release tag: `gh api repos/home-assistant/core/contents/<path>?ref=2026.7.4 --jq .content | base64 -d`
+- Community PRs come from forks: base-repo `?ref=<pr-branch>` 404s; get the fork with `gh pr view <pr> --json headRepository` and fetch files from there
