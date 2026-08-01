@@ -945,9 +945,13 @@ variables:
 
 What the forward read costs depends on how the template uses the name (behavior as of 2026.7):
 
-- **Aborts the run** — attribute or item access, arithmetic, ordering comparisons and casts such as `| int` raise `UndefinedError` and log at ERROR. [`continue_on_error:`](#continue-on-error) is no escape: it is an action option, and a top-level block is not an action, while on a mid-sequence step it cannot suppress a render error. A default like `| int(0)` does not save it either — the default covers an unconvertible value, not an undefined name.
-- **Renders empty, with a logged warning** — a bare `{{ }}`, `{% if %}`, `~` concatenation and iteration. The value is empty and falsy, so the automation runs on and takes the else branch.
-- **Returns a real value and logs nothing at all** — `| length` gives `0`, `==` gives `False`, `!=` gives `True`. Watch the last one: `{% if later != 'x' %}` on a name that is not defined yet takes the **then** branch, and leaves no warning and no trace entry behind to explain why.
+| Use of the undefined name | Result |
+|---|---|
+| `x.attr`, `x['k']`, arithmetic, `<`/`>`/`<=`/`>=`, `\| int`, `\| float` | Raises `UndefinedError`, logs ERROR — **aborts the run** |
+| `{{ x }}`, `{% if x %}`, `{% for i in x %}`, `'p' ~ x` | Empty and falsy, logs WARNING — runs on into the else branch |
+| `x \| length`, `x == y`, `x != y` | `0` / `False` / `True` — **no log and no trace entry** |
+
+For the aborting row, [`continue_on_error:`](#continue-on-error) is no escape — it is an action option, a top-level block is not an action, and on a mid-sequence step it cannot suppress a render error. A default like `| int(0)` does not save it either: the default covers an unconvertible value, not an undefined name. In the silent row, watch `!=`: `{% if later != 'x' %}` on a name that is not defined yet takes the **then** branch, leaving nothing behind to explain why.
 
 Not a problem when the name also exists in an enclosing scope — the reference then resolves outward to that value. The two placements diverge on that collision, though: a top-level `variables:` block **skips** a key already present in the incoming scope, so the incoming value stands and the block's own definition never takes effect for that run, while a mid-sequence `- variables:` step renders and **overwrites** it. Staging a computation across consecutive `variables:` steps is therefore mid-sequence only.
 
