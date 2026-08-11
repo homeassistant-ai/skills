@@ -192,6 +192,31 @@ self.call_service(
 )
 ```
 
+### Reserved keyword arguments — colliding service fields go in `service_data`
+
+`call_service` claims some keyword names for the call itself: `namespace`, `timeout`,
+`hass_timeout`, `callback`, `return_response`, `suppress_log_messages`, `service_data`,
+`target`, `entity_id`. A service field with one of those names never reaches the service.
+
+`entity_id` is harmless — AppDaemon lifts it into `target: {entity_id: ...}`, which is where
+HA wants it anyway. `target` is the trap, because legacy `notify.<name>` services take a
+`target` field of their own (the per-call recipient):
+
+```python
+# WRONG — lifted into the call's own target field, where HA requires a dict of
+# entity/device/area ids. HA replies "invalid_format: expected a dictionary for
+# dictionary value @ data['target']" and drops the message.
+self.call_service("notify/smtp", title=t, message=m, target=["guest@example.com"])
+
+# RIGHT — service_data exists for fields whose names collide, and is merged with the
+# other kwargs.
+self.call_service("notify/smtp",
+                  service_data={"title": t, "message": m, "target": ["guest@example.com"]})
+```
+
+The wrong version raises nothing: the call returns and the message is lost. Assert on the
+*shape* of the call in tests, not on its return value.
+
 ### Targeting Areas
 
 ```python
@@ -503,6 +528,7 @@ def verify_thermostat(self, **kwargs):
 | Accessing `self.get_state()` result without guarding for `"unavailable"` / `"unknown"` | `if new not in (None, "unavailable", "unknown")` | Unavailable sensors cause `float()` / `int()` to raise `ValueError` |
 | Polling state with a tight `run_every` loop | `listen_state` with `duration` parameter | Polling wastes CPU and bloats the log; `listen_state(duration=N)` is event-driven |
 | call_service("light.turn_on", ...) — dot notation | call_service("light/turn_on", ...) — slash notation | AppDaemon requires domain/service format; dot notation will cause the call to silently do nothing or log a warning, depending on the version. |
+| A service field named like a reserved `call_service` kwarg (`target`, `timeout`, `namespace`, `callback`, `return_response`) passed as a plain kwarg | Pass it in `service_data={...}` | AppDaemon takes the reserved name for the call itself, so the service never gets the field. With `target` on a legacy `notify` service, HA rejects the message and the app sees no error |
 | `self.args["key"]` without `.get()` | `self.args.get("key", default)` | Missing key in `apps.yaml` raises `KeyError` at startup with no useful error message |
 | Writing a new AppDaemon app for logic that native HA can express | Use native automation, `choose`, `repeat`, or `wait_for_trigger` | AppDaemon adds a separate process, Python dependency, and longer restart cycle |
 
