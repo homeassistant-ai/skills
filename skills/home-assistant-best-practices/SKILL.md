@@ -122,6 +122,8 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Free-text input for an entity/device in a Blueprint | Typed `entity`/`target`/`device` selector | Text lets typos through and fails silently; selectors validate the choice | `references/blueprint-guide.md#inputs-and-selectors` |
 | `!input` used directly inside a template | Bind it to a `variables:` entry, use the variable | `!input` is a YAML tag, not a template value — the template errors or ignores it | `references/blueprint-guide.md#referencing-inputs-input-and-templating` |
 | Publishing a Blueprint without `source_url` | Set `source_url` to the file's canonical URL | Without it users can't re-import updates and sharing is awkward | `references/blueprint-guide.md#blueprint-metadata` |
+| Full instance restore to undo one automation/script/scene/dashboard/helper edit | Write the previous definition back (config-level rollback) | A full restore reverts every unrelated change made since the backup and restarts HA | `references/backups.md#which-recovery-layer` |
+| Deleting a device/entity/integration, or upgrading Core, without a preceding backup | Take the full backup *before* the operation | Registry deletions can't be undone by writing the old value back, and a backup taken afterwards captures the damage | `references/backups.md#when-a-full-backup-earns-its-cost` |
 
 ---
 
@@ -144,3 +146,4 @@ Read these when you need detailed information:
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
 | `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact | — |
 | `references/blueprint-guide.md` | Authoring reusable blueprints: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, input sections, `!input` templating, versioning | `#when-to-author-a-blueprint`, `#blueprint-metadata`, `#inputs-and-selectors`, `#target-selector-vs-entity-selector`, `#defaults`, `#input-sections`, `#referencing-inputs-input-and-templating`, `#versioning-and-updates`, `#common-pitfalls` |
+| `references/backups.md` | Deciding whether an operation needs a backup first, choosing between a full instance restore and config-level rollback, restore consequences and post-restore verification, why deleting backups is guarded | `#which-recovery-layer`, `#when-a-full-backup-earns-its-cost`, `#what-a-full-backup-contains`, `#restoring-consequences-and-verification`, `#why-deleting-backups-is-guarded`, `#common-pitfalls` |
