@@ -22,7 +22,7 @@ This document covers Home Assistant's built-in helpers and integrations that sho
 Helpers reach Home Assistant through two different creation mechanisms — which one a helper uses determines whether you submit flat fields in a single step or step through a config flow:
 
 - **Storage-collection helpers** — created via a per-domain WebSocket collection command (`<domain>/create`, e.g. `input_boolean/create`, `counter/create`) with flat, structured fields: `input_boolean`, `input_number`, `input_select`, `input_text`, `input_datetime`, `input_button`, `counter`, `timer`, `schedule`, `zone`, `person`, `tag`. (`schedule` additionally offers an optional YAML mode.)
-- **Config-entry-flow helpers** — created through the generic config-entry flow (`config_entries/flow`, handler = the helper domain), often a multi-step flow that begins with a sub-type menu (see [Menu-Based Helpers](#menu-based-helpers)): `template`, `group`, `utility_meter`, `derivative`, `min_max`, `threshold`, `integration`, `statistics`, `trend`, `random`, `filter`, `tod`, `generic_thermostat`, `generic_hygrostat`, `switch_as_x`, `bayesian`, `mold_indicator`.
+- **Config-entry-flow helpers** — created through the generic config-entry flow (`config_entries/flow`, handler = the helper domain), often a multi-step flow that begins with a sub-type menu (see [Menu-Based Helpers](#menu-based-helpers)): `template`, `group`, `utility_meter`, `derivative`, `min_max`, `threshold`, `integration`, `statistics`, `trend`, `random`, `filter`, `tod`, `generic_thermostat`, `generic_hygrostat`, `switch_as_x`, `bayesian`, `mold_indicator`, `history_stats`.
 
 ## Menu-Based Helpers
 
@@ -357,6 +357,9 @@ sensor:
 **Key behaviors:**
 - Limited by recorder's `purge_keep_days`
 - Updates when source changes or once per minute
+- Creatable via the config-entry flow (multi-step: entity and type, then
+  tracked states, then the period — exactly two of `start`/`end`/`duration`);
+  YAML remains supported but is not required
 
 **Common uses:**
 - How long lights were on today
