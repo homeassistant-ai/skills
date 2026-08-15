@@ -1,89 +1,114 @@
 # Backups and Recovery
 
-Home Assistant has **two independent recovery layers with very different blast radii**: a *full instance backup* (a tarball of the config directory and add-ons — restoring it restarts HA and reverts everything changed since it was taken) and *config-level rollback* (re-applying one stored automation/script/scene/dashboard/helper definition — no restart, one object). Picking the wrong layer is the common failure: a full restore used to undo a single automation edit also discards every unrelated change made in between.
+**Three different things get called a "backup" in Home Assistant work.** This file covers the first two, and only the first is a Home Assistant feature:
+
+1. A **full instance backup** — the archive Home Assistant creates at *Settings → System → Backups*, which is also the surface for restoring and deleting one.
+2. **Object rollback** — not an HA feature but a workflow: fetch an object's current definition *before* editing it, then write that definition back through the same config API to undo. One object, no restart.
+3. The **pre-edit file copy** a managed YAML write takes — a different mechanism entirely, covered in `references/yaml-only-integrations.md`.
+
+**Restoring a backup, deleting a backup, and upgrading Core are irreversible and require explicit user confirmation before you act — every time, including when a backup already exists.** A backup lowers recovery risk; it does not authorize the action.
 
 ## Table of Contents
-1. [Which Recovery Layer](#which-recovery-layer)
+1. [Which Recovery Path](#which-recovery-path)
 2. [When a Full Backup Earns Its Cost](#when-a-full-backup-earns-its-cost)
 3. [What a Full Backup Contains](#what-a-full-backup-contains)
 4. [Restoring: Consequences and Verification](#restoring-consequences-and-verification)
-5. [Why Deleting Backups Is Guarded](#why-deleting-backups-is-guarded)
+5. [Deleting Backups](#deleting-backups)
 6. [Common Pitfalls](#common-pitfalls)
 
 ---
 
-## Which Recovery Layer
+## Which Recovery Path
 
-| Situation | Layer |
-|-----------|-------|
-| One automation / script / scene / dashboard / helper edit went wrong | Config-level rollback — write the previous definition back. No restart. |
-| Several config objects edited in one session went wrong | Config-level rollback, one object at a time. Still no restart. |
-| A device, entity, or area was deleted from the registry | Full backup. Registry state (IDs, area/label assignments, and every reference other config held) is not recoverable from a config-level snapshot. |
-| An integration / config entry was removed | Full backup. Its entities and their recorded history went with it. |
-| An add-on update or removal broke something | Full backup, restored partially — the affected add-on only, where the restore flow allows it. |
-| A Core or OS upgrade broke the instance | Full backup restore. |
-| The instance no longer boots | Full backup restore through the Supervisor / onboarding restore flow. |
+| Situation | What to do |
+|-----------|------------|
+| One automation / script / scene / dashboard / helper edit went wrong | **Roll the object back** — write its previous definition back through the config API. No restart, nothing else touched. Fetching before writing is what makes this possible; see `references/safe-refactoring.md#universal-workflow`. |
+| Several objects were edited in one session | **Roll each object back**, one at a time. Still no restart. |
+| A device, entity, or area was deleted from the registry | **Restore a full backup.** Registry state — IDs, area/label assignments, and the references other config held to them — cannot be recovered by writing a definition back. |
+| An integration or config entry was removed | **Restore a full backup.** Its entities went with it. |
+| An App update or removal broke something | **Restore a full backup partially** — that App and its data only. |
+| A Core or Operating System upgrade broke the instance | **Restore a full backup.** |
+| The instance no longer boots | **Restore a full backup** through the Supervisor / onboarding restore flow. |
 
-Prefer the narrowest layer that can fix the problem. Config-level rollback is object-scoped, needs no restart, and cannot lose unrelated work.
+Prefer the narrowest path that can fix the fault. Object rollback is scoped to one object, needs no restart, and cannot lose unrelated work.
+
+**Partial restore is a narrower restore, not a rollback.** HA's partial restore (`hassio.restore_partial`) picks which parts of an existing backup to put back — Home Assistant settings, specific Apps, and folders. Including Home Assistant settings restarts HA. That is a different mechanism from writing one object's definition back through the config API, which restarts nothing.
 
 ## When a Full Backup Earns Its Cost
 
-The rule is reversibility, not risk-feel: **take a full backup before an operation you cannot undo by writing the old value back.**
+The test is reversibility, not how risky something feels: **back up before an operation you cannot undo by writing the old value back.**
 
-**Irreversible — back up first:**
+**Irreversible — take the backup first, and confirm the operation with the user:**
 - Deleting a device, entity, or area from the registry.
 - Removing an integration or config entry.
-- Removing an add-on, or a major add-on version jump.
-- Core / Operating System version upgrades.
+- Removing an App, or a major App version jump.
+- Core / Operating System upgrades.
 - Restoring a *different* backup — a restore is itself destructive of current state.
 - Bulk operations across many objects whose before-state was not captured.
+- Editing a Config-Entry integration whose fields have no post-setup API write path — see `references/safe-refactoring.md#config-entry-data--blind-spots-for-entity-registry-renames`.
 
 **Reversible — a backup is usually redundant:**
-- Editing an automation / script / scene / dashboard / helper whose current definition was fetched first. Writing that fetched definition back *is* the undo.
+- Editing an automation / script / scene / dashboard / helper whose current definition was fetched first. Writing that definition back *is* the undo.
 - Renaming a friendly name, changing an icon, moving an entity between areas.
-- Toggling an entity or calling a service.
+- A service call whose inverse you can name and target identically — `light.turn_on` ↔ `light.turn_off` on the same entity.
 
-Two things this rule depends on:
+**Neither list — treat as irreversible until you have checked:** a service call with no inverse (`vacuum.send_command`, any `*.press`, `notify.*`); anything that drives a physical mechanism (locks, covers, valves, garage doors); and anything whose effect leaves Home Assistant, since a sent notification or fired webhook cannot be recalled. "It's just a service call" is not a reversibility argument — the inverse depends on the service and the target.
 
-- **Timing is the whole point.** A backup taken *after* the destructive step captures the damage. It must precede the operation, not follow it.
-- **An existing backup schedule does not substitute.** On an instance with nightly automatic backups, the newest one can be almost a day stale — fine for reversible edits, not for an irreversible operation about to run now.
+Two things this test depends on:
+
+- **Timing is the whole point.** A backup taken *after* the destructive step captures the damage. It must precede the operation.
+- **An existing schedule does not substitute.** On an instance with nightly automatic backups, the newest one can be almost a day stale — fine for reversible edits, not for an irreversible operation about to run now.
 
 ## What a Full Backup Contains
 
-- The config directory: registries under `.storage`, YAML configuration, and the stored automations, scripts, scenes, dashboards, and helpers.
-- Add-ons and their data directories. Add-on selection is often partial — check what a given backup actually included before relying on it.
-- The recorder database is **optional and commonly excluded**, because it dominates the size. Excluded means long-term statistics and history do not come back on restore, even though every entity does.
-- Nothing outside the config directory. Files elsewhere on the host are not in the backup.
+Backup contents are **selected per backup**, so what a given archive holds is a property of that archive, not of Home Assistant:
 
-Backups contain credentials, tokens, and API keys in cleartext inside `.storage`. Treat the tarball as a secret: encrypt it, and do not copy it anywhere the user has not chosen.
+- **Home Assistant settings** — the config directory: `.storage` registries, YAML configuration, and the stored automations, scripts, scenes, dashboards, and helpers.
+- **The recorder database — included by default.** `include_database` defaults to true, so history and long-term statistics normally *are* in the backup and *do* come back on restore. The exceptions are a backup created with that option switched off, and a recorder pointed at an external database, which lives outside the backup entirely. Check the archive before telling a user their history will or won't return.
+- **Apps**, individually selectable, with their data directories.
+- **Folders**, individually selectable: `share`, `addons/local`, `ssl`, `media`.
+
+Nothing else on the host is included, and a restore overwrites only the parts a given backup actually contains.
+
+**Encryption and secrets.** Backups are password-protected by default, and restoring one requires its encryption key — the key issued in the backup emergency kit when HA sets up encrypted backups. **An archive without its key is not a recovery point**, so verify the user has the emergency kit before treating a backup as a fallback. A backup downloaded through the UI is decrypted on the way out, and that copy carries `.storage` in cleartext — credentials, long-lived tokens, API keys. Protect the archive and the emergency kit as separate secrets, and never move either anywhere the user has not chosen.
 
 ## Restoring: Consequences and Verification
 
-- A **full restore reverts everything** changed since the backup was taken, then restarts HA. Name the changes that will be lost and confirm before restoring — the user often has unrelated work in that window.
-- A **partial restore** (config only, or one add-on) narrows the blast radius. Prefer it whenever the fault is localised.
-- A **config-level rollback** re-applies one definition through the normal write path; the object reloads and no restart happens.
+- **Confirm before restoring.** Naming which changes will be lost is part of the ask.
+- A **full restore** reverts every included part to its state at backup time and restarts HA. Unrelated work done in that window is gone.
+- A **partial restore** narrows the blast radius; prefer it whenever the fault is localised. Including Home Assistant settings still restarts HA.
+- An **object rollback** through the config API restarts nothing and touches one object.
 
 After any restore, verify rather than assume:
 - Entities are available, not `unavailable` — a restored config entry whose credentials expired comes back broken.
 - The error log is clean of startup failures.
-- Cloud-backed integrations may need re-authentication; a restore replays a token that has since been rotated.
+- Cloud-backed integrations may need re-authentication; a restore replays a token that may have been rotated since.
 - Objects that were disabled when the backup was taken come back disabled.
 
-## Why Deleting Backups Is Guarded
+## Deleting Backups
 
-Deleting backups is guarded because the point of a backup is to survive a mistake made by whoever is currently editing the instance — including an automated agent. Three properties follow:
+Be precise about what Home Assistant protects here, because it is less than it looks:
 
-- **The newest remaining backup is never a valid delete target.** It is the only guaranteed rollback for whatever just happened.
-- **Scheduled / automatic backups belong to a retention policy.** Deleting them ad hoc silently breaks the guarantee the schedule was configured to provide.
-- **A minimum-age floor protects the recent ones.** Breakage is usually noticed hours after the change that caused it, so a young backup may be the only snapshot predating the change under investigation.
+- The **retention cleanup** that enforces a backup schedule will not delete the last remaining backup for a backup location.
+- A **direct delete of one specific backup** — the operation performed when a user asks for a particular backup to be removed — has **no such guard**, and there is no minimum-age protection anywhere. Delete the only recovery point and Home Assistant will carry it out.
 
-Storage pressure is the legitimate reason to delete. When it applies: delete oldest-first, keep the newest and the most recent known-good, and confirm the specific target with the user.
+So on this operation the caution has to come from whoever is driving, not from the platform:
+
+- **Confirm the specific backup with the user before deleting it** — name which one and how old it is.
+- **Leave at least one recent, usable recovery point.** Usable includes having its encryption key available.
+- **Delete oldest first** when clearing several.
+
+Storage pressure is not the only legitimate reason to delete. A credential compromise can make the archive itself the liability; a privacy or retention requirement can mandate removal; and a user can simply ask. None of those removes the confirmation step or the keep-one-recovery-point guidance.
 
 ## Common Pitfalls
 
-- **Backing up after the destructive step.** The snapshot now contains the damage.
-- **Using a full restore to undo one config edit.** Discards every unrelated change made since.
-- **Expecting history back.** The recorder database is usually excluded; entities return, their statistics do not.
-- **Deleting the newest backup to free space.** Removes the only recovery point for the change being investigated.
+- **Backing up after the destructive step.** The archive now contains the damage.
+- **Using a full restore to undo one config edit.** It reverts every unrelated change since, and restarts HA.
+- **Assuming a direct backup delete is guarded.** It isn't — only the scheduled retention cleanup keeps a last backup.
+- **Treating an archive without its encryption key as a recovery point.** It cannot be restored.
+- **Treating a UI-downloaded backup as an ordinary file.** It is decrypted, and it holds cleartext credentials and tokens.
+- **Claiming history will or won't come back without checking.** The recorder database is included by default, but per-backup selection and external databases both change the answer.
+- **Calling a service "reversible" without naming its inverse.**
 - **Treating a backup as a substitute for fetching the current definition before an edit.** Fetching is cheaper, object-scoped, and needs no restart to undo.
-- **Keeping backups only on the instance they back up.** One disk or host failure takes the instance and its recovery points together. Copy them off-box.
+- **Keeping backups only on the instance they back up.** One disk or host failure takes the instance and its recovery points together.
+- **Acting on an irreversible operation because a backup exists.** The backup is the safety net, not the authorization — the user's confirmation is.
