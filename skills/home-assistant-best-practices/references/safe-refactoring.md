@@ -205,7 +205,7 @@ Iterate the returned entries and check `data` and `options` fields for the old e
 
 For integrations that store entity_ids in `options` (Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern.
 
-For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename.
+For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename. This is the one operation in this guide that a fetch-before-write rollback cannot undo, so treat the rename as irreversible and take a full backup first — see `references/backups.md#when-a-full-backup-earns-its-cost`.
 
 ---
 

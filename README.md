@@ -76,7 +76,7 @@ The `home-assistant-best-practices` skill includes:
 | `references/examples.yaml` | Compound examples combining multiple best practices |
 | `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact |
 | `references/blueprint-guide.md` | Blueprint authoring: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, `!input` templating, versioning |
-| `references/backups.md` | Full instance backups vs config-level rollback, when an operation needs a backup first, restore consequences, backup-deletion guards |
+| `references/backups.md` | Full instance backups vs rolling one object back, when an operation needs a backup first, what an archive contains, encryption keys, restore verification, backup deletion |
 
 ## Contributing
 
