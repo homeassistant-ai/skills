@@ -9,10 +9,10 @@ description: >
   - Restructuring triggers, conditions, or modes
   - Zigbee button/remote automations
   - Renaming entities or migrating device_id to entity_id
-  - Looking up card types, domain docs, or selecting helpers
+  - Looking up card types or domain docs
   - AppDaemon apps
   - Authoring reusable Blueprints
-  - Backing up, restoring, or rolling back a change
+  - About to delete, restore, or upgrade with no undo
 
   SYMPTOMS:
   - Agent uses Jinja2 templates where native options exist
@@ -23,7 +23,7 @@ description: >
   - Agent edits .storage, writes YAML, or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI integrations
   - Agent hardcodes Blueprint entities or uses free-text over a selector
-  - Agent runs an irreversible change with no recovery point
+  - Agent changes existing state with no recovery path
 metadata:
   version: 16
 ---
@@ -125,8 +125,8 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Publishing a Blueprint without `source_url` | Set `source_url` to the file's canonical URL | Without it users can't re-import updates and sharing is awkward | `references/blueprint-guide.md#blueprint-metadata` |
 | Full instance restore to undo one automation/script/scene/dashboard/helper edit | Roll that object back — write its previous definition back through the config API | A full restore reverts every unrelated change made since the backup and restarts HA | `references/backups.md#which-recovery-path` |
 | Deleting a device/entity/integration, or upgrading Core, without a preceding backup | Take the full backup *before* the operation | Registry deletions can't be undone by writing the old value back, and a backup taken afterward captures the damage | `references/backups.md#when-a-full-backup-earns-its-cost` |
-| Restoring a backup, deleting a backup, or upgrading Core without explicit user confirmation | Ask, name what will be lost, and wait for an answer — every time, backup or not | These are irreversible; a backup lowers recovery risk but does not authorize the action | `references/backups.md#deleting-backups` |
-| Calling a service "reversible" without naming its inverse | Treat an operation as reversible only when you can name and target its exact inverse | `vacuum.send_command`, `*.press`, `notify.*`, and anything physical or outbound have no inverse to call | `references/backups.md#when-a-full-backup-earns-its-cost` |
+| Restoring a backup, deleting a backup, or upgrading Core without explicit user confirmation | Ask, name the concrete effect, and wait for an answer — every time, backup or not | Restore discards everything since the archive and restarts HA; deletion destroys a recovery point; a Core/OS upgrade is high-impact and its recovery path IS the pre-upgrade backup | `references/backups.md` |
+| Calling a service "reversible" without naming its inverse | Treat an operation as reversible only when you can name and target its exact inverse | `vacuum.send_command`, `*.press` and `notify.*` have none; and an exact inverse still doesn't undo the consequence — re-locking a door doesn't un-expose the house | `references/backups.md#when-a-full-backup-earns-its-cost` |
 
 ---
 
