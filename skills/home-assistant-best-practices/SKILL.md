@@ -25,7 +25,7 @@ description: >
   - Agent hardcodes Blueprint entities or uses free-text over a selector
   - Agent changes existing state with no recovery path
 metadata:
-  version: 16
+  version: 17
 ---
 
 # Home Assistant Best Practices
