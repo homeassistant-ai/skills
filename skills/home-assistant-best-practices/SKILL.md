@@ -5,14 +5,14 @@ description: >
 
   TRIGGER THIS SKILL WHEN:
   - Creating or editing automations, scripts, scenes, or dashboards
-  - Choosing between template sensors and built-in helpers
-  - Restructuring triggers, conditions, or automation modes
-  - Setting up Zigbee button/remote automations
+  - Choosing template sensors vs built-in helpers
+  - Restructuring triggers, conditions, or modes
+  - Zigbee button/remote automations
   - Renaming entities or migrating device_id to entity_id
-  - Configuring dashboard cards or selecting helpers
   - Looking up card types or domain docs
-  - Writing or reviewing AppDaemon apps
-  - Authoring or editing reusable Blueprints
+  - AppDaemon apps
+  - Authoring reusable Blueprints
+  - About to delete a backup, restore a backup, or upgrade Core or the OS
 
   SYMPTOMS:
   - Agent uses Jinja2 templates where native options exist
@@ -22,7 +22,8 @@ description: >
   - Agent hard-codes values or uses raw sensor over helper
   - Agent edits .storage, writes YAML, or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI integrations
-  - Agent hardcodes entities in a Blueprint or uses free-text input over a selector
+  - Agent hardcodes Blueprint entities or uses free-text over a selector
+  - Agent changes existing state with no recovery path
 metadata:
   version: 17
 ---
@@ -122,6 +123,10 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Free-text input for an entity/device in a Blueprint | Typed `entity`/`target`/`device` selector | Text lets typos through and fails silently; selectors validate the choice | `references/blueprint-guide.md#inputs-and-selectors` |
 | `!input` used directly inside a template | Bind it to a `variables:` entry, use the variable | `!input` is a YAML tag, not a template value — the template errors or ignores it | `references/blueprint-guide.md#referencing-inputs-input-and-templating` |
 | Publishing a Blueprint without `source_url` | Set `source_url` to the file's canonical URL | Without it users can't re-import updates and sharing is awkward | `references/blueprint-guide.md#blueprint-metadata` |
+| Full instance restore to undo one automation/script/scene/dashboard/helper edit | Roll that object back — write its previous definition back through the config API | A full restore reverts every unrelated change made since the backup and restarts HA | `references/backups.md#which-recovery-path` |
+| Deleting a device/entity/integration, or upgrading Core, without a preceding backup | Take the full backup *before* the operation | Registry deletions can't be undone by writing the old value back, and a backup taken afterward captures the damage | `references/backups.md#when-a-full-backup-earns-its-cost` |
+| Restoring a backup, deleting a backup, or upgrading Core or the OS without explicit user confirmation | Ask, name the concrete effect, and wait for an answer — every time, backup or not | A full restore discards everything since the archive for all restored parts and restarts HA; a Supervisor partial restore overwrites only the selected archive parts; deletion destroys a recovery point; a Core/OS upgrade is high-impact and its recovery path IS the pre-upgrade backup | `references/backups.md` |
+| Calling a service "reversible" without naming its inverse | Treat an operation as reversible only when you can name and target its exact inverse | `vacuum.send_command`, `*.press` and `notify.*` have none; and an exact inverse still doesn't undo the consequence — re-locking a door doesn't un-expose the house | `references/backups.md#when-a-full-backup-earns-its-cost` |
 
 ---
 
@@ -144,3 +149,4 @@ Read these when you need detailed information:
 | `references/examples.yaml` | Need compound examples combining multiple best practices | — |
 | `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact | — |
 | `references/blueprint-guide.md` | Authoring reusable blueprints: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, input sections, `!input` templating, versioning | `#when-to-author-a-blueprint`, `#blueprint-metadata`, `#inputs-and-selectors`, `#target-selector-vs-entity-selector`, `#defaults`, `#input-sections`, `#referencing-inputs-input-and-templating`, `#versioning-and-updates`, `#common-pitfalls` |
+| `references/backups.md` | Deciding whether an operation needs a backup first; choosing between a full restore, a partial restore, and rolling one object back; what an archive actually contains; encryption keys and the emergency kit; restore verification; what HA does and does not protect when deleting a backup | `#which-recovery-path`, `#when-a-full-backup-earns-its-cost`, `#what-a-full-backup-contains`, `#restoring-consequences-and-verification`, `#deleting-backups`, `#common-pitfalls` |
