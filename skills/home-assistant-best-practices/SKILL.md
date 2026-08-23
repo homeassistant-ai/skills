@@ -1,18 +1,18 @@
 ---
 name: home-assistant-best-practices
 description: >
-  Best practices for HA automations, helpers, scripts, controls, and dashboards.
+  Best practices for HA automations, helpers, scripts, and dashboards.
 
   TRIGGER THIS SKILL WHEN:
-  - Creating or editing automations, scripts, scenes, or dashboards
-  - Choosing template sensors vs built-in helpers
+  - Creating or editing automations, scripts, scenes, dashboards
+  - Choosing template sensors, built-in helpers, or Jinja macros
   - Restructuring triggers, conditions, or modes
   - Zigbee button/remote automations
   - Renaming entities or migrating device_id to entity_id
   - Looking up card types or domain docs
   - AppDaemon apps
-  - Authoring reusable Blueprints
-  - About to delete a backup, restore a backup, or upgrade Core or the OS
+  - Authoring Blueprints
+  - About to delete or restore a backup, or upgrade Core or the OS
 
   SYMPTOMS:
   - Agent uses Jinja2 templates where native options exist
@@ -20,10 +20,11 @@ description: >
   - Agent changes entity IDs without checking consumers
   - Wrong automation mode
   - Agent hard-codes values or uses raw sensor over helper
-  - Agent edits .storage, writes YAML, or generates YAML snippets
+  - Agent edits .storage or generates YAML snippets
   - Agent tells user to edit configuration.yaml for UI integrations
-  - Agent hardcodes Blueprint entities or uses free-text over a selector
+  - Agent hardcodes Blueprint entities or skips selectors
   - Agent changes existing state with no recovery path
+  - Agent copy-pastes Jinja between templates
 metadata:
   version: 18
 ---
@@ -127,6 +128,8 @@ See `references/device-control.md#zigbee-buttonremote-patterns`.
 | Deleting a device/entity/integration, or upgrading Core, without a preceding backup | Take the full backup *before* the operation | Registry deletions can't be undone by writing the old value back, and a backup taken afterward captures the damage | `references/backups.md#when-a-full-backup-earns-its-cost` |
 | Restoring a backup, deleting a backup, or upgrading Core or the OS without explicit user confirmation | Ask, name the concrete effect, and wait for an answer — every time, backup or not | A full restore discards everything since the archive for all restored parts and restarts HA; a Supervisor partial restore overwrites only the selected archive parts; deletion destroys a recovery point; a Core/OS upgrade is high-impact and its recovery path IS the pre-upgrade backup | `references/backups.md` |
 | Calling a service "reversible" without naming its inverse | Treat an operation as reversible only when you can name and target its exact inverse | `vacuum.send_command`, `*.press` and `notify.*` have none; and an exact inverse still doesn't undo the consequence — re-locking a door doesn't un-expose the house | `references/backups.md#when-a-full-backup-earns-its-cost` |
+| The same non-trivial Jinja expression repeated across templates | Once a native trigger/condition and a built-in helper are ruled out, define it once as a macro in `config/custom_templates/*.jinja` and import it | One definition to fix when the rule changes, instead of copies that drift apart | `references/template-guidelines.md#reusable-macros` |
+| `trigger`, `this`, `value_json`, or a `{% set %}` variable used inside an imported macro | Pass it to the macro as an argument | An import does not carry the caller's context — the variable is undefined inside the macro, so it renders empty and any attribute access on it errors (HA's own functions like `states` are globals and do work) | `references/template-guidelines.md#imports-do-not-carry-the-callers-context` |
 
 ---
 
@@ -139,7 +142,7 @@ Read these when you need detailed information:
 | `references/safe-refactoring.md` | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config | `#universal-workflow`, `#entity-renames`, `#helper-replacements`, `#trigger-restructuring`, `#config-entry-data--blind-spots-for-entity-registry-renames`, `#storage-mode-dashboards-storagelovelace` |
 | `references/automation-patterns.md` | Writing triggers, conditions, waits, variables, or choosing automation modes; capturing action responses; documenting/annotating steps; disabling automations | `#purpose-specific-triggers--conditions-default-since-20267`, `#native-conditions`, `#trigger-types`, `#wait-actions`, `#automation-modes`, `#continue-on-error`, `#stopping-a-sequence`, `#variables`, `#capturing-action-responses`, `#repeat-actions`, `#ifthen-vs-choose`, `#parallel-actions`, `#trigger-ids`, `#documenting-automations--scripts`, `#disabling-automations` |
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#how-helpers-are-created`, `#menu-based-helpers`, `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#probabilistic-inference`, `#data-smoothing`, `#random-values`, `#climate-control`, `#domain-conversion`, `#template-helpers`, `#decision-matrix` |
-| `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling` |
+| `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case; sharing Jinja logic between templates with `custom_templates` macros | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling`, `#reusable-macros` |
 | `references/yaml-only-integrations.md` | Creating or editing YAML-only integrations that have no config flow (e.g. `command_line`, platform-based `mqtt`, `rest`) | `#yaml-only-integration-types`, `#post-edit-actions` |
 | `references/device-control.md` | Writing service calls, Zigbee button automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#zigbee-buttonremote-patterns`, `#domain-specific-patterns` |
 | `references/scenes.md` | Authoring or activating scenes; snapshot/restore patterns; snapshot-vs-script distinction | `#scene-config-shape`, `#activating-a-scene`, `#snapshot--restore-scenecreate`, `#apply-states-without-storing-sceneapply` |
