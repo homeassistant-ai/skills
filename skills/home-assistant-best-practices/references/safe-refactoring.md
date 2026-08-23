@@ -58,6 +58,13 @@ Additional requirements beyond the universal workflow:
 **Device-sibling discovery (Step 1):**
 HA devices bundle multiple entities. A smart plug might expose `switch.*`, `sensor.*_energy`, and `update.*`. A multi-sensor exposes motion, temperature, illuminance, and battery entities. Rename all siblings to match.
 
+> **One device entry per integration (2026.8+).** HA used to merge a physical device set up
+> through two integrations into a single device entry; each integration now keeps its own,
+> and previously-merged devices were split automatically on upgrade. So a single device
+> query can return only *part* of a physical device's entities — a bulb reachable over both
+> Matter and its vendor integration appears twice. Search by the shared name or identifier,
+> not by one device entry, before concluding you have found every sibling.
+
 Example — renaming a smart plug's entities from manufacturer defaults to room-based names:
 
 | Domain | Old entity ID | New entity ID |

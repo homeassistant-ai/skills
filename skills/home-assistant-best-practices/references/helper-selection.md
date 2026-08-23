@@ -1012,6 +1012,10 @@ Menu-based — pick a sub-type first (see [Menu-Based Helpers](#menu-based-helpe
 
 Other sub-types follow the same shape — a `state` template plus domain-appropriate metadata.
 
+**State restoration (2026.8+):** `fan`, `cover`, and `device_tracker` template entities
+restore their previous state after a restart, so they resume where they left off instead
+of coming back blank.
+
 **Equivalent YAML platform** (for reference; prefer the helper):
 ```yaml
 template:

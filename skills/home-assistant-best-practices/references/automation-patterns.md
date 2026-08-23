@@ -276,7 +276,7 @@ conditions:
 | `climate.target_temperature` (condition) | `climate.is_target_temperature` |
 | `climate.target_humidity` (condition) | `climate.is_target_humidity` |
 
-**Discovering what exists:** every purpose-specific trigger and condition (and every service action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see `domain-docs.md#fetching-trigger-condition-and-action-docs`. The trees span 50+ domains (~190 trigger and ~145 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, and more. 2026.7 added the sun family (`sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers).
+**Discovering what exists:** every purpose-specific trigger and condition (and every service action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see `domain-docs.md#fetching-trigger-condition-and-action-docs`. The trees span 50+ domains (~190 trigger and ~150 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, event, vibration, moon, and more. The catalog grows every release — 2026.7 added the sun family (`sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers); 2026.8 added the moon family (`moon.phase_changed` trigger; `moon.is_phase` / `moon.is_waning` / `moon.is_waxing` conditions) and the vibration family (`vibration.detected` / `vibration.cleared` triggers; `vibration.is_detected` / `vibration.is_not_detected` conditions) — both are new in 2026.8, so don't emit them for an instance on 2026.7. Check the doc tree rather than this list when a domain you need isn't named here.
 
 Since 2026.7, `options.for` durations on **conditions** are primed from recorded history, so a freshly created or reloaded condition does not restart its duration clock from zero. Trigger `for:` clocks still reset as described in [`for:` duration resets](#for-duration-resets-on-restart-and-on-unavailable).
 
@@ -480,7 +480,7 @@ triggers:
 
 ### Device Trigger (Use Sparingly)
 
-Device triggers key off an opaque `device_id` rather than a readable `entity_id`. Prefer entity-based `state` triggers where practical — they're self-documenting and easier to maintain.
+Device triggers key off an opaque `device_id` rather than a readable `entity_id`. Prefer a purpose-specific trigger with a `target:`, or failing that an entity-based `state` trigger — both are self-documenting and easier to maintain.
 
 ```yaml
 # Prefer a state trigger on a readable entity_id where practical
@@ -492,7 +492,7 @@ triggers:
     subtype: single
 ```
 
-A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same trade-off — prefer a `state`/`numeric_state` condition on a readable `entity_id` where practical.
+A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same trade-off — prefer a purpose-specific condition, or a `state`/`numeric_state` condition on a readable `entity_id`.
 
 ### Zone Trigger
 

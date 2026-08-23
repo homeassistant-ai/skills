@@ -9,7 +9,7 @@ This repository provides an Agent Skill for Home Assistant, following the open [
 
 ## Included Skill
 
-**[home-assistant-best-practices](skills/home-assistant-best-practices/):** Native HA constructs over templates, helper selection, automation modes, Zigbee button patterns, device control best practices, YAML-only integration management, dashboard configuration, and safe refactoring.
+**[home-assistant-best-practices](skills/home-assistant-best-practices/):** Native HA constructs over templates, helper selection, automation modes, button and remote patterns, device control best practices, YAML-only integration management, dashboard configuration, and safe refactoring.
 
 ## Installation
 
@@ -68,7 +68,7 @@ The `home-assistant-best-practices` skill includes:
 | `references/helper-selection.md` | Built-in helpers vs template sensors (with decision matrix) |
 | `references/template-guidelines.md` | When to use templates, when to avoid them, sensor best practices, reusable `custom_templates` macros |
 | `references/yaml-only-integrations.md` | YAML-only integration types, post-edit actions (reload vs restart) |
-| `references/device-control.md` | Service calls, entity_id vs device_id, Zigbee buttons |
+| `references/device-control.md` | Service calls, entity_id vs device_id, buttons and remotes |
 | `references/scenes.md` | Scene authoring: config shape, snapshot/restore, snapshot-vs-script distinction |
 | `references/dashboard-guide.md` | Dashboard layout, view types, sections, custom cards, CSS styling |
 | `references/dashboard-cards.md` | Card type lookup and card-specific documentation |

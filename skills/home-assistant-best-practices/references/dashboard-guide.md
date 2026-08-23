@@ -586,16 +586,21 @@ For iterative dashboard design with visual feedback, add a browser automation MC
 
 ```
 1. Create/update dashboard via the HA config API
-2. Navigate browser to dashboard URL (e.g., http://homeassistant.local:8123/lovelace/my-dashboard)
+2. Navigate browser to {base_url}/lovelace/{url_path}
 3. Take screenshot to see current layout
 4. Analyze screenshot for issues (spacing, alignment, colors)
 5. Adjust configuration and repeat
 ```
 
+**Read `{base_url}` from the instance; never assume `:8123`.** Since 2026.8 a new Home
+Assistant OS install serves on a plain web address with no port suffix, and the port is
+user-settable from the interface, so the number that was a safe default for years no
+longer is. Existing installs keep whatever port they had.
+
 ### Example with Playwright MCP
 
 ```
-1. Get the HA base URL from the system overview (e.g., "http://homeassistant.local:8123")
+1. Get the HA base URL from the system overview — use it verbatim, port included or not
 2. Update dashboard config via the HA REST API
 3. Navigate browser to {base_url}/lovelace/{url_path}
 4. Take screenshot → analyze → adjust → repeat

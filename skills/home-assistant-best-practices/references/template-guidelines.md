@@ -430,9 +430,27 @@ Always use `states()` function, not `states.sensor.x.state`:
 
 ### Attribute Access with Default
 
+`state_attr` returns `None` when the attribute is absent (a light that is off has no
+`brightness`) or the entity does not exist. Jinja's `default` substitutes only for an
+**undefined** name, and `None` is defined — so it passes straight through and the template
+renders the string `None`.
+
 ```yaml
+# BAD - renders "None" while the light is off
 {{ state_attr('light.bedroom', 'brightness') | default(0) }}
+
+# GOOD - the second argument makes default replace any falsy value, None included
+{{ state_attr('light.bedroom', 'brightness') | default(0, true) }}
+
+# GOOD - a type filter's default covers None and converts in one step
+{{ state_attr('light.bedroom', 'brightness') | int(0) }}
 ```
+
+The same trap applies to `| default(...)` after anything that can yield `None`
+(`state_attr`, `.get()`, an attribute that exists but is null) — pass `true` or use
+`int()`/`float()`. Both replace *any* falsy value though, so a real `0`, `False` or `''`
+becomes the default too. Where those are meaningful values, test explicitly instead — see
+[Handle None Attributes](#handle-none-attributes).
 
 ### Time Since State Change
 
@@ -480,12 +498,18 @@ Always use `states()` function, not `states.sensor.x.state`:
 {{ states('sensor.x') | float(default=0) }}
 {{ states('sensor.x') | int(default=-1) }}
 
-# For attribute access
-{{ state_attr('light.x', 'brightness') | default(100) }}
+# For attribute access - `true` is required, because state_attr returns None
+{{ state_attr('light.x', 'brightness') | default(100, true) }}
 
-# For entire template failures
-{{ states('sensor.missing') | default('Unknown', true) }}
+# For a missing or unavailable entity - test it; no default filter will catch it
+{{ states('sensor.missing') if has_value('sensor.missing') else 'Unknown' }}
 ```
+
+**A default filter cannot rescue a missing entity.** `states()` returns the *string*
+`"unknown"` for an entity that does not exist (and `"unavailable"` for one that is
+offline). Both are non-empty strings, so both are truthy: `| default('Unknown', true)`
+leaves them untouched and the template renders `unknown`. `has_value()` is the test that
+covers missing, `unknown`, and `unavailable` in one call.
 
 ### Availability Template
 
@@ -716,7 +740,7 @@ For a real return value, give the macro a `returns` argument and convert it with
 | `float(default)` | Convert to float |
 | `int(default)` | Convert to int |
 | `round(precision)` | Round number |
-| `default(value)` | Provide fallback |
+| `default(value, true)` | Fallback; the `true` is what catches `None` |
 | `timestamp_custom(format)` | Format timestamp |
 | `from_json` | Parse JSON string |
 | `to_json` | Convert to JSON string |

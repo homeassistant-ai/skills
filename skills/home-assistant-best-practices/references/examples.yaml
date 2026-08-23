@@ -10,6 +10,9 @@
 # -----------------------------------------------------------------------------
 # Demonstrates: restart mode, state trigger, native time condition, wait_for_trigger
 # Best practice: Use restart mode so re-triggering resets the timeout
+# Since 2026.7, prefer `trigger: motion.detected` with `target: {area_id: hallway}` for
+# the trigger — see device-control.md#buttonremote-patterns. The state trigger is kept
+# here because wait_for_trigger below reuses the same entity.
 
 automation:
   - id: motion_light_hallway
@@ -185,6 +188,8 @@ automation:
 # -----------------------------------------------------------------------------
 # Demonstrates: if/then action, native time condition, quiet hours logic
 # Best practice: Use if/then for simple binary, choose for multiple branches
+# If the doorbell exposes an `event.*` entity, prefer `trigger: event.received` with
+# `options.event_type` over this state trigger — see device-control.md#buttonremote-patterns.
 
   - id: doorbell_announcement
     alias: "Doorbell Announcement"

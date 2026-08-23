@@ -25,4 +25,11 @@ For sending notifications, prefer config-flow notify integrations (Mobile App, T
 | `sensor` / `binary_sensor` (platform-style) | `homeassistant.restart` | Platform-style YAML — a top-level `sensor:` (or `binary_sensor:`) key with a block sequence of `- platform: <name>` entries — for platforms without a config flow. Many platforms now have config flows — check the integration's docs before assuming YAML is required |
 | `switch` / `light` / `fan` / `cover` / `climate` (platform-style) | `homeassistant.restart` | Platform-style YAML — a top-level `switch:` / `light:` / etc. key with a block sequence of `- platform: <name>` entries — only for platforms that have no config flow. Check the integration's docs before assuming YAML is required |
 
-Confirm with the user before triggering `homeassistant.restart` — it briefly interrupts all automations and integrations.
+## Post-Edit Actions
+
+A YAML edit changes nothing until the integration re-reads the file. Which action applies is the second column above:
+
+- **`<domain>.reload`** — where the integration offers one. It reloads that domain only; nothing else is interrupted.
+- **`homeassistant.restart`** — the fallback for platform-style YAML, which has no reload action. **Confirm with the user first:** it briefly interrupts every automation and integration, not just the one you edited.
+
+Run `homeassistant.check_config` first. `homeassistant.restart` validates the config itself and refuses to restart when it fails, so the risk isn't a broken instance — it's that a reload silently leaves the old config running, or that you spend the user's restart to discover a typo.

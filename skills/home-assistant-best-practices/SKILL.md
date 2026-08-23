@@ -4,27 +4,24 @@ description: >
   Best practices for HA automations, helpers, scripts, and dashboards.
 
   TRIGGER THIS SKILL WHEN:
-  - Creating or editing automations, scripts, scenes, dashboards
-  - Choosing template sensors, built-in helpers, or Jinja macros
-  - Restructuring triggers, conditions, or modes
-  - Zigbee button/remote automations
+  - Creating or editing automations, scripts, scenes, dashboards, blueprints
+  - Choosing template sensors, helpers, or Jinja macros
+  - Restructuring triggers, conditions, or modes; button, remote, or event-entity automations
   - Renaming entities or migrating device_id to entity_id
-  - Looking up card types or domain docs
-  - AppDaemon apps
-  - Authoring Blueprints
-  - About to delete or restore a backup, or upgrade Core or the OS
+  - Looking up card types or domain docs; writing AppDaemon apps
+  - Deleting or restoring a backup, or upgrading Core or the OS
 
   SYMPTOMS:
-  - Agent uses Jinja2 templates where native options exist
-  - Agent uses device_id instead of entity_id
-  - Agent changes entity IDs without checking consumers
-  - Wrong automation mode
-  - Agent hard-codes values or uses raw sensor over helper
-  - Agent edits .storage or generates YAML snippets
-  - Agent tells user to edit configuration.yaml for UI integrations
-  - Agent hardcodes Blueprint entities or skips selectors
-  - Agent changes existing state with no recovery path
-  - Agent copy-pastes Jinja between templates
+  - Jinja2 templates where native options exist
+  - device_id used instead of entity_id
+  - Entity IDs changed without checking consumers
+  - Wrong automation mode chosen
+  - Raw sensor or hard-coded value used where a helper belongs
+  - Direct .storage edits, or generated YAML snippets
+  - User told to edit configuration.yaml for UI integrations
+  - Hardcoded Blueprint entities or skipped selectors
+  - Existing state changed with no recovery path
+  - Jinja copy-pasted between templates
 metadata:
   version: 19
 ---
@@ -83,11 +80,12 @@ Default `single` mode is often wrong. See `references/automation-patterns.md#aut
 
 **Exception:** Zigbee2MQTT autodiscovered device triggers are acceptable.
 
-### 5. For Zigbee buttons/remotes
-- **ZHA:** Use `event` trigger with `device_ieee` (persistent)
-- **Z2M:** Use `device` trigger (autodiscovered) or `mqtt` trigger
+### 5. For buttons and remotes
+- **Any integration exposing an `event.*` entity:** Use `event.received` targeting that entity — a normal entity, so it can be renamed and survives a re-add when the integration keeps a stable unique ID
+- **ZHA:** No event entities — use an `event` trigger with `device_ieee` (persistent)
+- **Z2M:** Event entities are experimental and off by default — use a `device` trigger (autodiscovered) or `mqtt` trigger
 
-See `references/device-control.md#zigbee-buttonremote-patterns`.
+See `references/device-control.md#buttonremote-patterns`.
 
 ---
 
@@ -144,7 +142,7 @@ Read these when you need detailed information:
 | `references/helper-selection.md` | Deciding whether to use a built-in helper vs template sensor | `#how-helpers-are-created`, `#menu-based-helpers`, `#numeric-aggregation`, `#rate-and-change`, `#time-based-tracking`, `#counting-and-timing`, `#scheduling`, `#entity-grouping`, `#probabilistic-inference`, `#data-smoothing`, `#random-values`, `#climate-control`, `#domain-conversion`, `#template-helpers`, `#decision-matrix` |
 | `references/template-guidelines.md` | Confirming templates ARE appropriate for a use case; sharing Jinja logic between templates with `custom_templates` macros | `#when-templates-are-appropriate`, `#when-to-avoid-templates`, `#template-sensor-best-practices`, `#common-patterns`, `#error-handling`, `#reusable-macros` |
 | `references/yaml-only-integrations.md` | Creating or editing YAML-only integrations that have no config flow (e.g. `command_line`, platform-based `mqtt`, `rest`) | `#yaml-only-integration-types`, `#post-edit-actions` |
-| `references/device-control.md` | Writing service calls, Zigbee button automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#zigbee-buttonremote-patterns`, `#domain-specific-patterns` |
+| `references/device-control.md` | Writing service calls, button/remote automations, or using target: | `#entity-id-vs-device-id`, `#service-calls-best-practices`, `#buttonremote-patterns`, `#domain-specific-patterns` |
 | `references/scenes.md` | Authoring or activating scenes; snapshot/restore patterns; snapshot-vs-script distinction | `#scene-config-shape`, `#activating-a-scene`, `#snapshot--restore-scenecreate`, `#apply-states-without-storing-sceneapply` |
 | `references/dashboard-guide.md` | Designing or modifying Lovelace dashboards — layout, view types, strategies, sections, cards, badges, CSS styling, HACS | `#dashboard-structure`, `#view-types`, `#dashboard-strategies`, `#built-in-cards`, `#features`, `#badges`, `#custom-cards`, `#css-styling`, `#common-pitfalls` |
 | `references/dashboard-cards.md` | Looking up available card types or fetching card-specific documentation | — |
