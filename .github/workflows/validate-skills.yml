@@ -67,12 +67,24 @@ jobs:
         # version) that strict clients refuse to parse. Scoped to skills/ and
         # left non-strict on purpose: repo-wide, agnix also emits prose-style
         # heuristics about CLAUDE.md that should not gate a merge.
+        #
+        # Installed as a checksum-verified release binary because this repo
+        # restricts Actions to GitHub-owned and verified creators.
         if: steps.changes.outputs.skills_changed == 'true'
-        uses: agent-sh/agnix@v0.49.0
-        with:
-          path: skills/
-          target: claude-code
-          version: '0.49.0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGNIX_VERSION: v0.49.0
+        run: |
+          set -euo pipefail
+          asset="agnix-x86_64-unknown-linux-gnu.tar.gz"
+          dest="${RUNNER_TEMP}/agnix"
+          mkdir -p "$dest"
+          gh release download "$AGNIX_VERSION" --repo agent-sh/agnix \
+            --pattern "$asset" --pattern "$asset.sha256" --dir "$dest"
+          (cd "$dest" && sha256sum -c "$asset.sha256")
+          tar xzf "$dest/$asset" -C "$dest"
+          "$dest/agnix" --version
+          "$dest/agnix" skills/ --target claude-code
 
       - name: Enforce version not manually changed
         if: steps.changes.outputs.skills_changed == 'true' && github.event_name == 'pull_request'

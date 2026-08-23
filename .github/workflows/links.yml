@@ -5,7 +5,8 @@ on:
     paths:
       - '**/*.md'
       # SKILL.md links to references/examples.yaml; without this a rename of a
-      # linked .yaml touches no .md and the broken link merges unchecked.
+      # linked .yaml touches no markdown, the workflow never runs, and the
+      # broken link merges unchecked.
       - '**/*.yaml'
   schedule:
     # External links rot on their own schedule, not ours — check weekly.
@@ -15,20 +16,40 @@ on:
 permissions:
   contents: read
 
+env:
+  # This repo restricts Actions to GitHub-owned and verified creators, so lychee
+  # is installed as a checksum-verified release binary rather than via its
+  # action. The archive ships its own README.md and docs/, so it is unpacked
+  # into RUNNER_TEMP — unpacking it into the workspace would make lychee scan
+  # its own documentation.
+  LYCHEE_VERSION: v0.24.2
+
 jobs:
   internal:
-    # Local file paths and #anchors only. No network, so it is deterministic
-    # and safe to block a PR on.
+    # Local file paths and #anchors only. No network, so it is deterministic and
+    # safe to block a merge on.
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install lychee
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          asset="lychee-x86_64-unknown-linux-gnu.tar.gz"
+          dest="${RUNNER_TEMP}/lychee"
+          mkdir -p "$dest"
+          gh release download "lychee-${LYCHEE_VERSION}" --repo lycheeverse/lychee \
+            --pattern "$asset" --pattern "$asset.sha256" --dir "$dest"
+          (cd "$dest" && sha256sum -c "$asset.sha256")
+          tar xzf "$dest/$asset" -C "$dest" --strip-components=1
+          echo "$dest" >> "$GITHUB_PATH"
+          "$dest/lychee" --version
+
       - name: Check internal links and anchors
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: --offline --include-fragments --no-progress './**/*.md'
-          fail: true
+        run: lychee --offline --include-fragments --no-progress './**/*.md'
 
   external:
     # Network-dependent: a dead upstream or a rate limit would fail unrelated
@@ -38,8 +59,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install lychee
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          asset="lychee-x86_64-unknown-linux-gnu.tar.gz"
+          dest="${RUNNER_TEMP}/lychee"
+          mkdir -p "$dest"
+          gh release download "lychee-${LYCHEE_VERSION}" --repo lycheeverse/lychee \
+            --pattern "$asset" --pattern "$asset.sha256" --dir "$dest"
+          (cd "$dest" && sha256sum -c "$asset.sha256")
+          tar xzf "$dest/$asset" -C "$dest" --strip-components=1
+          echo "$dest" >> "$GITHUB_PATH"
+          "$dest/lychee" --version
+
       - name: Check external links
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: --no-progress --max-retries 3 './**/*.md'
-          fail: true
+        run: lychee --no-progress --max-retries 3 './**/*.md'
