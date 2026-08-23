@@ -448,8 +448,10 @@ renders the string `None`.
 
 The same trap applies to `| default(...)` after anything that can yield `None`
 (`state_attr`, `.get()`, an attribute that exists but is null) — pass `true` or use
-`int()`/`float()`. Both replace *any* falsy value though, so a real `0`, `False` or `''`
-becomes the default too. Where those are meaningful values, test explicitly instead — see
+`int()`/`float()` — but they are not equivalent. `default(x, true)` replaces **any** falsy
+value, so a real `0`, `False` or `''` becomes the default too; `int(x)`/`float(x)` fall back
+only when the **conversion fails**, so a real `0` stays `0` and `False` converts to `0`.
+Where a falsy value is meaningful, use the conversion filter, or test explicitly — see
 [Handle None Attributes](#handle-none-attributes).
 
 ### Time Since State Change
@@ -509,7 +511,9 @@ becomes the default too. Where those are meaningful values, test explicitly inst
 `"unknown"` for an entity that does not exist (and `"unavailable"` for one that is
 offline). Both are non-empty strings, so both are truthy: `| default('Unknown', true)`
 leaves them untouched and the template renders `unknown`. `has_value()` is the test that
-covers missing, `unknown`, and `unavailable` in one call.
+covers missing, `unknown`, and `unavailable` in one call — in a full template. Limited
+template contexts (a blueprint's `trigger_variables:`, `enabled:`) have no `states()` or
+`has_value()`; see [blueprint-guide #referencing-inputs-input-and-templating](blueprint-guide.md#referencing-inputs-input-and-templating).
 
 ### Availability Template
 

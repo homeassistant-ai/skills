@@ -58,7 +58,7 @@ The test is reversibility, not how risky something feels: **back up before an op
 **Reversible — a backup is usually redundant:**
 - Editing an automation / script / scene / dashboard / helper whose current definition was fetched first. Writing that definition back *is* the undo.
 - Renaming a friendly name, changing an icon, moving an entity between areas.
-- An action whose inverse you can name and target identically — `light.turn_on` ↔ `light.turn_off` on the same entity.
+- An action whose inverse you can name and target identically — `light.turn_on` ↔ `light.turn_off` on the same entity, and only for a bare on/off from a known starting state. Once `light.turn_on` carries `brightness`, `color_*`, `profile` or `transition`, or the prior state is unknown, `turn_off` does not restore it — snapshot the state first (`scene.create`) and restore that.
 
 **Neither list — treat as irreversible until you have checked.** The exact-inverse test is the rule; these are the cases where passing it still is not enough:
 

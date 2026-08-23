@@ -242,21 +242,25 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
 
 2. Replace entity IDs (Python — JSON-aware, boundary-safe):
    import re
-   def _replace_ids(obj, old_id, new_id, _pat=None):
-       # Substitutes *within* strings, so `states('x')` / `state_attr('x')` and
-       # `states.<domain>.<object>` object notation are all caught.
-       # First branch: lookarounds stop `sensor.old` matching `sensor.old_backup`.
-       # Second branch: after `states.`, only a word char may not follow — a dot
-       # there is attribute access (`.state`), since an entity_id has one dot.
-       pat = _pat or re.compile(
-           rf"(?<![\w.]){re.escape(old_id)}(?![\w.])"
-           rf"|(?<=states\.){re.escape(old_id)}(?![\w])")
-       if isinstance(obj, str):  return pat.sub(new_id, obj)
+   def entity_pattern(old_id):
+       # Matches `sensor.x` as a value, and `states.sensor.x` object notation.
+       # `(?<![\w.])` before BOTH branches stops `sensor.x` matching inside
+       # `sensor.x_backup` / `binary_sensor.x`, and stops the `states.` branch
+       # firing on a lookalike prefix such as `other_states.sensor.x`.
+       e = re.escape(old_id)
+       return re.compile(rf"(?<![\w.])(states\.){e}(?![\w])|(?<![\w.]){e}(?![\w.])")
+
+   def _replace_ids(obj, old_id, new_id, pat=None):
+       pat = pat or entity_pattern(old_id)
+       sub = lambda m: (m.group(1) or "") + new_id   # keep the `states.` prefix
+       if isinstance(obj, str):  return pat.sub(sub, obj)
        if isinstance(obj, list): return [_replace_ids(i, old_id, new_id, pat) for i in obj]
        if isinstance(obj, dict): return {_replace_ids(k, old_id, new_id, pat): _replace_ids(v, old_id, new_id, pat)
                                          for k, v in obj.items()}
        return obj
-   new_config = _replace_ids(config, "old.entity_id", "new.entity_id")
+
+   pat = entity_pattern("old.entity_id")          # reuse this in step 4
+   new_config = _replace_ids(config, "old.entity_id", "new.entity_id", pat)
    # An exact whole-string match (obj == old_id) is NOT enough: it silently skips
    # every reference inside a Markdown card's Jinja ({{ states('sensor.old') }}),
    # which Step 2 explicitly tells you to search for. Plain string replace over
@@ -268,7 +272,8 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
    → takes effect immediately, no restart required
 
 4. Verify against the WRITTEN config, not the source you edited:
-   re-read via `lovelace/config` and re-run `pat.search()` over the serialized
+   re-read via `lovelace/config` and run `pat.search()` (the same compiled
+   pattern from step 2) over the serialized
    result — reuse the same boundary-aware pattern, not a plain substring test.
    A substring test reports `sensor.old_backup` as a stale `sensor.old`, and
    Step 5.4 then tells you to roll back a rename that actually succeeded.

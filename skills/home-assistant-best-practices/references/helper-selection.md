@@ -6,19 +6,19 @@ This document covers Home Assistant's built-in helpers and integrations that sho
 1. [How Helpers Are Created](#how-helpers-are-created)
 2. [Menu-Based Helpers](#menu-based-helpers)
 3. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
-2. [Rate and Change](#rate-and-change) - derivative, threshold, trend
-3. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
-4. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
-5. [Counting and Timing](#counting-and-timing) - counter, timer
-6. [Scheduling](#scheduling) - schedule, time of day (tod)
-7. [Entity Grouping](#entity-grouping) - group, binary sensor groups
-8. [Probabilistic Inference](#probabilistic-inference) - bayesian
-9. [Data Smoothing](#data-smoothing) - filter
-10. [Random Values](#random-values) - random
-11. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
-12. [Domain Conversion](#domain-conversion) - switch_as_x
-13. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
-14. [Decision Matrix](#decision-matrix) - which helper for which need
+4. [Rate and Change](#rate-and-change) - derivative, threshold, trend
+5. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
+6. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
+7. [Counting and Timing](#counting-and-timing) - counter, timer
+8. [Scheduling](#scheduling) - schedule, time of day (tod)
+9. [Entity Grouping](#entity-grouping) - group, binary sensor groups
+10. [Probabilistic Inference](#probabilistic-inference) - bayesian
+11. [Data Smoothing](#data-smoothing) - filter
+12. [Random Values](#random-values) - random
+13. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
+14. [Domain Conversion](#domain-conversion) - switch_as_x
+15. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+16. [Decision Matrix](#decision-matrix) - which helper for which need
 
 ## How Helpers Are Created
 

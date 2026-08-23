@@ -11,7 +11,8 @@
 # Demonstrates: restart mode, state trigger, native time condition, wait_for_trigger
 # Best practice: Use restart mode so re-triggering resets the timeout
 # Since 2026.7, prefer `trigger: motion.detected` with `target: {area_id: hallway}` for
-# the trigger — see device-control.md#buttonremote-patterns. The state trigger is kept
+# the trigger — see automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267.
+# The state trigger is kept
 # here because wait_for_trigger below reuses the same entity.
 
 automation:
