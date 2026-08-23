@@ -1,0 +1,45 @@
+name: Links
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+      # SKILL.md links to references/examples.yaml; without this a rename of a
+      # linked .yaml touches no .md and the broken link merges unchecked.
+      - '**/*.yaml'
+  schedule:
+    # External links rot on their own schedule, not ours — check weekly.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  internal:
+    # Local file paths and #anchors only. No network, so it is deterministic
+    # and safe to block a PR on.
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check internal links and anchors
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --include-fragments --no-progress './**/*.md'
+          fail: true
+
+  external:
+    # Network-dependent: a dead upstream or a rate limit would fail unrelated
+    # PRs, so this runs on a schedule instead of in the merge path.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check external links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --max-retries 3 './**/*.md'
+          fail: true

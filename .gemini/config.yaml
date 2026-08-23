@@ -11,8 +11,9 @@ code_review:
           err toward over-triggering rather than under-triggering; good descriptions
           include explicit TRIGGER WHEN and SYMPTOMS sections listing observable agent
           behaviors that signal the skill is needed
-        - `metadata.version`: monotonically incrementing integer managed by CI; new
-          skills set it to `0` as a placeholder — do not edit manually
+        - `metadata.version`: monotonically incrementing integer, written as a quoted
+          string per the spec; managed by CI; new skills set it to `"0"` as a
+          placeholder — do not edit manually
 
         ## Structure
         - SKILL.md must stay under 500 lines
@@ -21,11 +22,15 @@ code_review:
         - Use forward slashes in all file paths
 
         ## Content quality
-        - Include only domain-specific knowledge agents lack; omit general programming advice
+        - Keep what is Home Assistant-specific; cut general programming advice. The test is
+          whether the content is HA-specific, not whether a model already knows it — these
+          skills run on agents from frontier models to small local ones. Keep anywhere HA
+          diverges from what the general syntax implies (e.g. `state_attr` returns `None`,
+          not an undefined, so `| default(x)` does not catch it).
         - Provide patterns and quick-reference tables, not tutorials
         - One term per concept throughout (consistent terminology)
         - Explain the *why* behind instructions rather than issuing bare MUST/NEVER commands
-        - If bundled scripts exist, the skill should tell Claude when and how to use them
+        - If bundled scripts exist, the skill should tell the agent when and how to use them
 
         ## Common pitfalls
         - Skills should not reference specific MCP tool names (e.g. `ha_rename_entity`,
