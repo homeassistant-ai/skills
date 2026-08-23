@@ -23,9 +23,9 @@ This document covers when templates ARE the right choice in Home Assistant, and 
 
 Templates are the RIGHT choice when:
 
-### 1. Dynamic Service Data
+### 1. Dynamic Action Data
 
-You need to pass dynamic values to service calls based on entity states or trigger context.
+You need to pass dynamic values to actions based on entity states or trigger context.
 
 ```yaml
 actions:
@@ -174,7 +174,7 @@ Do NOT use templates when a native alternative exists:
 | Template binary sensor with threshold | `threshold` helper |
 | Template sensor averaging over time | `statistics` helper |
 
-See `automation-patterns.md` and `helper-selection.md` for comprehensive alternatives.
+See [automation-patterns](automation-patterns.md) and [helper-selection](helper-selection.md) for comprehensive alternatives.
 
 ---
 
@@ -285,7 +285,7 @@ not in separate blocks per entity. Trigger-based blocks (with their own `trigger
 must be separate regardless of entity type, since each block defines its own trigger context:
 
 ```yaml
-# CORRECT — state-based sensors: one block, multiple entries:
+# GOOD — state-based sensors: one block, multiple entries:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -295,7 +295,7 @@ template:
         unique_id: motion_room_b
         state: "{{ ... }}"
 
-# AVOID — state-based sensors split across separate blocks:
+# BAD — state-based sensors split across separate blocks:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -430,9 +430,29 @@ Always use `states()` function, not `states.sensor.x.state`:
 
 ### Attribute Access with Default
 
+`state_attr` returns `None` when the attribute is absent (a light that is off has no
+`brightness`) or the entity does not exist. Jinja's `default` substitutes only for an
+**undefined** name, and `None` is defined — so it passes straight through and the template
+renders the string `None`.
+
 ```yaml
+# BAD - renders "None" while the light is off
 {{ state_attr('light.bedroom', 'brightness') | default(0) }}
+
+# GOOD - the second argument makes default replace any falsy value, None included
+{{ state_attr('light.bedroom', 'brightness') | default(0, true) }}
+
+# GOOD - a type filter's default covers None and converts in one step
+{{ state_attr('light.bedroom', 'brightness') | int(0) }}
 ```
+
+The same trap applies to `| default(...)` after anything that can yield `None`
+(`state_attr`, `.get()`, an attribute that exists but is null) — pass `true` or use
+`int()`/`float()` — but they are not equivalent. `default(x, true)` replaces **any** falsy
+value, so a real `0`, `False` or `''` becomes the default too; `int(x)`/`float(x)` fall back
+only when the **conversion fails**, so a real `0` stays `0` and `False` converts to `0`.
+Where a falsy value is meaningful, use the conversion filter, or test explicitly — see
+[Handle None Attributes](#handle-none-attributes).
 
 ### Time Since State Change
 
@@ -480,12 +500,20 @@ Always use `states()` function, not `states.sensor.x.state`:
 {{ states('sensor.x') | float(default=0) }}
 {{ states('sensor.x') | int(default=-1) }}
 
-# For attribute access
-{{ state_attr('light.x', 'brightness') | default(100) }}
+# For attribute access - `true` is required, because state_attr returns None
+{{ state_attr('light.x', 'brightness') | default(100, true) }}
 
-# For entire template failures
-{{ states('sensor.missing') | default('Unknown', true) }}
+# For a missing or unavailable entity - test it; no default filter will catch it
+{{ states('sensor.missing') if has_value('sensor.missing') else 'Unknown' }}
 ```
+
+**A default filter cannot rescue a missing entity.** `states()` returns the *string*
+`"unknown"` for an entity that does not exist (and `"unavailable"` for one that is
+offline). Both are non-empty strings, so both are truthy: `| default('Unknown', true)`
+leaves them untouched and the template renders `unknown`. `has_value()` is the test that
+covers missing, `unknown`, and `unavailable` in one call — in a full template. Limited
+template contexts (a blueprint's `trigger_variables:`, `enabled:`) have no `states()` or
+`has_value()`; see [blueprint-guide #referencing-inputs-input-and-templating](blueprint-guide.md#referencing-inputs-input-and-templating).
 
 ### Availability Template
 
@@ -610,7 +638,7 @@ The `.jinja` file requires filesystem access to the config directory — there i
 | Create `config/custom_templates/` | HA does not create it; a missing directory is not an error, it just yields no macros |
 | Add a `*.jinja` file | Subdirectories are scanned too; only the `.jinja` extension is loaded |
 | Import by path relative to `custom_templates/` | `battery.jinja`, or `sensors/battery.jinja` for a file in a subdirectory |
-| Call `homeassistant.reload_custom_templates` | Admin service, no restart. Required after every edit — HA holds the sources in memory. `homeassistant.reload_all` includes it |
+| Call `homeassistant.reload_custom_templates` | Admin action, no restart. Required after every edit — HA holds the sources in memory. `homeassistant.reload_all` includes it |
 
 
 ```jinja
@@ -716,7 +744,7 @@ For a real return value, give the macro a `returns` argument and convert it with
 | `float(default)` | Convert to float |
 | `int(default)` | Convert to int |
 | `round(precision)` | Round number |
-| `default(value)` | Provide fallback |
+| `default(value, true)` | Fallback; the `true` is what catches `None` |
 | `timestamp_custom(format)` | Format timestamp |
 | `from_json` | Parse JSON string |
 | `to_json` | Convert to JSON string |

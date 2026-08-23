@@ -1,6 +1,30 @@
 # Device Control Patterns
 
-Best practices for controlling devices, triggering from Zigbee buttons/remotes, and structuring service calls.
+Best practices for controlling devices, triggering from buttons and remotes, and structuring actions.
+
+> **Check for a purpose-specific trigger first.** Since 2026.7 the default building block is
+> a purpose-specific trigger/condition — `motion.detected`, `door.opened`,
+> `switch.turned_on`, `temperature.crossed_threshold` — aimed at a `target:` that accepts an
+> area, floor, or label instead of a list of entity IDs. The generic `state` patterns in this
+> file remain correct and are the right answer when no purpose-specific block matches, but
+> check for one before reaching for them; see
+> [automation-patterns #purpose-specific-triggers--conditions-default-since-20267](automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267).
+>
+> This does not soften the entity-over-device rule below — it strengthens it. A
+> purpose-specific `target:` takes `entity_id` / `area_id` / `floor_id` / `label_id` (and
+> `device_id`, which you should still avoid), and targeting an area is what removes the stale
+> entity list *and* the `device_id` at once.
+
+## Table of Contents
+1. [Entity ID vs Device ID](#entity-id-vs-device-id)
+2. [Action Best Practices](#action-best-practices)
+3. [Button/Remote Patterns](#buttonremote-patterns)
+4. [Domain-Specific Patterns](#domain-specific-patterns)
+5. [Vacuum Control](#vacuum-control)
+6. [Response Data](#response-data)
+7. [Common Mistakes](#common-mistakes)
+8. [Quick Reference: Action Structure](#quick-reference-action-structure)
+9. [Quick Reference: Trigger Types for Devices](#quick-reference-trigger-types-for-devices)
 
 ---
 
@@ -23,6 +47,7 @@ triggers:
     type: motion
 
 # ✅ RIGHT - entity_id is stable and renameable
+#    (generic fallback — check motion.detected with an area target first)
 triggers:
   - trigger: state
     entity_id: binary_sensor.hallway_motion
@@ -39,11 +64,11 @@ The only cases where `device_id` might be acceptable:
 
 ---
 
-## Service Calls Best Practices
+## Action Best Practices
 
 ### Use target: Structure
 
-Modern Home Assistant service calls use the `target:` key to specify entities, areas, or devices:
+Modern Home Assistant actions use the `target:` key to specify entities, areas, or devices:
 
 ```yaml
 actions:
@@ -102,7 +127,37 @@ target:
 
 ---
 
-## Zigbee Button/Remote Patterns
+## Button/Remote Patterns
+
+### First: does the integration expose an `event.*` entity?
+
+Many integrations now represent a stateless button press as an **event entity** rather than
+a bus event or a device trigger. Where one exists and is stable, it is the best target — a
+normal entity, so it can be renamed, is reachable by area or label, and survives a device
+re-add as long as the integration assigns a stable unique ID. Trigger on it with
+`event.received`:
+
+```yaml
+triggers:
+  - trigger: event.received
+    target:
+      entity_id: event.living_room_remote_button
+    options:
+      event_type:
+        - double_short_release   # values are integration-defined; read them off the entity
+```
+
+The available `event_type` values come from the entity's own `event_types` attribute —
+read them rather than guessing. A plain `state` trigger on the entity fires on *any* event
+type, which is the right choice only when you genuinely want all of them.
+
+Two Zigbee stacks are exceptions:
+
+- **ZHA has no event platform**, so ZHA remotes use the `zha_event` pattern below.
+- **Zigbee2MQTT's event entities are experimental and off by default** — they need
+  `homeassistant: {experimental_event_entities: true}`, and Z2M documents both the feature
+  and its event-type names as subject to change. Prefer its autodiscovered `device` trigger
+  or an `mqtt` trigger unless the user has already opted in.
 
 ### ZHA (Zigbee Home Automation)
 
@@ -118,11 +173,11 @@ triggers:
       command: "toggle"
 ```
 
-For a complete multi-button remote with trigger_id + choose, see `references/examples.yaml` Example 2.
+For a complete multi-button remote with trigger_id + choose, see [examples.yaml](examples.yaml) Example 2.
 
 #### Finding ZHA Event Data
 
-1. Go to **Developer Tools → Events**
+1. Go to **Tools → Events** (named **Developer Tools** before 2026.8)
 2. Subscribe to `zha_event`
 3. Press your button
 4. Copy the `device_ieee` and `command` values
@@ -266,7 +321,7 @@ actions:
   - action: notify.mobile_app_phone
     data:
       title: "Motion Detected"
-      message: "Motion in {{ trigger.to_state.attributes.friendly_name }}"
+      message: "Motion in {{ entity_name(trigger.entity_id) }}"
       data:
         tag: "motion-alert"
         actions:
@@ -337,7 +392,7 @@ Suggest the user configure segment-to-area mapping when possible to avoid vendor
 
 ## Response Data
 
-Some services return data. Use `response_variable` to capture it:
+Some actions return data. Use `response_variable` to capture it:
 
 ```yaml
 actions:
@@ -391,7 +446,7 @@ actions:
       entity_id: light.living_room
 ```
 
-### ❌ Forgetting service data structure
+### ❌ Forgetting action data structure
 
 ```yaml
 # WRONG - brightness_pct at wrong level
@@ -412,7 +467,7 @@ actions:
 
 ---
 
-## Quick Reference: Service Call Structure
+## Quick Reference: Action Structure
 
 ```yaml
 actions:
@@ -421,19 +476,26 @@ actions:
       entity_id: entity.id        # Single or list
       area_id: area_name          # Single or list
       device_id: device_id        # Avoid except for Z2M
-    data:                         # Service-specific parameters
+    data:                         # Action-specific parameters
       parameter: value
     response_variable: result     # Capture response (if needed)
 ```
 
 ## Quick Reference: Trigger Types for Devices
 
-| Device Type | ZHA | Zigbee2MQTT | Generic |
-|-------------|-----|-------------|---------|
-| Button/Remote | `event` (zha_event) | `device` or `mqtt` | `state` |
-| Motion sensor | `state` | `state` | `state` |
-| Door/Window | `state` | `state` | `state` |
-| Temperature | `state` or `numeric_state` | `state` or `numeric_state` | `state` or `numeric_state` |
-| Switch | `state` | `state` | `state` |
+Read left to right and stop at the first column that applies.
 
-Always prefer `state` triggers with `entity_id` for sensors and switches. Only use event/device triggers for stateless devices (buttons, remotes).
+| Device type | Purpose-specific (check first) | Generic fallback | Zigbee specifics |
+|-------------|-------------------------------|------------------|------------------|
+| Button/Remote | `event.received` on the `event.*` entity, when one exists | `state` on the `event.*` entity (fires on any event type) | ZHA: `event` trigger on `zha_event` + `device_ieee`. Z2M: `device` or `mqtt` trigger |
+| Motion sensor | `motion.detected` / `motion.cleared` | `state` | — |
+| Door/Window | `door.opened` / `door.closed`, `window.opened` / `window.closed` | `state` | — |
+| Temperature | `temperature.crossed_threshold` / `temperature.changed` | `numeric_state` or `state` | — |
+| Switch | `switch.turned_on` / `switch.turned_off` | `state` | — |
+| Battery | `battery.became_low` / `battery.no_longer_low` | `numeric_state` | — |
+
+Two rules survive whichever column you land in: **don't key a trigger off a `device_id`**
+outside the cases in [When Device ID is Acceptable](#when-device-id-is-acceptable), and
+**prefer a `target:` over a list of entity IDs** when the automation is really about "this
+area" rather than these specific entities — the area keeps working as devices are added,
+swapped, or removed.

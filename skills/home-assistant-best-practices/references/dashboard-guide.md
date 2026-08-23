@@ -148,7 +148,7 @@ views: []
 | **Display** | sensor, history-graph, statistics-graph, gauge, energy, calendar, distribution |
 | **Legacy Control** | entity, entities, light, thermostat (use tile instead) |
 
-**Default:** Use `tile` card for most entities. Use `references/dashboard-cards.md` to look up all card types or fetch card-specific docs.
+**Default:** Use `tile` card for most entities. Use [dashboard-cards](dashboard-cards.md) to look up all card types or fetch card-specific docs.
 
 ### Tile Card
 
@@ -574,39 +574,14 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 
 ## Visual Iteration Workflow
 
-For iterative dashboard design with visual feedback, add a browser automation MCP server:
+Where browser automation is available, render the dashboard and look at it rather than
+reasoning about the JSON: write the config through the HA API, open
+`{base_url}/lovelace/{url_path}`, screenshot, adjust, repeat.
 
-### Recommended MCP Servers
-
-- **Playwright MCP** (`@anthropic/mcp-playwright`) — Take screenshots, interact with pages
-- **Puppeteer MCP** — Similar browser automation capabilities
-- **Browser DevTools MCP** — Inspect elements, debug layouts
-
-### Workflow
-
-```
-1. Create/update dashboard via the HA config API
-2. Navigate browser to dashboard URL (e.g., http://homeassistant.local:8123/lovelace/my-dashboard)
-3. Take screenshot to see current layout
-4. Analyze screenshot for issues (spacing, alignment, colors)
-5. Adjust configuration and repeat
-```
-
-### Example with Playwright MCP
-
-```
-1. Get the HA base URL from the system overview (e.g., "http://homeassistant.local:8123")
-2. Update dashboard config via the HA REST API
-3. Navigate browser to {base_url}/lovelace/{url_path}
-4. Take screenshot → analyze → adjust → repeat
-```
-
-### Benefits
-
-- See actual rendered output, not just JSON config
-- Catch visual issues (card overlap, responsive breakpoints)
-- Verify custom card styling
-- Test on different viewport sizes
+**Read `{base_url}` from the instance; never assume `:8123`.** Since 2026.8 a new Home
+Assistant OS install serves on a plain web address with no port suffix, and the port is
+user-settable from the interface, so the number that was a safe default for years no
+longer is. Existing installs keep whatever port they had.
 
 ### Screenshot Caveats
 

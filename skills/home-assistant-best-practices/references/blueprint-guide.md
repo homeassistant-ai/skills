@@ -59,7 +59,7 @@ Common selectors:
 | Selector | Yields | Use for |
 |----------|--------|---------|
 | `entity` | entity_id(s) | Picking specific entities; filter with `domain`, `device_class`, `integration` |
-| `target` | a target dict (entities/devices/areas/floors/labels) | Anything you pass straight to a service call's `target:` |
+| `target` | a target dict (entities/devices/areas/floors/labels) | Anything you pass straight to an action's `target:` |
 | `device` | device_id(s) | Device triggers, or device-level actions (rare — prefer entities) |
 | `area` / `floor` / `label` | area/floor/label id(s) | Scoping actions to a whole area/floor/label |
 | `number` | number | Timeouts, brightness, thresholds; set `min`/`max`/`step`/`mode`/`unit_of_measurement` |
@@ -88,7 +88,7 @@ Add `multiple: true` to accept a list. Filter by `integration:` when the bluepri
 The issue this guide most often resolves. Both point at "what to control," but they produce different shapes:
 
 - **`entity` selector → `entity_id`(s).** Use it when you need the id itself — for a `state` trigger's `entity_id`, a `states(...)` lookup in a template, or an action that specifically wants an entity.
-- **`target` selector → a target dict** (`{entity_id, device_id, area_id, floor_id, label_id}`). Use it when the value flows straight into a service call's `target:`. It lets the user target entities, whole devices, or entire areas/floors/labels — more flexible for "act on these lights," where the user might prefer to say "all lights in the living room area."
+- **`target` selector → a target dict** (`{entity_id, device_id, area_id, floor_id, label_id}`). Use it when the value flows straight into an action's `target:`. It lets the user target entities, whole devices, or entire areas/floors/labels — more flexible for "act on these lights," where the user might prefer to say "all lights in the living room area."
 
 ```yaml
 # target selector — pass directly to target:
@@ -168,9 +168,9 @@ actions:
       brightness_pct: "{{ brightness_pct }}"   # use the variable, never !input
 ```
 
-For **templated triggers**, bind inputs through `trigger_variables:` (a separate top-level key evaluated before triggers fire). It supports **limited templates only** — no `states()`/`state_attr()` — and exists mainly to pass a blueprint `!input` into trigger options (see `automation-patterns.md#trigger-types`). Don't put state-based templates there.
+For **templated triggers**, bind inputs through `trigger_variables:` (a separate top-level key evaluated before triggers fire). It supports **limited templates only** — no `states()`/`state_attr()` — and exists mainly to pass a blueprint `!input` into trigger options (see [automation-patterns #trigger-types](automation-patterns.md#trigger-types)). Don't put state-based templates there.
 
-`enabled:` on an individual trigger/condition/action also accepts a blueprint `!input` (evaluated once at load) — handy for optional behavior toggled by a `boolean` input (see `automation-patterns.md#enabled-on-individual-triggers-conditions-and-actions`).
+`enabled:` on an individual trigger/condition/action also accepts a blueprint `!input` (evaluated once at load) — handy for optional behavior toggled by a `boolean` input (see [automation-patterns #enabled-on-individual-triggers-conditions-and-actions](automation-patterns.md#enabled-on-individual-triggers-conditions-and-actions)).
 
 ## Versioning and Updates
 

@@ -60,6 +60,35 @@ jobs:
           done
           exit $exit_code
 
+      - name: Lint skills with agnix
+        # Second opinion on spec conformance. skills-ref declares
+        # `metadata: dict[str, str]` as a Python annotation with no runtime
+        # check, so it passes type violations (e.g. an unquoted integer
+        # version) that strict clients refuse to parse. Scoped to skills/ and
+        # left non-strict on purpose: repo-wide, agnix also emits prose-style
+        # heuristics about CLAUDE.md that should not gate a merge.
+        #
+        # Installed as a checksum-verified release binary because this repo
+        # restricts Actions to GitHub-owned and verified creators.
+        if: steps.changes.outputs.skills_changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AGNIX_VERSION: v0.49.0
+          # Pinned digest — see the note in links.yml on why the release's own
+          # .sha256 is not a sufficient integrity check.
+          AGNIX_SHA256: e3bb9e3661025d54cc5d5835c429548d2a6e0626135363c41c044822f861bcbd
+        run: |
+          set -euo pipefail
+          asset="agnix-x86_64-unknown-linux-gnu.tar.gz"
+          dest="${RUNNER_TEMP}/agnix"
+          mkdir -p "$dest"
+          gh release download "$AGNIX_VERSION" --repo agent-sh/agnix \
+            --pattern "$asset" --dir "$dest"
+          echo "${AGNIX_SHA256}  ${dest}/${asset}" | sha256sum -c -
+          tar xzf "$dest/$asset" -C "$dest"
+          "$dest/agnix" --version
+          "$dest/agnix" skills/ --target claude-code
+
       - name: Enforce version not manually changed
         if: steps.changes.outputs.skills_changed == 'true' && github.event_name == 'pull_request'
         env:

@@ -104,10 +104,10 @@ jobs:
               /^---/{fd++; print; next}
               fd==1 && /^metadata:/{m=1; print; next}
               fd==1 && m && /^[[:space:]]+version:/{
-                if (/version:[[:space:]]*"/)
-                  sub(/"[^"]*"/, new_ver)    # quoted string — strip quotes and write bare integer
-                else
-                  sub(/[0-9]+/, new_ver)     # unquoted integer
+                # The spec requires metadata values to be strings, so the integer
+                # is written quoted. Handles both the quoted steady state and any
+                # remaining unquoted value.
+                sub(/version:.*/, "version: \"" new_ver "\"")
                 m=0
               }
               {print}

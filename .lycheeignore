@@ -1,0 +1,13 @@
+# Fetch-on-demand URL templates: the placeholder is substituted by the agent at
+# runtime, so the literal URL is not resolvable.
+.*\{[a-z_]+\}.*
+.*<[a-z_]+>.*
+
+# Stand-in repo URL in the blueprint `source_url` example.
+https://github\.com/you/.*
+
+# Illustrative endpoints inside YAML examples, not real services.
+https?://([a-z]+\.)?example\.com.*
+
+# Local-network instance addresses; unreachable from CI by design.
+https?://homeassistant\.local.*

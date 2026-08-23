@@ -276,7 +276,7 @@ conditions:
 | `climate.target_temperature` (condition) | `climate.is_target_temperature` |
 | `climate.target_humidity` (condition) | `climate.is_target_humidity` |
 
-**Discovering what exists:** every purpose-specific trigger and condition (and every service action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see `domain-docs.md#fetching-trigger-condition-and-action-docs`. The trees span 50+ domains (~190 trigger and ~145 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, and more. 2026.7 added the sun family (`sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers).
+**Discovering what exists:** every purpose-specific trigger and condition (and every action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see [domain-docs #fetching-trigger-condition-and-action-docs](domain-docs.md#fetching-trigger-condition-and-action-docs). The trees span 50+ domains (~190 trigger and ~150 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, event, vibration, moon, and more. The catalog grows every release — 2026.7 added the sun family (`sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers); 2026.8 added the moon family (`moon.phase_changed` trigger; `moon.is_phase` / `moon.is_waning` / `moon.is_waxing` conditions) and the vibration family (`vibration.detected` / `vibration.cleared` triggers; `vibration.is_detected` / `vibration.is_not_detected` conditions) — both are new in 2026.8, so don't emit them for an instance on 2026.7. Check the doc tree rather than this list when a domain you need isn't named here.
 
 Since 2026.7, `options.for` durations on **conditions** are primed from recorded history, so a freshly created or reloaded condition does not restart its duration clock from zero. Trigger `for:` clocks still reset as described in [`for:` duration resets](#for-duration-resets-on-restart-and-on-unavailable).
 
@@ -480,7 +480,7 @@ triggers:
 
 ### Device Trigger (Use Sparingly)
 
-Device triggers key off an opaque `device_id` rather than a readable `entity_id`. Prefer entity-based `state` triggers where practical — they're self-documenting and easier to maintain.
+Device triggers key off an opaque `device_id` rather than a readable `entity_id`. Prefer a purpose-specific trigger with a `target:`, or failing that an entity-based `state` trigger — both are self-documenting and easier to maintain.
 
 ```yaml
 # Prefer a state trigger on a readable entity_id where practical
@@ -492,7 +492,7 @@ triggers:
     subtype: single
 ```
 
-A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same trade-off — prefer a `state`/`numeric_state` condition on a readable `entity_id` where practical.
+A matching **`condition: device`** variant exists (`device_id`, `domain`, `entity_id`, `type`) with the same trade-off — prefer a purpose-specific condition, or a `state`/`numeric_state` condition on a readable `entity_id`.
 
 ### Zone Trigger
 
@@ -584,7 +584,7 @@ Use `start` for boot-time setup (restore state, resync devices). `shutdown` hand
 
 > **Don't recompute a user-settable value on `start`.** A boot-time recompute (e.g. re-deriving a
 > mode from sensors) overwrites any manual override on every restart. For user-settable state, let
-> the helper restore its value (omit `initial:` — see `helper-selection.md`) and only *re-sync
+> the helper restore its value (omit `initial:` — see [helper-selection](helper-selection.md)) and only *re-sync
 > dependent flags* from the restored value on start.
 
 ### Conversation Trigger
@@ -807,7 +807,7 @@ Stops the current run and starts fresh. Timer-based actions are reset.
 mode: restart  # Re-trigger resets the timer
 ```
 
-See `references/examples.yaml` Example 1 for a complete motion-light automation using restart + wait_for_trigger.
+See [examples.yaml](examples.yaml) Example 1 for a complete motion-light automation using restart + wait_for_trigger.
 
 ### queued
 
@@ -961,7 +961,7 @@ When an automation declares both `trigger_variables:` and `variables:`, the two 
 
 ## Capturing Action Responses
 
-`response_variable` captures the data a service returns (e.g. `weather.get_forecasts`, `calendar.get_events`, `todo.get_items`) into a variable for later steps — the only native mechanism for response-aware service calls.
+`response_variable` captures the data an action returns (e.g. `weather.get_forecasts`, `calendar.get_events`, `todo.get_items`) into a variable for later steps — the only native mechanism for response-aware actions.
 
 ```yaml
 - action: weather.get_forecasts
@@ -1175,7 +1175,7 @@ Home Assistant provides two distinct ways to disable an automation, with differe
 
 ### Method 1: Turn Off (Temporary, State Machine)
 
-`automation.turn_off` disables the automation's configured triggers — it will not fire automatically. The entity remains in the state machine with state `off` and can still be invoked via the `automation.trigger` service.
+`automation.turn_off` disables the automation's configured triggers — it will not fire automatically. The entity remains in the state machine with state `off` and can still be invoked via the `automation.trigger` action.
 
 ```yaml
 - action: automation.turn_off
@@ -1221,7 +1221,7 @@ Disabling an automation via *Settings → Automations → open automation → �
 `enabled:` is **not** a valid top-level key in `automations.yaml`. Home Assistant rejects unknown keys during schema validation, so the automation loads as `unavailable`.
 
 ```yaml
-# CORRECT — disable temporarily via service (Method 1)
+# CORRECT — disable temporarily via action (Method 1)
 - action: automation.turn_off
   target:
     entity_id: automation.my_automation

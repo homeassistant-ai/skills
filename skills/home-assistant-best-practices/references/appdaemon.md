@@ -11,7 +11,7 @@ automations in general — use it only when native tools are genuinely insuffici
 1. [When to Use AppDaemon (vs. Native HA)](#when-to-use-appdaemon-vs-native-ha)
 2. [App Structure and Lifecycle](#app-structure-and-lifecycle)
 3. [Listening to State Changes](#listening-to-state-changes)
-4. [Calling HA Services](#calling-ha-services)
+4. [Calling HA Actions](#calling-ha-actions)
 5. [Scheduling and Timers](#scheduling-and-timers)
 6. [State Management and Inter-App Communication](#state-management-and-inter-app-communication)
 7. [Logging](#logging)
@@ -149,7 +149,7 @@ def on_zha_event(self, event_name, data, **kwargs):
         self.toggle("light.bedroom")
 ```
 
-## Calling HA Services
+## Calling HA Actions
 
 ### turn_on / turn_off / toggle
 
@@ -159,7 +159,7 @@ self.turn_on("light.kitchen")
 self.turn_off("light.kitchen")
 self.toggle("light.kitchen")
 
-# With service data
+# With action data
 self.turn_on("light.kitchen", brightness_pct=80, color_temp_kelvin=3000)
 ```
 
@@ -319,7 +319,7 @@ def on_custom_event(self, event_name, data, **kwargs):
 self.log("Normal operational message") # INFO (default)
 self.log("Detailed debug info", level="DEBUG")
 self.log("Something unexpected happened", level="WARNING")
-self.log("Service call failed", level="ERROR")
+self.log("Action failed", level="ERROR")
 ```
 
 **Best practices:**
@@ -455,9 +455,9 @@ def initialize(self):
     self._light = self.args["entity_light"]
 ```
 
-### Verifying Service Call Outcomes
+### Verifying Action Outcomes
 
-AppDaemon does not raise exceptions for failed service calls. Verify critical
+AppDaemon does not raise exceptions for failed actions. Verify critical
 outcomes by reading entity state after a short delay:
 
 ```python
@@ -511,7 +511,7 @@ def verify_thermostat(self, **kwargs):
 AppDaemon apps reference HA entity IDs as string literals in Python files **and**
 as argument values in `apps.yaml`. When renaming HA entities, search AppDaemon
 sources in addition to the standard HA config components listed in
-`references/safe-refactoring.md#step-2-search-all-consumers`.
+[safe-refactoring #step-2-search-all-consumers](safe-refactoring.md#step-2-search-all-consumers).
 
 **Additional locations to include in the Step 2 checklist:**
 
@@ -533,5 +533,5 @@ in `appdaemon.log` that the app reloaded without errors.
 | HA entity rename consumed by an app | Update all `.py` files and `apps.yaml`; hot-reload triggers automatically |
 | New Python package dependency | Add to AppDaemon App configuration (`python_packages` list) and restart the App |
 
-**Note:** In HA 2026.2+, add-ons are referred to as **Apps**. The AppDaemon add-on
-appears under **Settings → Apps**.
+**Note:** HA renamed add-ons to **Apps** in 2026.2. The AppDaemon App appears under
+**Settings → Apps**.

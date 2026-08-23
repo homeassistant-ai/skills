@@ -1,21 +1,24 @@
 # Helper Selection Guide
 
-This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **template helper** (created via the UI / config-entry flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
+This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **Template Helper** (created via the UI / config-entry flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
 
 ## Table of Contents
-1. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
-2. [Rate and Change](#rate-and-change) - derivative, threshold, trend
-3. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
-4. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
-5. [Counting and Timing](#counting-and-timing) - counter, timer
-6. [Scheduling](#scheduling) - schedule, time of day (tod)
-7. [Entity Grouping](#entity-grouping) - group, binary sensor groups
-8. [Probabilistic Inference](#probabilistic-inference) - bayesian
-9. [Data Smoothing](#data-smoothing) - filter
-10. [Random Values](#random-values) - random
-11. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
-12. [Domain Conversion](#domain-conversion) - switch_as_x
-13. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+1. [How Helpers Are Created](#how-helpers-are-created)
+2. [Menu-Based Helpers](#menu-based-helpers)
+3. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
+4. [Rate and Change](#rate-and-change) - derivative, threshold, trend
+5. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
+6. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
+7. [Counting and Timing](#counting-and-timing) - counter, timer
+8. [Scheduling](#scheduling) - schedule, time of day (tod)
+9. [Entity Grouping](#entity-grouping) - group, binary sensor groups
+10. [Probabilistic Inference](#probabilistic-inference) - bayesian
+11. [Data Smoothing](#data-smoothing) - filter
+12. [Random Values](#random-values) - random
+13. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
+14. [Domain Conversion](#domain-conversion) - switch_as_x
+15. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+16. [Decision Matrix](#decision-matrix) - which helper for which need
 
 ## How Helpers Are Created
 
@@ -989,7 +992,7 @@ UI-only — no YAML equivalent. The original switch entity is hidden once conver
 
 ## Template Helpers
 
-When no dedicated helper covers your need, use the **template helper** — created via the config-entry flow / UI, **not** YAML `template:` platform sensors. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
+When no dedicated helper covers your need, use the **Template Helper** — created via the config-entry flow / UI, **not** YAML `template:` platform sensors. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
 
 ### template
 
@@ -1012,6 +1015,10 @@ Menu-based — pick a sub-type first (see [Menu-Based Helpers](#menu-based-helpe
 
 Other sub-types follow the same shape — a `state` template plus domain-appropriate metadata.
 
+**State restoration (2026.8+):** `fan`, `cover`, and `device_tracker` template entities
+restore their previous state after a restart, so they resume where they left off instead
+of coming back blank.
+
 **Equivalent YAML platform** (for reference; prefer the helper):
 ```yaml
 template:
@@ -1027,7 +1034,7 @@ template:
         device_class: presence
 ```
 
-See the [Decision Matrix](#decision-matrix) for when the template helper is the right choice vs. a dedicated helper — every pattern that has a dedicated helper (averaging, rate of change, thresholds, time-of-day, scheduling, any-on/all-on) should go through that helper first.
+See the [Decision Matrix](#decision-matrix) for when the Template Helper is the right choice vs. a dedicated helper — every pattern that has a dedicated helper (averaging, rate of change, thresholds, time-of-day, scheduling, any-on/all-on) should go through that helper first.
 
 ---
 

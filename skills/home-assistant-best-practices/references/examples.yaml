@@ -10,6 +10,10 @@
 # -----------------------------------------------------------------------------
 # Demonstrates: restart mode, state trigger, native time condition, wait_for_trigger
 # Best practice: Use restart mode so re-triggering resets the timeout
+# Since 2026.7, prefer `trigger: motion.detected` with `target: {area_id: hallway}` for
+# the trigger — see automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267.
+# The state trigger is kept
+# here because wait_for_trigger below reuses the same entity.
 
 automation:
   - id: motion_light_hallway
@@ -185,6 +189,8 @@ automation:
 # -----------------------------------------------------------------------------
 # Demonstrates: if/then action, native time condition, quiet hours logic
 # Best practice: Use if/then for simple binary, choose for multiple branches
+# If the doorbell exposes an `event.*` entity, prefer `trigger: event.received` with
+# `options.event_type` over this state trigger — see device-control.md#buttonremote-patterns.
 
   - id: doorbell_announcement
     alias: "Doorbell Announcement"
@@ -225,7 +231,7 @@ automation:
 # EXAMPLE 6: Script with fields, sequence, and mode
 # -----------------------------------------------------------------------------
 # Demonstrates: correct script schema (sequence not actions), fields for
-# parameterization, mode selection, area targeting, multiple service calls
+# parameterization, mode selection, area targeting, multiple actions
 # Best practice: Use the HA config API to create scripts programmatically
 # rather than generating YAML snippets for manual file editing
 
