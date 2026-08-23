@@ -255,8 +255,16 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
        sub = lambda m: (m.group(1) or "") + new_id   # keep the `states.` prefix
        if isinstance(obj, str):  return pat.sub(sub, obj)
        if isinstance(obj, list): return [_replace_ids(i, old_id, new_id, pat) for i in obj]
-       if isinstance(obj, dict): return {_replace_ids(k, old_id, new_id, pat): _replace_ids(v, old_id, new_id, pat)
-                                         for k, v in obj.items()}
+       if isinstance(obj, dict):
+           out = {}
+           for k, v in obj.items():
+               nk = _replace_ids(k, old_id, new_id, pat)
+               # Both ids present as keys (scene entity maps, card entity dicts)
+               # would silently collapse into one and drop the other's settings.
+               if nk in out:
+                   raise ValueError(f"rename collides on key {nk!r}; resolve by hand")
+               out[nk] = _replace_ids(v, old_id, new_id, pat)
+           return out
        return obj
 
    pat = entity_pattern("old.entity_id")          # reuse this in step 4
