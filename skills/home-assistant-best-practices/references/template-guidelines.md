@@ -23,9 +23,9 @@ This document covers when templates ARE the right choice in Home Assistant, and 
 
 Templates are the RIGHT choice when:
 
-### 1. Dynamic Service Data
+### 1. Dynamic Action Data
 
-You need to pass dynamic values to service calls based on entity states or trigger context.
+You need to pass dynamic values to actions based on entity states or trigger context.
 
 ```yaml
 actions:
@@ -174,7 +174,7 @@ Do NOT use templates when a native alternative exists:
 | Template binary sensor with threshold | `threshold` helper |
 | Template sensor averaging over time | `statistics` helper |
 
-See `automation-patterns.md` and `helper-selection.md` for comprehensive alternatives.
+See [automation-patterns](automation-patterns.md) and [helper-selection](helper-selection.md) for comprehensive alternatives.
 
 ---
 
@@ -285,7 +285,7 @@ not in separate blocks per entity. Trigger-based blocks (with their own `trigger
 must be separate regardless of entity type, since each block defines its own trigger context:
 
 ```yaml
-# CORRECT — state-based sensors: one block, multiple entries:
+# GOOD — state-based sensors: one block, multiple entries:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -295,7 +295,7 @@ template:
         unique_id: motion_room_b
         state: "{{ ... }}"
 
-# AVOID — state-based sensors split across separate blocks:
+# BAD — state-based sensors split across separate blocks:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -634,7 +634,7 @@ The `.jinja` file requires filesystem access to the config directory — there i
 | Create `config/custom_templates/` | HA does not create it; a missing directory is not an error, it just yields no macros |
 | Add a `*.jinja` file | Subdirectories are scanned too; only the `.jinja` extension is loaded |
 | Import by path relative to `custom_templates/` | `battery.jinja`, or `sensors/battery.jinja` for a file in a subdirectory |
-| Call `homeassistant.reload_custom_templates` | Admin service, no restart. Required after every edit — HA holds the sources in memory. `homeassistant.reload_all` includes it |
+| Call `homeassistant.reload_custom_templates` | Admin action, no restart. Required after every edit — HA holds the sources in memory. `homeassistant.reload_all` includes it |
 
 
 ```jinja

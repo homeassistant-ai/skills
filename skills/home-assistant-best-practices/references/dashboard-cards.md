@@ -6,7 +6,7 @@ Home Assistant provides 39 built-in card types. For card-specific documentation,
 
 alarm-panel, area, button, calendar, clock, conditional, distribution, energy, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, media-control, picture-elements, picture-entity, picture-glance, picture, plant-status, sensor, shopping-list, shortcut, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
 
-**Note:** The HA docs URL pattern also covers 4 view types (`masonry`, `panel`, `sections`, `sidebar`) — these are set at the view level via `"type"` in view config, NOT inside card arrays. See `references/dashboard-guide.md#view-types`.
+**Note:** The HA docs URL pattern also covers 4 view types (`masonry`, `panel`, `sections`, `sidebar`) — these are set at the view level via `"type"` in view config, NOT inside card arrays. See [dashboard-guide #view-types](dashboard-guide.md#view-types).
 
 ## Fetching Card Documentation
 

@@ -4,6 +4,15 @@ Follow this workflow whenever you modify existing Home Assistant configuration: 
 
 **Core rule:** Search all consumers BEFORE changing anything. Verify zero stale references AFTER.
 
+## Table of Contents
+1. [Universal Workflow](#universal-workflow)
+2. [Entity Renames](#entity-renames)
+3. [Helper Replacements](#helper-replacements)
+4. [Trigger Restructuring](#trigger-restructuring)
+5. [Config-Entry-Groups](#config-entry-groups)
+6. [Config-Entry Data — Blind Spots for entity registry renames](#config-entry-data--blind-spots-for-entity-registry-renames)
+7. [Storage-Mode-Dashboards (`.storage/lovelace.*`)](#storage-mode-dashboards-storagelovelace)
+
 ---
 
 ## Universal Workflow
@@ -212,7 +221,7 @@ Iterate the returned entries and check `data` and `options` fields for the old e
 
 For integrations that store entity_ids in `options` (Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern.
 
-For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename. This is the one operation in this guide that a fetch-before-write rollback cannot undo, so treat the rename as irreversible and take a full backup first — see `references/backups.md#when-a-full-backup-earns-its-cost`.
+For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename. This is the one operation in this guide that a fetch-before-write rollback cannot undo, so treat the rename as irreversible and take a full backup first — see [backups #when-a-full-backup-earns-its-cost](backups.md#when-a-full-backup-earns-its-cost).
 
 ---
 
@@ -232,19 +241,39 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
    → returns full dashboard config (JSON)
 
 2. Replace entity IDs (Python — JSON-aware, boundary-safe):
-   def _replace_ids(obj, old_id, new_id):
-       if isinstance(obj, str): return new_id if obj == old_id else obj
-       if isinstance(obj, list): return [_replace_ids(i, old_id, new_id) for i in obj]
-       if isinstance(obj, dict): return {(new_id if k == old_id else k): _replace_ids(v, old_id, new_id) for k, v in obj.items()}
+   import re
+   def _replace_ids(obj, old_id, new_id, _pat=None):
+       # Substitutes *within* strings, so `states('x')` / `state_attr('x')` and
+       # `states.<domain>.<object>` object notation are all caught.
+       # First branch: lookarounds stop `sensor.old` matching `sensor.old_backup`.
+       # Second branch: after `states.`, only a word char may not follow — a dot
+       # there is attribute access (`.state`), since an entity_id has one dot.
+       pat = _pat or re.compile(
+           rf"(?<![\w.]){re.escape(old_id)}(?![\w.])"
+           rf"|(?<=states\.){re.escape(old_id)}(?![\w])")
+       if isinstance(obj, str):  return pat.sub(new_id, obj)
+       if isinstance(obj, list): return [_replace_ids(i, old_id, new_id, pat) for i in obj]
+       if isinstance(obj, dict): return {_replace_ids(k, old_id, new_id, pat): _replace_ids(v, old_id, new_id, pat)
+                                         for k, v in obj.items()}
        return obj
    new_config = _replace_ids(config, "old.entity_id", "new.entity_id")
-   # Note: string replace on json.dumps() is not boundary-safe — it matches entity IDs
-   # that appear as JSON keys or as substrings of other strings in the serialized output.
+   # An exact whole-string match (obj == old_id) is NOT enough: it silently skips
+   # every reference inside a Markdown card's Jinja ({{ states('sensor.old') }}),
+   # which Step 2 explicitly tells you to search for. Plain string replace over
+   # json.dumps() is the opposite failure — it has no boundaries at all.
 
 3. Write dashboard config:
    WebSocket: {"type": "lovelace/config/save", "url_path": "<dashboard_url_path>", "config": new_config}
    Note: use `"url_path": null` for the default (Overview) dashboard; use the string path for custom dashboards.
    → takes effect immediately, no restart required
+
+4. Verify against the WRITTEN config, not the source you edited:
+   re-read via `lovelace/config` and re-run `pat.search()` over the serialized
+   result — reuse the same boundary-aware pattern, not a plain substring test.
+   A substring test reports `sensor.old_backup` as a stale `sensor.old`, and
+   Step 5.4 then tells you to roll back a rename that actually succeeded.
+   Verifying the object you built in memory proves nothing about what the
+   dashboard now holds.
 ```
 
 

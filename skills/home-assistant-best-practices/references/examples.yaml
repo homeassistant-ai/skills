@@ -230,7 +230,7 @@ automation:
 # EXAMPLE 6: Script with fields, sequence, and mode
 # -----------------------------------------------------------------------------
 # Demonstrates: correct script schema (sequence not actions), fields for
-# parameterization, mode selection, area targeting, multiple service calls
+# parameterization, mode selection, area targeting, multiple actions
 # Best practice: Use the HA config API to create scripts programmatically
 # rather than generating YAML snippets for manual file editing
 

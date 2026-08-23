@@ -1,9 +1,11 @@
 # Helper Selection Guide
 
-This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **template helper** (created via the UI / config-entry flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
+This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **Template Helper** (created via the UI / config-entry flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
 
 ## Table of Contents
-1. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
+1. [How Helpers Are Created](#how-helpers-are-created)
+2. [Menu-Based Helpers](#menu-based-helpers)
+3. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
 2. [Rate and Change](#rate-and-change) - derivative, threshold, trend
 3. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
 4. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
@@ -16,6 +18,7 @@ This document covers Home Assistant's built-in helpers and integrations that sho
 11. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
 12. [Domain Conversion](#domain-conversion) - switch_as_x
 13. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+14. [Decision Matrix](#decision-matrix) - which helper for which need
 
 ## How Helpers Are Created
 
@@ -989,7 +992,7 @@ UI-only — no YAML equivalent. The original switch entity is hidden once conver
 
 ## Template Helpers
 
-When no dedicated helper covers your need, use the **template helper** — created via the config-entry flow / UI, **not** YAML `template:` platform sensors. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
+When no dedicated helper covers your need, use the **Template Helper** — created via the config-entry flow / UI, **not** YAML `template:` platform sensors. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
 
 ### template
 
@@ -1031,7 +1034,7 @@ template:
         device_class: presence
 ```
 
-See the [Decision Matrix](#decision-matrix) for when the template helper is the right choice vs. a dedicated helper — every pattern that has a dedicated helper (averaging, rate of change, thresholds, time-of-day, scheduling, any-on/all-on) should go through that helper first.
+See the [Decision Matrix](#decision-matrix) for when the Template Helper is the right choice vs. a dedicated helper — every pattern that has a dedicated helper (averaging, rate of change, thresholds, time-of-day, scheduling, any-on/all-on) should go through that helper first.
 
 ---
 

@@ -1,6 +1,6 @@
 # Device Control Patterns
 
-Best practices for controlling devices, triggering from buttons and remotes, and structuring service calls.
+Best practices for controlling devices, triggering from buttons and remotes, and structuring actions.
 
 > **Check for a purpose-specific trigger first.** Since 2026.7 the default building block is
 > a purpose-specific trigger/condition — `motion.detected`, `door.opened`,
@@ -8,12 +8,23 @@ Best practices for controlling devices, triggering from buttons and remotes, and
 > area, floor, or label instead of a list of entity IDs. The generic `state` patterns in this
 > file remain correct and are the right answer when no purpose-specific block matches, but
 > check for one before reaching for them; see
-> `automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267`.
+> [automation-patterns #purpose-specific-triggers--conditions-default-since-20267](automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267).
 >
 > This does not soften the entity-over-device rule below — it strengthens it. A
 > purpose-specific `target:` takes `entity_id` / `area_id` / `floor_id` / `label_id` (and
 > `device_id`, which you should still avoid), and targeting an area is what removes the stale
 > entity list *and* the `device_id` at once.
+
+## Table of Contents
+1. [Entity ID vs Device ID](#entity-id-vs-device-id)
+2. [Action Best Practices](#action-best-practices)
+3. [Button/Remote Patterns](#buttonremote-patterns)
+4. [Domain-Specific Patterns](#domain-specific-patterns)
+5. [Vacuum Control](#vacuum-control)
+6. [Response Data](#response-data)
+7. [Common Mistakes](#common-mistakes)
+8. [Quick Reference: Action Structure](#quick-reference-action-structure)
+9. [Quick Reference: Trigger Types for Devices](#quick-reference-trigger-types-for-devices)
 
 ---
 
@@ -53,11 +64,11 @@ The only cases where `device_id` might be acceptable:
 
 ---
 
-## Service Calls Best Practices
+## Action Best Practices
 
 ### Use target: Structure
 
-Modern Home Assistant service calls use the `target:` key to specify entities, areas, or devices:
+Modern Home Assistant actions use the `target:` key to specify entities, areas, or devices:
 
 ```yaml
 actions:
@@ -162,7 +173,7 @@ triggers:
       command: "toggle"
 ```
 
-For a complete multi-button remote with trigger_id + choose, see `references/examples.yaml` Example 2.
+For a complete multi-button remote with trigger_id + choose, see [examples.yaml](examples.yaml) Example 2.
 
 #### Finding ZHA Event Data
 
@@ -310,7 +321,7 @@ actions:
   - action: notify.mobile_app_phone
     data:
       title: "Motion Detected"
-      message: "Motion in {{ trigger.to_state.attributes.friendly_name }}"
+      message: "Motion in {{ entity_name(trigger.entity_id) }}"
       data:
         tag: "motion-alert"
         actions:
@@ -381,7 +392,7 @@ Suggest the user configure segment-to-area mapping when possible to avoid vendor
 
 ## Response Data
 
-Some services return data. Use `response_variable` to capture it:
+Some actions return data. Use `response_variable` to capture it:
 
 ```yaml
 actions:
@@ -435,7 +446,7 @@ actions:
       entity_id: light.living_room
 ```
 
-### ❌ Forgetting service data structure
+### ❌ Forgetting action data structure
 
 ```yaml
 # WRONG - brightness_pct at wrong level
@@ -456,7 +467,7 @@ actions:
 
 ---
 
-## Quick Reference: Service Call Structure
+## Quick Reference: Action Structure
 
 ```yaml
 actions:
@@ -465,7 +476,7 @@ actions:
       entity_id: entity.id        # Single or list
       area_id: area_name          # Single or list
       device_id: device_id        # Avoid except for Z2M
-    data:                         # Service-specific parameters
+    data:                         # Action-specific parameters
       parameter: value
     response_variable: result     # Capture response (if needed)
 ```

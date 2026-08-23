@@ -62,21 +62,21 @@ The `home-assistant-best-practices` skill includes:
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Decision workflow and quick-reference routing |
-| `references/safe-refactoring.md` | Safe workflow for renaming entities, replacing helpers, restructuring automations |
-| `references/automation-patterns.md` | Native conditions, triggers, waits, automation modes |
-| `references/helper-selection.md` | Built-in helpers vs template sensors (with decision matrix) |
-| `references/template-guidelines.md` | When to use templates, when to avoid them, sensor best practices, reusable `custom_templates` macros |
-| `references/yaml-only-integrations.md` | YAML-only integration types, post-edit actions (reload vs restart) |
-| `references/device-control.md` | Service calls, entity_id vs device_id, buttons and remotes |
-| `references/scenes.md` | Scene authoring: config shape, snapshot/restore, snapshot-vs-script distinction |
-| `references/dashboard-guide.md` | Dashboard layout, view types, sections, custom cards, CSS styling |
-| `references/dashboard-cards.md` | Card type lookup and card-specific documentation |
-| `references/domain-docs.md` | Integration and domain documentation for service calls, entity attributes |
-| `references/examples.yaml` | Compound examples combining multiple best practices |
-| `references/appdaemon.md` | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact |
-| `references/blueprint-guide.md` | Blueprint authoring: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, `!input` templating, versioning |
-| `references/backups.md` | Full instance backups vs rolling one object back, when an operation needs a backup first, what an archive contains, encryption keys, restore verification, backup deletion |
+| [`SKILL.md`](skills/home-assistant-best-practices/SKILL.md) | Decision workflow and quick-reference routing |
+| [`references/safe-refactoring.md`](skills/home-assistant-best-practices/references/safe-refactoring.md) | Safe workflow for renaming entities, replacing helpers, restructuring automations |
+| [`references/automation-patterns.md`](skills/home-assistant-best-practices/references/automation-patterns.md) | Native conditions, triggers, waits, automation modes |
+| [`references/helper-selection.md`](skills/home-assistant-best-practices/references/helper-selection.md) | Built-in helpers vs template sensors (with decision matrix) |
+| [`references/template-guidelines.md`](skills/home-assistant-best-practices/references/template-guidelines.md) | When to use templates, when to avoid them, sensor best practices, reusable `custom_templates` macros |
+| [`references/yaml-only-integrations.md`](skills/home-assistant-best-practices/references/yaml-only-integrations.md) | YAML-only integration types, post-edit actions (reload vs restart) |
+| [`references/device-control.md`](skills/home-assistant-best-practices/references/device-control.md) | Service calls, entity_id vs device_id, buttons and remotes |
+| [`references/scenes.md`](skills/home-assistant-best-practices/references/scenes.md) | Scene authoring: config shape, snapshot/restore, snapshot-vs-script distinction |
+| [`references/dashboard-guide.md`](skills/home-assistant-best-practices/references/dashboard-guide.md) | Dashboard layout, view types, sections, custom cards, CSS styling |
+| [`references/dashboard-cards.md`](skills/home-assistant-best-practices/references/dashboard-cards.md) | Card type lookup and card-specific documentation |
+| [`references/domain-docs.md`](skills/home-assistant-best-practices/references/domain-docs.md) | Integration and domain documentation for service calls, entity attributes |
+| [`references/examples.yaml`](skills/home-assistant-best-practices/references/examples.yaml) | Compound examples combining multiple best practices |
+| [`references/appdaemon.md`](skills/home-assistant-best-practices/references/appdaemon.md) | AppDaemon apps: when to use vs. native HA, app structure, service calls, scheduling, error handling, safe refactoring impact |
+| [`references/blueprint-guide.md`](skills/home-assistant-best-practices/references/blueprint-guide.md) | Blueprint authoring: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, `!input` templating, versioning |
+| [`references/backups.md`](skills/home-assistant-best-practices/references/backups.md) | Full instance backups vs rolling one object back, when an operation needs a backup first, what an archive contains, encryption keys, restore verification, backup deletion |
 
 ## Contributing
 
