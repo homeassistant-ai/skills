@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, device control, and dashboards",
-    "version": "0.18.0"
+    "version": "0.19.0"
   },
   "plugins": [
     {

@@ -26,7 +26,7 @@ description: >
   - Agent changes existing state with no recovery path
   - Agent copy-pastes Jinja between templates
 metadata:
-  version: 18
+  version: 19
 ---
 
 # Home Assistant Best Practices
