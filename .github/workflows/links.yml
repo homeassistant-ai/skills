@@ -23,6 +23,10 @@ env:
   # into RUNNER_TEMP — unpacking it into the workspace would make lychee scan
   # its own documentation.
   LYCHEE_VERSION: v0.24.2
+  # Digest pinned here, not read from the release's own .sha256: a retag could
+  # replace the archive and its checksum together, so verifying one against the
+  # other proves nothing (CWE-494). Update both lines when bumping the version.
+  LYCHEE_SHA256: 1f4e0ef7f6554a6ed33dd7ac144fb2e1bbed98598e7af973042fc5cd43951c9a
 
 jobs:
   internal:
@@ -42,8 +46,8 @@ jobs:
           dest="${RUNNER_TEMP}/lychee"
           mkdir -p "$dest"
           gh release download "lychee-${LYCHEE_VERSION}" --repo lycheeverse/lychee \
-            --pattern "$asset" --pattern "$asset.sha256" --dir "$dest"
-          (cd "$dest" && sha256sum -c "$asset.sha256")
+            --pattern "$asset" --dir "$dest"
+          echo "${LYCHEE_SHA256}  ${dest}/${asset}" | sha256sum -c -
           tar xzf "$dest/$asset" -C "$dest" --strip-components=1
           echo "$dest" >> "$GITHUB_PATH"
           "$dest/lychee" --version
@@ -68,8 +72,8 @@ jobs:
           dest="${RUNNER_TEMP}/lychee"
           mkdir -p "$dest"
           gh release download "lychee-${LYCHEE_VERSION}" --repo lycheeverse/lychee \
-            --pattern "$asset" --pattern "$asset.sha256" --dir "$dest"
-          (cd "$dest" && sha256sum -c "$asset.sha256")
+            --pattern "$asset" --dir "$dest"
+          echo "${LYCHEE_SHA256}  ${dest}/${asset}" | sha256sum -c -
           tar xzf "$dest/$asset" -C "$dest" --strip-components=1
           echo "$dest" >> "$GITHUB_PATH"
           "$dest/lychee" --version
