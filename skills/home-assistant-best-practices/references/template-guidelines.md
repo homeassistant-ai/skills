@@ -15,6 +15,7 @@ This document covers when templates ARE the right choice in Home Assistant, and 
 5. [Common Patterns](#common-patterns)
 6. [Error Handling](#error-handling)
 7. [Performance Considerations](#performance-considerations)
+8. [Reusable Macros](#reusable-macros)
 
 ---
 
@@ -587,6 +588,110 @@ automation:
   Hot (temp: {{ temp }}°C)
 {% endif %}
 ```
+
+---
+
+## Reusable Macros
+
+Jinja macros live in `config/custom_templates/` and let several templates share one definition. Reach for them only once a template is already the right tool — a native trigger/condition and a built-in helper ruled out (see [When to Avoid Templates](#when-to-avoid-templates)). A macro de-duplicates templates you were going to write anyway; it is not a reason to write more of them. HA's own bar: once the same template appears in two or three places, save it once and reuse it.
+
+| Situation | Use |
+|-----------|-----|
+| One template needs the value | A `{% set %}` variable in that template |
+| Several templates need the same *value* | One cached template sensor the others reference (see [Cache Complex Calculations](#cache-complex-calculations)) |
+| Several templates apply the same *logic* to different entities (battery-level thresholds, occupancy rules, unit conversion) | A macro |
+
+### Macro Setup
+
+The `.jinja` file requires filesystem access to the config directory — there is no UI or config-flow path for it. Without file access, hand the user the file content and the reload step instead of working around it. The consuming template is unaffected: the same `{% from %}` import works inside a Template Helper's state template, so preferring a Template Helper over a `template:` YAML block still applies.
+
+| Step | Detail |
+|------|--------|
+| Create `config/custom_templates/` | HA does not create it; a missing directory is not an error, it just yields no macros |
+| Add a `*.jinja` file | Subdirectories are scanned too; only the `.jinja` extension is loaded |
+| Import by path relative to `custom_templates/` | `battery.jinja`, or `sensors/battery.jinja` for a file in a subdirectory |
+| Call `homeassistant.reload_custom_templates` | Admin service, no restart. Required after every edit — HA holds the sources in memory. `homeassistant.reload_all` includes it |
+
+
+```jinja
+{# config/custom_templates/battery.jinja #}
+{% macro battery_state(entity_id) -%}
+  {%- set level = states(entity_id) | int(-1) -%}
+  {%- if level < 0 -%}unknown
+  {%- elif level <= 15 -%}critical
+  {%- elif level <= 30 -%}low
+  {%- else -%}ok
+  {%- endif -%}
+{%- endmacro %}
+```
+
+```yaml
+template:
+  - sensor:
+      - name: "Phone Battery Status"
+        unique_id: phone_battery_status
+        state: >
+          {% from 'battery.jinja' import battery_state %}
+          {{ battery_state('sensor.phone_battery') }}
+```
+
+The import goes inside every template that uses the macro — imports are per-template, not global.
+
+### Imports Do Not Carry the Caller's Context
+
+The costliest mistake. An imported macro sees the template environment's globals, but none of the calling template's variables — a missing one renders empty and logs `Template variable warning: ... is undefined`, while attribute access on it (`trigger.entity_id`) fails the render outright.
+
+| Available inside an imported macro | NOT available |
+|------------------------------------|---------------|
+| `states`, `state_attr`, `is_state`, `is_state_attr`, `expand`, `has_value`, `now()` and the rest of HA's template functions and filters | `trigger`, `this`, `value_json`, variables bound from a Blueprint `!input`, `repeat`, and anything `{% set %}` in the calling template |
+
+```jinja
+{# BAD — `this` and `trigger` are undefined here; the attribute access errors #}
+{% macro describe() -%}
+  {{ this.entity_id }} fired from {{ trigger.entity_id }}
+{%- endmacro %}
+
+{# GOOD — the caller passes them in #}
+{% macro describe(entity_id, source) -%}
+  {{ entity_id }} fired from {{ source }}
+{%- endmacro %}
+```
+
+`{% from 'battery.jinja' import battery_state with context %}` does expose the caller's variables, but ties the macro to one caller's variable names. Pass arguments instead.
+
+### Macros That Return Values
+
+A macro produces **text**. A macro meant to yield a number, boolean, or list returns a string of one instead, so `{{ battery_level('sensor.phone') | float }}` silently parses its own output rather than passing a number through.
+
+For a real return value, give the macro a `returns` argument and convert it with the `as_function` filter:
+
+```jinja
+{# config/custom_templates/battery.jinja #}
+{% macro macro_is_low(entity_id, returns) -%}
+  {%- set level = states(entity_id) | int(-1) -%}
+  {% do returns(level >= 0 and level <= 15) %}
+{%- endmacro %}
+```
+
+```jinja
+{% from 'battery.jinja' import macro_is_low %}
+{% set is_low = macro_is_low | as_function %}
+{{ 'charge it' if is_low('sensor.phone_battery') else 'fine' }}
+```
+
+`as_function` strips a leading `macro_` from the name — hence the convention of prefixing the macro and dropping it on the function.
+
+### State Tracking Is Unaffected
+
+`states()` and the other state functions called inside an imported macro register their entities as dependencies exactly as they would inline, so template sensors still update on state changes. No extra wiring needed.
+
+### Macro Pitfalls
+
+| Symptom | Cause |
+|---------|-------|
+| `TemplateNotFound` | File is not under `config/custom_templates/`, does not end in `.jinja`, or `reload_custom_templates` has not run since it was added |
+| Edits have no effect | Sources are cached in memory — call `homeassistant.reload_custom_templates` |
+| Empty output where a caller variable should be, or `'trigger' is undefined` in the log | Context does not cross an import — pass it as a macro argument |
 
 ---
 
