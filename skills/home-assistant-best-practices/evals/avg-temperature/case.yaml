@@ -1,0 +1,50 @@
+schema_version: "1.1"
+name: avg-temperature
+description: >
+  Averaging numeric sensors has a dedicated helper. Checks the agent reaches past
+  the Template Helper — the right answer for the doctrine cases — to min_max.
+tags: [helpers]
+
+execution:
+  prompt: create a sensor that averages my 3 room temperature sensors
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: recommends-min-max
+    criteria: >-
+      The response recommends the `min_max` integration helper, configured to
+      average — its `type` field set to `mean`.
+
+      FAIL if it names a different helper, or names min_max without indicating the
+      mean/average setting.
+
+  - type: llm
+    name: no-template-needed
+    criteria: >-
+      The response does NOT offer a template sensor — YAML or Template Helper — as
+      the primary solution.
+
+      PASS if a template approach is mentioned only as an aside or to rule it out.
+
+  - type: llm
+    name: no-yaml-platform-block
+    criteria: >-
+      The response does not present a YAML platform block (`sensor:` with
+      `- platform: min_max`) as the thing to write — the helper is created through
+      the UI or a config-entry flow.
+
+      PASS if a YAML-shaped snippet appears but is labelled as the helper's config
+      shape rather than a file to hand-edit.
+
+expected_outcome: >-
+  Recommends the min_max helper with type mean — not a Template Helper, not YAML.

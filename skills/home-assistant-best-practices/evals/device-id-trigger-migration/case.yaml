@@ -1,0 +1,57 @@
+schema_version: "1.1"
+name: device-id-trigger-migration
+description: >
+  A re-paired device gets a new device_id, silently breaking every automation
+  keyed to the old one. Checks the agent diagnoses that and converts BOTH the
+  trigger and the action target, not just the trigger.
+tags: [automations, devices, smoke]
+
+execution:
+  prompt: |-
+    this automation broke after I re-paired the sensor, can you fix it?
+
+    triggers:
+      - trigger: device
+        device_id: 4f2a91c8e77b4d6fa1c3
+        domain: binary_sensor
+        type: motion
+    actions:
+      - action: light.turn_on
+        target:
+          device_id: 4f2a91c8e77b4d6fa1c3
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: explains-device-id-instability
+    criteria: >-
+      The response explains that `device_id` changes when a device is removed and
+      re-added, and that this is why the automation stopped working.
+
+  - type: llm
+    name: converts-trigger-and-target
+    criteria: >-
+      The rewritten automation moves BOTH the trigger and the action's target off
+      `device_id`.
+
+      FAIL if only the trigger is converted and the `light.turn_on` target still
+      uses `device_id`.
+
+  - type: llm
+    name: prefers-entity-or-purpose-specific
+    criteria: >-
+      The replacement trigger is an `entity_id` state trigger or a purpose-specific
+      motion trigger with a target — not another device-keyed trigger.
+
+expected_outcome: >-
+  Diagnoses device_id instability across re-adds and converts both the trigger and
+  the action target to entity-based (or a purpose-specific motion trigger).

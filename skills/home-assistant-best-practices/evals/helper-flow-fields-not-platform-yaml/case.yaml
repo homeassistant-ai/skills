@@ -1,0 +1,72 @@
+schema_version: "1.1"
+name: helper-flow-fields-not-platform-yaml
+description: >
+  A numeric threshold with anti-flap buffer is the threshold helper's exact job.
+  Checks the agent reaches for that helper and hands back its config-flow fields,
+  rather than a template binary sensor or a `binary_sensor:` / `- platform: threshold`
+  block to paste into configuration.yaml.
+tags:
+  - helpers
+  - smoke
+
+execution:
+  prompt: >-
+    Set up a binary sensor that turns on when the outdoor temperature goes above
+    25 degrees, with a bit of buffer so it doesn't flap
+  # Skill + Read/Glob/Grep are read-only and available by default, so this case
+  # needs no --allow-tools grant. Keep it that way: an ungranted case runs in CI.
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+
+# 3 runs is what makes the llm graders' 2-of-3 vote meaningful. Override with
+# --runs 1 for a cheap smoke pass.
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: hysteresis is the field that answers the user's anti-flap ask, so it
+  # cannot appear as an anti-pattern the response is warning against.
+  - type: regex
+    name: uses-hysteresis
+    pattern: '\bhysteresis\b'
+    flags: i
+    match: contains
+
+  - type: llm
+    name: recommends-threshold-helper
+    criteria: >-
+      The response recommends Home Assistant's threshold helper — a binary sensor
+      derived from the numeric temperature sensor by the `threshold` integration —
+      as the solution.
+
+      FAIL if the primary recommendation is a template binary sensor (a `template:`
+      entity whose `state:` is a Jinja comparison such as
+      `{{ states('sensor.x') | float > 25 }}`), or any other hand-written entity.
+
+      PASS if a template sensor is mentioned only to rule it out.
+
+  - type: llm
+    name: no-platform-wrapper
+    criteria: >-
+      The helper's configuration is presented as the fields its config flow accepts
+      (`name`, `entity_id`, `upper` and/or `lower`, `hysteresis`), created through the
+      UI (Settings → Devices & Services → Helpers) or a config-entry flow call.
+
+      FAIL if the response presents a `binary_sensor:` block containing
+      `- platform: threshold` as YAML for the user to paste into `configuration.yaml`,
+      or if its actionable instruction is to hand-edit a YAML file.
+
+      PASS if a YAML-shaped snippet is shown but is labelled as the helper's config
+      shape / flow fields rather than as a file to edit. Showing the shape is fine;
+      telling the user to paste it into configuration.yaml is not.
+
+expected_outcome: >-
+  Recommends the threshold helper created through the config flow, supplying
+  entity_id / upper / hysteresis as flow fields — not a
+  `binary_sensor:` → `- platform: threshold` block for configuration.yaml.

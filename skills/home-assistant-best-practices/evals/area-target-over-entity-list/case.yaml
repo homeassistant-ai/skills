@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: area-target-over-entity-list
+description: >
+  The user states the maintenance requirement outright — they keep adding
+  sensors. An area or floor target follows membership; an enumerated entity list
+  does not.
+tags: [automations, triggers]
+
+execution:
+  prompt: >-
+    send me a phone notification if any motion sensor downstairs picks something up
+    while we're away. I keep adding sensors down there so I don't want to keep
+    editing this
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: uses-area-or-floor-target
+    criteria: >-
+      The trigger targets an area, floor, or label rather than a hardcoded list of
+      sensor entity IDs.
+
+      FAIL if the automation enumerates `binary_sensor.*` entity IDs.
+
+  - type: llm
+    name: uses-purpose-specific-trigger
+    criteria: >-
+      The response uses a purpose-specific motion trigger rather than a generic
+      `trigger: state` block over a list of entities.
+
+  - type: llm
+    name: addresses-the-maintenance-ask
+    criteria: >-
+      The response explains that sensors added to the area later are picked up
+      without editing the automation — answering the user's stated reason for
+      asking.
+
+expected_outcome: >-
+  A purpose-specific motion trigger with an area/floor target, plus an explanation
+  that new sensors are picked up automatically.

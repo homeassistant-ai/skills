@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repo Layout
 
 One skill lives under `skills/<name>/`: `SKILL.md` plus `references/` (one level deep only),
-`evals/evals.json`, and optional `scripts/`/`assets/`. `docs/plans/` is gitignored
-scratch space.
+`evals/<case>/case.yaml` (one directory per eval case), and optional `scripts/`/`assets/`.
+`docs/plans/` is gitignored scratch space.
 
 **SKILL.md is in context on every trigger; `references/` load only when read.** That is why
 SKILL.md body size is capped and why domain-niche content belongs in a reference file behind
@@ -48,22 +48,28 @@ To validate locally:
 uvx --from skills-ref agentskills validate skills/<skill-name>
 ```
 
-Three more checks gate a merge. `agnix` and `lychee` run as release binaries pinned in
+Four more checks gate a merge. `agnix` and `lychee` run as release binaries pinned in
 `.github/workflows/` — install those versions (lychee's release tag is `lychee-vX.Y.Z`, not
-`vX.Y.Z`); `claude plugin validate` ships with the Claude Code CLI:
+`vX.Y.Z`); `claude plugin validate` ships with the Claude Code CLI; the eval-case checker is
+in-repo and needs only PyYAML:
 
 ```bash
 agnix skills/ --target claude-code                              # spec conformance
 lychee --offline --include-fragments --no-progress './**/*.md'  # local links + #anchors
 claude plugin validate .                                        # plugin manifests
+python scripts/check_eval_cases.py                              # evals/<case>/case.yaml
 ```
 
 agnix catches what skills-ref's unenforced `metadata: dict[str, str]` annotation lets pass —
 e.g. an unquoted integer version, which strict clients refuse. In CI (`links.yml`) lychee runs
 that same local check on PRs touching `.md`/`.yaml`, plus external URLs weekly, dot-directories
-excluded; it cannot see references written as inline code. Two things nothing checks, so both
-stay review items: that every reference file is still routed from SKILL.md, and that
-`references/examples.yaml` still parses.
+excluded; it cannot see references written as inline code. `check_eval_cases.py` validates the
+shape of eval cases against the `claude plugin eval` 1.1 schema — that command is gated behind
+early access, so its own parser never runs here; the schema is transcribed by hand and needs
+re-deriving if `schema_version` moves. It checks structure only and never runs a case. Three
+things nothing checks, so all three stay review items: that every reference file is still
+routed from SKILL.md, that `references/examples.yaml` still parses, and that an eval grader
+still means what it was written to mean.
 
 ## Reviewing Skill PRs
 
