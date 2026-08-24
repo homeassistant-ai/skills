@@ -34,6 +34,16 @@ graders:
 
       PASS if such an approach is mentioned only to rule it out.
 
+  - type: llm
+    name: targets-the-kitchen-timer
+    criteria: >-
+      The trigger fires only for the kitchen timer, not for every timer in the
+      house — a `target:` naming the kitchen `timer.*` entity on the purpose-specific
+      trigger, or an `event_data.entity_id` filter on a legacy event trigger.
+
+      FAIL if the trigger is a bare `timer.finished` with no target and no filter,
+      which announces whenever any timer anywhere finishes.
+
 expected_outcome: >-
-  An event trigger on `timer.finished` (or a purpose-specific timer trigger). No
-  polling, no wait_template.
+  A `timer.finished` trigger targeting the kitchen timer specifically. No polling,
+  no wait_template.

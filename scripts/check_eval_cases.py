@@ -7,9 +7,10 @@ merge unnoticed. The schema below is transcribed by hand from the Zod definition
 in the Claude Code 2.1.241 binary — re-derive it if schema_version moves off "1.1".
 
 Checks: schema conformance, the grader objects' .strict() key sets, unique grader
-names within a case, regex patterns that compile, valid JS RegExp flags,
-directory/name agreement, an empty allowed_tools (so no case needs an
---allow-tools operator grant to run), and a skill-fired indicator on every case.
+names within a case, regex patterns that compile *in the JavaScript engine that
+runs them*, valid JS RegExp flags, directory/name agreement, an empty
+allowed_tools (so no case needs an --allow-tools operator grant to run), and a
+skill-fired grader that can actually prove the skill loaded.
 
 Does NOT check that a grader still means what it was written to mean. Judging
 that is a review item.
@@ -17,8 +18,11 @@ that is a review item.
 Usage: python scripts/check_eval_cases.py [skills_root]   (default: skills)
 """
 import glob
+import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 from collections import Counter
 
@@ -37,9 +41,63 @@ GRADER = {  # type -> (required keys, optional keys); each grader object is .str
     "baseline":    ({"type", "name", "baseline_file", "criteria"}, {"weight", "arm"}),
 }
 
+# Node script: compile each pattern with the same engine the harness uses, and run
+# the match expectations. Python's `re` is not a stand-in — it rejects JS-valid
+# `(?<name>x)` and accepts Python-only `(?P<name>x)`.
+NODE_SRC = r"""
+const probes = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+const out = [];
+for (const p of probes) {
+  let rx;
+  try {
+    rx = new RegExp(p.pattern, p.flags || '');
+  } catch (e) {
+    out.push(`${p.label}: pattern is not a valid JavaScript RegExp: ${e.message}`);
+    continue;
+  }
+  for (const s of p.must_match || []) {
+    rx.lastIndex = 0;
+    if (!rx.test(s)) out.push(`${p.label}: pattern does not match ${JSON.stringify(s)}, which it must`);
+  }
+  for (const s of p.must_not_match || []) {
+    rx.lastIndex = 0;
+    if (rx.test(s)) out.push(`${p.label}: pattern matches ${JSON.stringify(s)}, which it must reject`);
+  }
+}
+console.log(JSON.stringify(out));
+"""
 
-def check_case(path, err):
-    """Validate one case.yaml. Appends messages to err; returns the parsed dict or None."""
+
+def check_regexes(probes, err):
+    """Compile probes with node, the engine that actually runs them."""
+    if not probes:
+        return
+    node = shutil.which("node")
+    if node is None:
+        # Python `re` disagrees with JS at the edges, so say so rather than imply
+        # this was a real check.
+        print("  note: node not found — regex patterns were NOT checked against the "
+              "JavaScript engine that runs them")
+        for p in probes:
+            try:
+                re.compile(p["pattern"])
+            except re.error as e:
+                err.append(f"{p['label']}: pattern does not compile (python re, approximate): {e}")
+        return
+    try:
+        r = subprocess.run([node, "-e", NODE_SRC], input=json.dumps(probes),
+                           capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as e:
+        err.append(f"could not run node to validate regex patterns: {e}")
+        return
+    if r.returncode != 0:
+        err.append(f"node failed while validating regex patterns: {r.stderr.strip()[:300]}")
+        return
+    err.extend(json.loads(r.stdout))
+
+
+def check_case(path, skill, err, probes):
+    """Validate one case.yaml. Appends messages to err and probes; returns the parsed dict."""
     rel = os.path.relpath(path)
     case_dir = os.path.basename(os.path.dirname(path))
     w = lambda m: err.append(f"{rel}: {m}")
@@ -81,7 +139,7 @@ def check_case(path, err):
     graders = d.get("graders") or []
     if not graders:
         w("graders must have at least one entry")
-    seen = set()
+    seen = {}
     for g in graders:
         if not isinstance(g, dict):
             w("grader is not a mapping")
@@ -98,40 +156,74 @@ def check_case(path, err):
             w(f"grader {name}: unknown key {k} (the grader schema is strict)")
         if name in seen:
             w(f"duplicate grader name {name}")
-        seen.add(name)
+        seen[name] = g
         if g["type"] == "regex":
             if not re.fullmatch(r"[dgimsuvy]*", str(g.get("flags", ""))):
                 w(f"grader {name}: flags must be JS RegExp flags (d g i m s u v y)")
             match = g.get("match", "contains")
             if match not in ("contains", "not_contains") and not re.fullmatch(r"count:\d+", str(match)):
                 w(f"grader {name}: match must be contains | not_contains | count:N")
-            try:
-                re.compile(g["pattern"])
-            except (re.error, KeyError, TypeError) as e:
-                w(f"grader {name}: pattern does not compile: {e}")
-    if "skill-fired" not in seen:
+            if isinstance(g.get("pattern"), str):
+                probes.append({"label": f"{rel}: grader {name}",
+                               "pattern": g["pattern"], "flags": str(g.get("flags", ""))})
+
+    check_skill_fired(rel, skill, seen.get("skill-fired"), err, probes)
+    return d
+
+
+def check_skill_fired(rel, skill, g, err, probes):
+    """The skill-fired grader must be able to prove the skill loaded, not just be named so.
+
+    A name alone proves nothing: an `llm` grader called skill-fired passes a
+    name check while telling you nothing about whether the Skill tool ran.
+    """
+    w = lambda m: err.append(f"{rel}: {m}")
+    if g is None:
         w("no skill-fired grader — a failing case could not be told apart from "
           "the skill never triggering")
-    return d
+        return
+    if g.get("type") != "tool_used":
+        w(f"skill-fired must be a tool_used grader, not {g.get('type')!r} — "
+          "only that type inspects the trace for a tool call")
+        return
+    if g.get("tool") != "Skill":
+        w(f"skill-fired must set tool: Skill, not {g.get('tool')!r}")
+    if g.get("min", 1) < 1:
+        w("skill-fired must require at least one call (min >= 1)")
+    pattern = g.get("input_match")
+    if not isinstance(pattern, str) or not pattern:
+        w("skill-fired needs an input_match, or it passes when any skill loads")
+        return
+    # Disprove as well as confirm: it must match this skill and reject another.
+    probes.append({
+        "label": f"{rel}: grader skill-fired input_match",
+        "pattern": pattern,
+        "flags": "",
+        "must_match": [json.dumps({"skill": skill}), json.dumps({"skill": f"plugin:{skill}"})],
+        "must_not_match": [json.dumps({"skill": "some-other-skill"})],
+    })
 
 
 def main(root="skills"):
     err = []
+    probes = []
     total = 0
     types = Counter()
     for evals_dir in sorted(glob.glob(os.path.join(root, "*", "evals"))):
+        skill = os.path.basename(os.path.dirname(evals_dir))
         paths = sorted(glob.glob(os.path.join(evals_dir, "*", "case.yaml")))
         if not paths:
             err.append(f"{os.path.relpath(evals_dir)}: contains no <case>/case.yaml")
             continue
         for p in paths:
-            d = check_case(p, err)
+            d = check_case(p, skill, err, probes)
             total += 1
             if d:
                 types.update(g.get("type") for g in (d.get("graders") or []) if isinstance(g, dict))
         print(f"{os.path.relpath(evals_dir)}: {len(paths)} cases")
+    check_regexes(probes, err)
     print(f"total: {total} cases, {sum(types.values())} graders {dict(types)}")
-    for e in err:
+    for e in sorted(err):
         print(f"  ! {e}")
     print("FAIL" if err else "OK")
     return 1 if err else 0

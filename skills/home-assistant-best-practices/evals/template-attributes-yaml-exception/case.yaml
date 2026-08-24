@@ -51,6 +51,15 @@ graders:
       The response does not propose a min_max or statistics helper, neither of which
       can report which entity changed.
 
+  - type: llm
+    name: attributes-carry-entity-and-timestamp
+    criteria: >-
+      The `attributes:` block exposes BOTH the triggering sensor's entity ID and a
+      timestamp, which is what the user asked for.
+
+      FAIL if only one of the two is present, or if the attributes are left as a
+      placeholder for the user to fill in.
+
 expected_outcome: >-
-  A trigger-based template with attributes:, named as a genuine YAML case, written
-  through managed config editing.
+  A trigger-based template whose attributes: expose the triggering entity ID and a
+  timestamp, named as a genuine YAML case, written through managed config editing.
