@@ -5,13 +5,13 @@
     "email": "homeassistant-mcp@qc-h.net"
   },
   "metadata": {
-    "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, device control, and dashboards",
+    "description": "Agent skills for Home Assistant: best practices for automations, helpers, templates, scenes, blueprints, device control, dashboards, AppDaemon, and backups",
     "version": "0.24.0"
   },
   "plugins": [
     {
       "name": "home-assistant-skills",
-      "description": "Best practices for Home Assistant automations, helpers, scripts, device controls, and dashboards",
+      "description": "Best practices for Home Assistant automations, helpers, scripts, scenes, blueprints, device control, dashboards, AppDaemon apps, and backups",
       "source": "./"
     }
   ]
