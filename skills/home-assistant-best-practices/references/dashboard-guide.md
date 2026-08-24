@@ -1,5 +1,7 @@
 # Dashboard Guide
 
+> **The YAML below shows config shape, not a file to hand-edit.** Storage-mode dashboards live in `.storage/` and are written through the Lovelace WebSocket API (`lovelace/config/save`) — never by editing the file. See [safe-refactoring #storage-mode-dashboards](safe-refactoring.md#storage-mode-dashboards-storagelovelace).
+
 Patterns and decisions for designing Home Assistant Lovelace dashboards.
 
 ## Table of Contents

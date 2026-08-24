@@ -61,9 +61,13 @@ Before creating a template sensor, check [helper-selection](references/helper-se
 - Consumption tracking → `utility_meter` helper
 
 **If no built-in helper fits, use a Template Helper — not YAML.**
-Create it via the HA config flow (MCP tool or API) or via the UI:
-Settings → Devices & Services → Helpers → Create Helper → Template.
-Only write `template:` YAML if explicitly requested or if neither path is available.
+Create it via the HA config flow (programmatically or in the UI:
+Settings → Devices & Services → Helpers → Create Helper → Template). A flow-created helper
+is UI-editable; a `template:` YAML entry needs a `template.reload` and is not.
+
+Write `template:` YAML when the user asks for it, when neither path is available, or when
+the config needs a key the flow has no field for — trigger-based templates and `attributes:`
+are the common ones. Then use managed YAML editing ([yaml-only-integrations](references/yaml-only-integrations.md)), not a hand-edit.
 
 ### 3. Select correct automation mode
 Default `single` mode is often wrong. See [automation-patterns #automation-modes](references/automation-patterns.md#automation-modes).
@@ -103,7 +107,7 @@ See [device-control #buttonremote-patterns](references/device-control.md#buttonr
 | Renaming entity IDs without impact analysis | Follow [safe-refactoring](references/safe-refactoring.md) workflow | Renames break dashboards, scripts, scenes, Config-Entry data, and storage dashboards silently | [safe-refactoring #entity-renames](references/safe-refactoring.md#entity-renames) |
 | Renaming members of Config-Entry-based groups (UI groups) without updating membership | Update group membership via Options Flow after the registry rename | The entity registry rename does not update `options.entities` in the Config Entry — group silently breaks | [safe-refactoring #config-entry-groups](references/safe-refactoring.md#config-entry-groups) |
 | Renaming entities used by Config-Entry integrations (Better/Generic Thermostat, Min/Max, Threshold) without patching Config-Entry data | Scan and patch `core.config_entries` `data`+`options` fields | These integrations store entity_ids in Config Entry — not updated by entity registry renames | [safe-refactoring #config-entry-data--blind-spots-for-entity-registry-renames](references/safe-refactoring.md#config-entry-data--blind-spots-for-entity-registry-renames) |
-| `template:` sensor/binary sensor in YAML | Template Helper (UI or config flow API) | Requires file edit and config reload; harder to manage | [template-guidelines](references/template-guidelines.md) |
+| `template:` sensor/binary sensor in YAML | Template Helper via the config flow | A flow helper reloads in place and stays UI-editable; a `template:` entry needs a config reload and does not. Exceptions are real — trigger-based templates and `attributes:` have no flow field | [helper-selection #template-helpers](references/helper-selection.md#template-helpers) |
 | Editing `.storage/` files or other HA internal state directly | Use the HA REST/WebSocket API to manage state and config entries | `.storage/` files are HA's internal state database; direct edits bypass validation, risk corruption, and can be silently overwritten by HA | — |
 | Writing raw YAML to `configuration.yaml` by hand for YAML-only integrations | Use managed YAML config editing with backup and validation | Unmanaged writes risk syntax errors, have no backup, and skip `check_config` — managed editing provides all three | [yaml-only-integrations](references/yaml-only-integrations.md) |
 | Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | [automation-patterns](references/automation-patterns.md), [examples.yaml](references/examples.yaml) |

@@ -1,5 +1,7 @@
 # Blueprints
 
+> **A blueprint is a file, but you still should not hand-write it.** It lives at `config/blueprints/<domain>/<author>/<name>.yaml`, and the WebSocket API authors it for you: `blueprint/save` takes `{domain, path, yaml, source_url?}`, validates against the blueprint schema, and writes the file — with `blueprint/import`, `blueprint/list`, `blueprint/delete`, and `blueprint/substitute` alongside it. Prefer that over an unchecked file write. The automations *created from* a blueprint are ordinary config-API objects.
+
 A **blueprint is a reusable, parameterized automation/script/template** — a skeleton whose device- and entity-specific parts are replaced by user-provided **inputs**. Author a blueprint only when a pattern will be instantiated more than once or shared/distributed. A one-off automation should stay a plain automation; don't blueprint what you'll use once.
 
 ## Table of Contents

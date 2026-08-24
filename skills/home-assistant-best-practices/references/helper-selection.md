@@ -1,31 +1,32 @@
 # Helper Selection Guide
 
-This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **Template Helper** (created via the UI / config-entry flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
+This document covers Home Assistant's built-in helpers and integrations that should be used instead of YAML template sensors or complex automations. When no dedicated helper covers your need, the **Template Helper** (created through the config flow, not YAML `template:`) is the right escape hatch — see [Template Helpers](#template-helpers).
 
 ## Table of Contents
 1. [How Helpers Are Created](#how-helpers-are-created)
 2. [Menu-Based Helpers](#menu-based-helpers)
-3. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
-4. [Rate and Change](#rate-and-change) - derivative, threshold, trend
-5. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
-6. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
-7. [Counting and Timing](#counting-and-timing) - counter, timer
-8. [Scheduling](#scheduling) - schedule, time of day (tod)
-9. [Entity Grouping](#entity-grouping) - group, binary sensor groups
-10. [Probabilistic Inference](#probabilistic-inference) - bayesian
-11. [Data Smoothing](#data-smoothing) - filter
-12. [Random Values](#random-values) - random
-13. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
-14. [Domain Conversion](#domain-conversion) - switch_as_x
-15. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
-16. [Decision Matrix](#decision-matrix) - which helper for which need
+3. [Reading the Examples in This File](#reading-the-examples-in-this-file) - config-flow fields vs. YAML platform shape
+4. [Numeric Aggregation](#numeric-aggregation) - min_max, statistics
+5. [Rate and Change](#rate-and-change) - derivative, threshold, trend
+6. [Time-Based Tracking](#time-based-tracking) - utility_meter, history_stats, integration (Riemann sum)
+7. [State Storage](#state-storage) - input_boolean, input_number, input_select, input_text, input_datetime, input_button
+8. [Counting and Timing](#counting-and-timing) - counter, timer
+9. [Scheduling](#scheduling) - schedule, time of day (tod)
+10. [Entity Grouping](#entity-grouping) - group, binary sensor groups
+11. [Probabilistic Inference](#probabilistic-inference) - bayesian
+12. [Data Smoothing](#data-smoothing) - filter
+13. [Random Values](#random-values) - random
+14. [Climate Control](#climate-control) - generic_thermostat, generic_hygrostat, mold_indicator
+15. [Domain Conversion](#domain-conversion) - switch_as_x
+16. [Template Helpers](#template-helpers) - template (escape hatch when no dedicated helper fits)
+17. [Decision Matrix](#decision-matrix) - which helper for which need
 
 ## How Helpers Are Created
 
 Helpers reach Home Assistant through two different creation mechanisms — which one a helper uses determines whether you submit flat fields in a single step or step through a config flow:
 
-- **Storage-collection helpers** — created via a per-domain WebSocket collection command (`<domain>/create`, e.g. `input_boolean/create`, `counter/create`) with flat, structured fields: `input_boolean`, `input_number`, `input_select`, `input_text`, `input_datetime`, `input_button`, `counter`, `timer`, `schedule`, `zone`, `person`, `tag`. (`schedule` additionally offers an optional YAML mode.)
-- **Config-entry-flow helpers** — created through the generic config-entry flow (`config_entries/flow`, handler = the helper domain), often a multi-step flow that begins with a sub-type menu (see [Menu-Based Helpers](#menu-based-helpers)): `template`, `group`, `utility_meter`, `derivative`, `min_max`, `threshold`, `integration`, `statistics`, `trend`, `random`, `filter`, `tod`, `generic_thermostat`, `generic_hygrostat`, `switch_as_x`, `bayesian`, `mold_indicator`, `history_stats`.
+- **Storage-collection helpers** — created via a per-domain WebSocket collection command (`<domain>/create`, e.g. `input_boolean/create`, `counter/create`) with flat, structured fields: `input_boolean`, `input_number`, `input_select`, `input_text`, `input_datetime`, `input_button`, `counter`, `timer`, `schedule`, `zone`, `person`, `tag`. (All of these also accept YAML config except `tag`, which has none.)
+- **Config-flow helpers** — created through the generic config-entry flow (`config_entries/flow`, handler = the helper domain), often a multi-step flow that begins with a sub-type menu (see [Menu-Based Helpers](#menu-based-helpers)): `template`, `group`, `utility_meter`, `derivative`, `min_max`, `threshold`, `integration`, `statistics`, `trend`, `random`, `filter`, `tod`, `generic_thermostat`, `generic_hygrostat`, `switch_as_x`, `bayesian`, `mold_indicator`, `history_stats`.
 
 ## Menu-Based Helpers
 
@@ -38,6 +39,58 @@ Several helper integrations — most prominently **`template`**, **`group`**, an
 | `random` | `sensor`, `binary_sensor` |
 
 Advance the menu by submitting `{"next_step_id": "<sub-type>"}` to the first step; the resulting form's fields become available in the next step. The chosen sub-type is then written into the stored config entry as `template_type` / `group_type` etc. by the integration's validator — those are storage keys, not inputs the caller submits.
+
+## Reading the Examples in This File
+
+Each helper below shows the **flat field set its creation mechanism accepts** — the config-flow
+step fields, or the storage-collection `<domain>/create` fields. That is the one representation
+the UI form, a raw `config_entries/flow` call, and any programmatic helper API all consume;
+core reuses the same `CONF_*` constants for both paths, so the keys match.
+
+The older `sensor:` → `- platform: <helper>` YAML platform shape is **not** shown, because a
+helper created that way is not editable in the UI — its config lives in a file, not in a
+config entry — and applying a change needs a file edit plus a reload or a restart. To write
+one anyway (the user asked for YAML, or you need a YAML-only key), use the YAML root from the
+table below with managed YAML editing: see [yaml-only-integrations](yaml-only-integrations.md).
+
+**The post-edit action is per helper, not a blanket restart.** These ship a `<domain>.reload`
+that re-reads their YAML platform config: `min_max`, `filter`, `derivative`, `trend`,
+`statistics`, `bayesian`, `history_stats`, `generic_thermostat`, `group`, `template`. These
+have none, so a YAML change needs `homeassistant.restart` — confirm with the user first:
+`threshold`, `tod`, `integration`, `mold_indicator`, `random`, `switch_as_x`,
+`generic_hygrostat`, and `utility_meter` (whose services are `reset`/`calibrate` only).
+
+**`YAML-only:` lines are verified against core 2026.8.3.** Those keys exist on the YAML
+platform schema and have no config-flow field, so needing one is a reason to write YAML.
+A helper with no `YAML-only:` line has no such keys. Where the two shapes differ or the flow
+cannot express a case (`trend`, `tod`, `bayesian`, `filter`, `template`), both are shown.
+
+**`unique_id` is the one exception, and never a reason to choose YAML.** Most YAML platform
+schemas accept it; no flow does, because a flow-created helper gets one from its config entry.
+It is therefore omitted from the `YAML-only:` lines below. (`threshold` and `random` are the
+odd ones out — their YAML platforms accept *no* `unique_id`, so a YAML-defined entity there
+cannot be renamed or given an area from the UI.)
+
+**Two global conventions**, so they are not repeated per helper:
+- **Duration fields are mappings in flows** (`minutes: 5`), while the YAML platforms also
+  accept the `"00:05:00"` string. Exceptions are called out where they exist.
+- **The entity_id is derived from `name`** for both mechanisms, so a helper created as
+  "Average Temperature" becomes `sensor.average_temperature`. Renaming it later does not move
+  the entity_id.
+
+**Where a `YAML-only:` key sends you, the YAML root differs per helper** — it is not always
+`sensor:`:
+
+| Helper | YAML root |
+|---|---|
+| `min_max`, `statistics`, `derivative`, `integration`, `history_stats`, `filter`, `random`, `mold_indicator` | `sensor:` → `- platform: <helper>` |
+| `threshold`, `trend`, `tod`, `bayesian` | `binary_sensor:` → `- platform: <helper>` |
+| `generic_thermostat` | `climate:` → `- platform: generic_thermostat` |
+| `generic_hygrostat` | `humidifier:` → `- platform: generic_hygrostat` |
+| `utility_meter` | top-level `utility_meter:` → slug → fields (no `platform:`) |
+| `template` | top-level `template:` → `- sensor:` / `- binary_sensor:` / … |
+| `group` (old style) | top-level `group:` → slug → fields |
+| `switch_as_x` | none — config flow only |
 
 ---
 
@@ -61,18 +114,19 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - min_max helper
-sensor:
-  - platform: min_max
-    name: "Average Temperature"
-    type: mean
-    entity_ids:
-      - sensor.temp_bedroom
-      - sensor.temp_living
-      - sensor.temp_kitchen
+# RIGHT — min_max helper (config-flow fields)
+name: "Average Temperature"
+type: mean               # required
+entity_ids:
+  - sensor.temp_bedroom
+  - sensor.temp_living
+  - sensor.temp_kitchen
+round_digits: 2          # required in the flow, default 2
 ```
 
-**Available types:** `min`, `max`, `mean`, `median`, `last`, `sum`
+Note the key is `round_digits` here — `derivative` and `integration` spell the same idea `round`.
+
+**Available types:** `min`, `max`, `mean`, `median`, `last`, `range`, `sum`
 
 **Key behaviors:**
 - Ignores `unknown` states (except `sum` which goes to unknown)
@@ -101,23 +155,36 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - Statistics helper
-sensor:
-  - platform: statistics
-    name: "Temperature Change (5 min)"
-    entity_id: sensor.temperature
-    state_characteristic: change
-    max_age:
-      minutes: 5
-    sampling_size: 50
+# RIGHT — statistics helper (config-flow submission, THREE steps — not one payload)
+# --- step 1 (user) ---
+name: "Temperature Change (5 min)"
+entity_id: sensor.temperature
+# --- step 2 (state_characteristic) ---
+state_characteristic: change   # options depend on sensor vs binary_sensor source
+# --- step 3 (options) ---
+sampling_size: 50
+max_age:                       # duration mapping
+  minutes: 5
+keep_last_sample: false
+percentile: 50                 # only used by the percentile characteristic
+precision: 2
 ```
 
-**Available characteristics:**
-- `mean`, `median`, `average_linear`, `average_step`, `average_timeless`
-- `standard_deviation`, `variance`
-- `change`, `change_second`, `change_sample`
-- `count`, `count_binary_on`, `count_binary_off`
-- `total`, `noisiness`
+
+**Available characteristics — numeric source** (27):
+`average_linear`, `average_step`, `average_timeless`, `change`, `change_sample`,
+`change_second`, `count`, `datetime_newest`, `datetime_oldest`, `datetime_value_max`,
+`datetime_value_min`, `distance_95_percent_of_values`, `distance_99_percent_of_values`,
+`distance_absolute`, `mean`, `mean_circular`, `median`, `noisiness`, `percentile`,
+`standard_deviation`, `sum`, `sum_differences`, `sum_differences_nonnegative`, `total`,
+`value_max`, `value_min`, `variance`
+
+**Binary-sensor source** (8): `average_step`, `average_timeless`, `count`, `count_on`,
+`count_off`, `datetime_newest`, `datetime_oldest`, `mean`
+
+The flow offers only the set valid for the chosen source, which is why
+`state_characteristic` is its own step. The binary values are `count_on` / `count_off` —
+`count_binary_on` / `count_binary_off` are the internal constant *names*, not accepted values.
 - `datetime_newest`, `datetime_oldest`, `datetime_value_max`, `datetime_value_min`
 - `value_max`, `value_min`, `quantiles`
 
@@ -150,25 +217,32 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - Derivative helper
-sensor:
-  - platform: derivative
-    name: "Power Rate of Change"
-    source: sensor.power
-    unit_time: min
-    time_window:
-      minutes: 5
+# RIGHT — derivative helper (config-flow fields)
+name: "Power Rate of Change"
+source: sensor.power
+unit_time: h             # required in the flow, default h
+round: 2                 # required in the flow, default 2
+time_window:             # duration mapping, required in the flow
+  minutes: 5
+unit_prefix: k           # optional
+max_sub_interval:        # optional duration mapping
+  minutes: 1
 ```
 
 **Parameters:**
-- `unit_time`: s, min, h, d - determines output unit (e.g., W/min)
-- `time_window`: Smoothing window using Simple Moving Average
-- `round`: Decimal places for output
+- `unit_time`: `s`, `min`, `h`, `d` — determines output unit (e.g. W/min)
+- `time_window`: smoothing window using a Simple Moving Average
+- `round`: decimal places for output (the key is `round`, not `round_digits`)
+- `max_sub_interval`: forces a recalculation when the source stops updating
+
+**YAML-only:** `unit` — override the derived output unit outright. Reaching for it is a
+legitimate reason to write the YAML platform.
 
 **Key behaviors:**
 - Without `time_window`, calculates between consecutive updates only
 - Can show large negative spikes when source resets to 0 (total_increasing sensors)
-- Use `force_update` option if source updates infrequently
+- When the source updates infrequently, set `max_sub_interval` so the derivative decays to
+  zero instead of holding its last value
 
 **Common uses:**
 - Energy production rate (kW from kWh sensor)
@@ -192,19 +266,22 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - Threshold helper
-binary_sensor:
-  - platform: threshold
-    name: "High Temperature"
-    entity_id: sensor.temperature
-    upper: 25
-    hysteresis: 1
+# RIGHT — threshold helper (config-flow fields)
+name: "High Temperature"
+entity_id: sensor.temperature
+upper: 25                # supply upper, lower, or both
+hysteresis: 1            # required in the flow, default 0
 ```
 
 **Parameters:**
-- `upper`: Threshold for "on" when value exceeds
-- `lower`: Threshold for "on" when value drops below
-- `hysteresis`: Buffer zone to prevent rapid toggling
+- `upper`: threshold for "on" when the value exceeds it
+- `lower`: threshold for "on" when the value drops below it
+- `hysteresis`: buffer zone to prevent rapid toggling
+- Supplying neither `upper` nor `lower` is rejected (`need_lower_upper`)
+
+**YAML-only:** `device_class`. Note the YAML platform accepts **no** `unique_id` here, so a
+YAML-defined threshold sensor cannot be renamed or assigned an area from the UI — a further
+reason to create it through the flow.
 
 **Hysteresis explained:**
 ```
@@ -236,22 +313,40 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - Trend helper. NOTE: `sensors:` is a MAPPING keyed by a slug (not a list)
+# RIGHT — trend helper (config-flow submission, NOT configuration.yaml)
+# --- step 1 (user) ---
+name: "Temperature Rising"
+entity_id: sensor.temperature
+# --- step 2 (settings) ---
+attribute: null          # optional — track an attribute instead of the state
+invert: false            # true = detect a downward trend
+```
+
+**The tuning fields are not available at creation.** `sample_duration`, `min_gradient`,
+`max_samples`, and `min_samples` live in the **options** flow only — submitting them during
+creation fails with *extra keys not allowed*. Create the helper first, then reconfigure it to
+set them, or write the YAML platform (below), which takes all of them up front.
+
+**The two shapes differ here.** The YAML platform nests everything under a slug-keyed
+`sensors:` **mapping** (not a list), unlike most other `binary_sensor` platforms:
+
+```yaml
+# YAML platform shape — only when writing configuration.yaml
 binary_sensor:
   - platform: trend
     sensors:
       temp_rising:
         entity_id: sensor.temperature
-        sample_duration: 1800    # seconds of history to consider
-        min_gradient: 0.001      # units per SECOND to count as a trend
-        max_samples: 120        # cap on samples kept (independent of sample_duration)
-        invert: false            # true = detect a downward trend
+        sample_duration: 1800
+        min_gradient: 0.001
 ```
+
+**YAML-only:** `device_class`, `friendly_name`, plus the four tuning fields above.
 
 **Key behaviors:**
 - `min_gradient` is units **per second** (0.001 °/s ≈ 3.6 °/h).
+- `sample_duration` is a plain number of seconds in both shapes — not a duration mapping.
 - `invert: true` detects a *downward* trend.
-- `sensors:` is a slug-keyed mapping (not a list), unlike most other `binary_sensor` platforms.
 
 **Common uses:**
 - Temperature/pressure rising or falling
@@ -286,34 +381,35 @@ automation:
 
 **Use this:**
 ```yaml
-# RIGHT - Utility meter
-utility_meter:
-  daily_energy:
-    source: sensor.energy_consumption
-    cycle: daily
-  monthly_energy:
-    source: sensor.energy_consumption
-    cycle: monthly
+# RIGHT — utility_meter helper (config-flow fields)
+name: "Daily Energy"
+source: sensor.energy_consumption
+cycle: daily                  # required — the key is `cycle`, not `meter_type`
+offset: 0                     # required, default 0 — NUMBER OF DAYS (0-28) in the flow
+tariffs: []                   # required, default [] — e.g. ["peak", "offpeak"]
+net_consumption: false        # required, default false
+delta_values: false           # required, default false
+periodically_resetting: true  # required, default true
+always_available: false       # optional, default false
 ```
 
-**Cycle options:** `quarter-hourly`, `hourly`, `daily`, `weekly`, `monthly`, `bimonthly`, `quarterly`, `yearly`
+One meter per flow submission — the YAML shape's slug-keyed mapping creates several at once.
+
+**Cycle options:** `none`, `quarter-hourly`, `hourly`, `daily`, `weekly`, `monthly`, `bimonthly`, `quarterly`, `yearly`.
+`cycle` is required in the flow, so `none` is how you say "never resets" there; the YAML
+platform has no `none` — omit `cycle` instead.
 
 **Advanced features:**
-- **Tariffs:** Track peak/off-peak separately
-- **Offset:** Start cycle on specific day (e.g., billing date)
-- **Cron:** Custom reset schedules
-- **Delta:** For sensors that report delta values
+- **Tariffs:** Track peak/off-peak separately — creates a `select` entity to switch between them
+- **Offset:** Shift the cycle start (e.g. a billing date)
+- **Delta:** For sensors that report delta values rather than a running total
 
-```yaml
-# Utility meter with tariffs
-utility_meter:
-  daily_energy:
-    source: sensor.energy_consumption
-    cycle: daily
-    tariffs:
-      - peak
-      - offpeak
-```
+**YAML-only:** `cron` — custom reset schedules as a cron expression; the flow offers only
+the fixed `cycle` list. A non-standard billing period is the usual reason to
+write the YAML platform.
+
+**Value type differs:** the flow's `offset` is a **number of days** (0–28); the YAML
+platform's `offset` is a duration (`cv.time_period`).
 
 Then use automation to switch tariffs:
 ```yaml
@@ -342,14 +438,21 @@ automation:
 **Use for:** Statistics about how long/often an entity has been in a specific state.
 
 ```yaml
-sensor:
-  - platform: history_stats
-    name: "Lights on today"
-    entity_id: light.living_room
-    state: "on"
-    type: time
-    start: "{{ now().replace(hour=0, minute=0, second=0) }}"
-    end: "{{ now() }}"
+# history_stats helper (config-flow submission, THREE steps — not one payload)
+# --- step 1 (user) ---
+name: "Lights on today"
+entity_id: light.living_room
+type: time                    # time | ratio | count, default time
+# --- step 2 (state) ---
+state:                        # a LIST — several states can be counted together
+  - "on"
+# --- step 3 (options) ---
+start: "{{ today_at() }}"     # supply exactly two of start / end / duration
+end: "{{ now() }}"
+state_class: measurement
+additional_settings:          # collapsed section
+  min_state_duration:
+    minutes: 1
 ```
 
 **Types:**
@@ -357,12 +460,12 @@ sensor:
 - `ratio`: Percentage of time
 - `count`: Number of state changes to the monitored state
 
+
 **Key behaviors:**
 - Limited by recorder's `purge_keep_days`
 - Updates when source changes or once per minute
-- Creatable via the config-entry flow (multi-step: entity and type, then
-  tracked states, then the period — exactly two of `start`/`end`/`duration`);
-  YAML remains supported but is not required
+- `state` is a list in both shapes — several states can be counted together
+- `duration` is a duration mapping; `start` / `end` are templates
 
 **Common uses:**
 - How long lights were on today
@@ -376,20 +479,26 @@ sensor:
 **Use for:** Converting power (W) to energy (kWh), flow rate to volume, etc.
 
 ```yaml
-sensor:
-  - platform: integration
-    name: "Solar Energy"
-    source: sensor.solar_power
-    unit_prefix: k
-    unit_time: h
-    method: left
-    round: 2
+# integration (Riemann sum) helper (config-flow fields)
+name: "Solar Energy"
+source: sensor.solar_power
+method: left             # required, default trapezoidal
+unit_time: h             # required, default h
+unit_prefix: k           # optional
+round: 2                 # optional
+max_sub_interval:        # optional duration mapping
+  minutes: 1
 ```
 
 **Methods:**
 - `left`: Uses previous value for interval (recommended for sparse data)
 - `right`: Uses new value for interval
 - `trapezoidal`: Averages previous and new (can overestimate with gaps)
+
+**Do not set `unit`.** It was removed from this platform: `PLATFORM_SCHEMA` wraps
+`cv.removed("unit")`, which **raises** *"The 'unit' option has been removed"* and fails the
+config rather than ignoring the key. The unit is derived from the source plus
+`unit_prefix`/`unit_time`.
 
 **Key behaviors:**
 - For solar/sensors with gaps, use `left` method
@@ -404,6 +513,11 @@ sensor:
 
 ## State Storage
 
+These are **storage-collection helpers**: the fields below are the `<domain>/create` payload.
+The YAML shape nests the same fields under a slug you choose (`input_boolean:` → `guest_mode:`
+→ fields); through `<domain>/create` there is no slug — HA derives the entity_id from `name`.
+Renaming such a helper later does not move its entity_id, so pick the name deliberately.
+
 **Pitfall — `initial` resets state on every restart:** `input_boolean`, `input_number`, `input_select`, `input_text`, and `input_datetime` all accept an `initial` field. If `initial` is present in the config, HA forces that value on every restart instead of restoring the last saved state.
 - Omit `initial` to preserve state across restarts.
 - Use `initial` only when the helper must always start at a fixed value.
@@ -413,13 +527,10 @@ sensor:
 **Use for:** Toggle switches for modes, flags, and conditions.
 
 ```yaml
-input_boolean:
-  guest_mode:
-    name: "Guest Mode"
-    icon: mdi:account-group
-  vacation_mode:
-    name: "Vacation Mode"
-    icon: mdi:airplane
+# input_boolean — input_boolean/create fields
+name: "Guest Mode"       # required
+icon: mdi:account-group
+initial: false           # omit to restore the last state across restarts
 ```
 
 **Common uses:**
@@ -433,14 +544,13 @@ input_boolean:
 **Use for:** Storing numeric values that can be adjusted.
 
 ```yaml
-input_number:
-  target_temperature:
-    name: "Target Temperature"
-    min: 15
-    max: 30
-    step: 0.5
-    unit_of_measurement: "°C"
-    mode: slider
+# input_number — input_number/create fields
+name: "Target Temperature"   # required
+min: 15                      # required
+max: 30                      # required
+step: 0.5                    # default 1
+unit_of_measurement: "°C"
+mode: slider                 # slider (default) or box
 ```
 
 **Modes:** `slider`, `box`
@@ -456,15 +566,14 @@ input_number:
 **Use for:** Dropdown selection of predefined options.
 
 ```yaml
-input_select:
-  hvac_mode:
-    name: "HVAC Mode"
-    options:
-      - "auto"
-      - "cool"
-      - "heat"
-      - "off"
-    icon: mdi:thermostat
+# input_select — input_select/create fields
+name: "HVAC Mode"        # required
+options:                 # required, must be non-empty and unique
+  - "auto"
+  - "cool"
+  - "heat"
+  - "off"
+icon: mdi:thermostat
 ```
 
 **Common uses:**
@@ -478,12 +587,12 @@ input_select:
 **Use for:** Storing text strings.
 
 ```yaml
-input_text:
-  notification_message:
-    name: "Custom Notification"
-    min: 0
-    max: 255
-    mode: text
+# input_text — input_text/create fields
+name: "Custom Notification"   # required
+min: 0                        # default 0
+max: 255                      # default 100
+mode: text                    # text (default) or password
+pattern: null                 # optional regex the value must match
 ```
 
 **Modes:** `text`, `password`
@@ -498,15 +607,10 @@ input_text:
 **Use for:** Storing date and/or time values.
 
 ```yaml
-input_datetime:
-  morning_alarm:
-    name: "Morning Alarm"
-    has_time: true
-    has_date: false
-  next_vacation:
-    name: "Next Vacation"
-    has_date: true
-    has_time: false
+# input_datetime — input_datetime/create fields
+name: "Morning Alarm"    # required
+has_time: true           # at least one of has_date / has_time must be true
+has_date: false
 ```
 
 **Common uses:**
@@ -519,10 +623,9 @@ input_datetime:
 **Use for:** Triggering automations manually.
 
 ```yaml
-input_button:
-  doorbell:
-    name: "Doorbell"
-    icon: mdi:bell
+# input_button — input_button/create fields
+name: "Doorbell"         # required
+icon: mdi:bell
 ```
 
 **Common uses:**
@@ -556,15 +659,13 @@ automation:
 
 **Use this:**
 ```yaml
-# RIGHT - Counter helper
-counter:
-  coffee_count:
-    name: "Coffees Today"
-    initial: 0
-    step: 1
-    minimum: 0
-    maximum: 100
-    restore: true
+# RIGHT — counter helper (counter/create fields)
+name: "Coffees Today"    # required
+initial: 0               # default 0
+step: 1                  # default 1
+minimum: 0               # default null (no floor)
+maximum: 100             # default null (no ceiling)
+restore: true            # default true
 ```
 
 **Actions:** `counter.increment`, `counter.decrement`, `counter.reset`, `counter.set_value`
@@ -597,12 +698,10 @@ actions:
 
 **Use this for pausable/restartable timers:**
 ```yaml
-# RIGHT - Timer helper
-timer:
-  laundry:
-    name: "Laundry Timer"
-    duration: "01:00:00"
-    restore: true
+# RIGHT — timer helper (timer/create fields)
+name: "Laundry Timer"    # required
+duration: "01:00:00"     # default 0
+restore: true            # default false
 ```
 
 **Actions:** `timer.start`, `timer.pause`, `timer.cancel`, `timer.finish`, `timer.change`
@@ -633,16 +732,15 @@ timer:
 **Use for:** Weekly on/off schedules.
 
 ```yaml
-schedule:
-  work_hours:
-    name: "Work Hours"
-    monday:
-      - from: "09:00:00"
-        to: "17:00:00"
-    tuesday:
-      - from: "09:00:00"
-        to: "17:00:00"
-    # ... etc
+# schedule — schedule/create fields
+name: "Work Hours"       # required
+monday:
+  - from: "09:00:00"
+    to: "17:00:00"
+tuesday:
+  - from: "09:00:00"
+    to: "17:00:00"
+# each weekday key defaults to [] when omitted
 ```
 
 **Key behaviors:**
@@ -675,18 +773,30 @@ template:
 **Use for:** Binary sensor based on current time (sunrise/sunset or fixed times).
 
 ```yaml
-binary_sensor:
-  - platform: tod
-    name: "Morning"
-    after: "06:00"
-    before: "12:00"
+# tod helper (config-flow fields)
+name: "Morning"
+after_time: "06:00:00"    # required
+before_time: "12:00:00"   # required
+```
 
+**The two shapes use different key names — this trips up copy-paste.** The flow takes
+`after_time` / `before_time` and accepts **clock times only**. The YAML platform takes
+`after` / `before` and additionally accepts the sun events `sunrise` / `sunset` plus
+`after_offset` / `before_offset`:
+
+```yaml
+# YAML platform shape — required for sun-relative windows
+binary_sensor:
   - platform: tod
     name: "Night Time"
     after: sunset
     after_offset: "01:00:00"
     before: sunrise
 ```
+
+**YAML-only:** sun events as `after`/`before` values, `after_offset`, `before_offset`.
+A sun-relative window is a legitimate reason to write the YAML platform — or
+use a `sun` condition in the automation instead of a helper.
 
 **Common uses:**
 - Time-of-day modes (morning, afternoon, evening, night)
@@ -701,34 +811,43 @@ binary_sensor:
 
 **Use for:** Combining entities for collective state and control.
 
-```yaml
-group:
-  all_lights:
-    name: "All Lights"
-    entities:
-      - light.living_room
-      - light.bedroom
-      - light.kitchen
-    all: false  # ON if ANY member is on
+**Menu-based** — submit `{"next_step_id": "<sub-type>"}` first (sub-types: `binary_sensor`,
+`button`, `cover`, `event`, `fan`, `light`, `lock`, `media_player`, `notify`, `sensor`,
+`switch`, `valve`), then the fields for that sub-type. The stored config entry carries
+`group_type` as a storage key — not an input you submit.
 
-  security_sensors:
-    name: "Security Sensors"
-    entities:
-      - binary_sensor.front_door
-      - binary_sensor.back_door
-      - binary_sensor.window
-    all: true  # ON only if ALL members are on
+```yaml
+# group → light (config-flow fields, after next_step_id: light)
+name: "All Lights"       # required
+entities:                # required
+  - light.living_room
+  - light.bedroom
+  - light.kitchen
+hide_members: false      # required, default false
+all: false               # required, default false — ON if ANY member is on
 ```
 
-**Parameters:**
-- `all: false` (default): Group is ON if ANY member is ON (OR logic)
-- `all: true`: Group is ON only if ALL members are ON (AND logic)
+**Fields vary by sub-type — `all` is not universal.** Every sub-type takes `name`,
+`entities`, `hide_members`. Beyond that:
+
+| Sub-type | Additional fields |
+|---|---|
+| `binary_sensor`, `light`, `switch` | `all` (false = ON if any member is on; true = ON only if all are) |
+| `sensor` | `type` (required: `last`, `first_available`, `max`, `mean`, `median`, `min`, `product`, `range`, `stdev`, `sum`). `ignore_non_numeric` is **options-flow only** — not accepted at creation |
+| `button`, `cover`, `event`, `fan`, `lock`, `media_player`, `notify`, `valve` | none — `all` is **not** accepted |
+
+Sensor groups accept members from `sensor`, `number`, and `input_number`.
 
 **Key behaviors:**
 - Groups inherit the domain of their members
 - Light groups can be controlled as a single entity
 - Binary sensor groups useful for "any door open" logic
-- Created via the config-entry flow API, `group` is **menu-based**: submit `{"next_step_id": "<sub-type>"}` first (sub-types: `binary_sensor`, `button`, `cover`, `event`, `fan`, `light`, `lock`, `media_player`, `notify`, `sensor`, `switch`, `valve`), then provide `entities`. Sensor groups additionally require `type` (one of `last`, `first_available`, `max`, `mean`, `median`, `min`, `product`, `range`, `stdev`, `sum`). The stored config entry then carries `group_type` as a storage key.
+- `hide_members: true` hides the individual members from the UI, leaving only the group
+
+**Old-style YAML `group:` is a different thing** — a domain-agnostic mapping under a top-level
+`group:` key that predates the helper. It is still supported and takes only `name`, `entities`,
+`all`, and `icon`; it produces a `group.*` entity rather than a native entity of the members'
+domain. Prefer the helper.
 
 **Instead of:**
 ```yaml
@@ -755,30 +874,50 @@ template:
 
 **Use for:** Inferring an unmeasurable state (someone cooking, showering, room occupied) from several probabilistic signals — instead of hand-tuning a template with stacked `and`/`or`/threshold logic.
 
-**Use this:**
+**The one helper whose flow cannot be expressed as a flat field set.** Observations are added
+**one per flow round-trip** through an observation-type menu (`state`, `numeric_state`,
+`template`), so there is no single payload carrying an `observations` list. The YAML shape
+below is therefore the clearest spec of the configuration; build it in the flow one
+observation at a time.
+
 ```yaml
+# bayesian — YAML platform shape. NOTE THE SCALE: every probability here is 0..1.
+# The config flow wants the SAME numbers as PERCENTAGES (0.3 -> 30). Copying these
+# values into a flow is accepted and silently means 0.3%.
 binary_sensor:
   - platform: bayesian
     name: "Kitchen In Use"
-    prior: 0.3                  # baseline probability before any observation
-    probability_threshold: 0.5  # turns on when posterior probability exceeds this
+    prior: 0.3                  # flow: 30
+    probability_threshold: 0.5  # flow: 50
     observations:
       - entity_id: binary_sensor.kitchen_motion
         platform: state         # or numeric_state / template
         to_state: "on"
-        prob_given_true: 0.95
-        prob_given_false: 0.33
+        prob_given_true: 0.95   # flow: 95, and the flow also requires a `name` here
+        prob_given_false: 0.33  # flow: 33
       - entity_id: sensor.kitchen_power
         platform: numeric_state
         above: 50
-        prob_given_true: 0.8
-        prob_given_false: 0.05
+        prob_given_true: 0.8    # flow: 80
+        prob_given_false: 0.05  # flow: 5
 ```
+
+**Four differences between the shapes:**
+
+| | YAML platform | Config flow |
+|---|---|---|
+| Probability scale | `0..1` (`prior: 0.3`) | percentages `0..100` (`prior: 30`), and exactly 0 or 100 is rejected |
+| Observations | one `observations:` list | one submission per observation, via a type menu |
+| Per-observation `name` | not accepted | **required** on every observation |
+| `prob_given_false` | optional | required |
 
 **Key behaviors:**
 - Each observation contributes `prob_given_true` / `prob_given_false`; the sensor turns on when the combined posterior probability exceeds `probability_threshold`.
 - Observation `platform` is `state`, `numeric_state` (uses `above`/`below`), or `template` (uses `value_template`).
-- **YAML uses probabilities `0..1`; the UI config flow uses percentages `0..100`** — a common mismatch.
+- Two `numeric_state` observations on the **same entity** may not have overlapping
+  `above`/`below` ranges — the YAML platform rejects the config with `overlapping_ranges`.
+- The observation schemas are closed: an unexpected key fails validation rather than being ignored.
+
 
 **Common uses:**
 - "Someone is cooking" / "shower running" from motion + power + humidity
@@ -805,7 +944,24 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - Filter helper (UI creates one filter per entry; YAML supports chains)
+# RIGHT — filter helper (config-flow submission, TWO steps), one filter per entry
+# --- step 1 (user) ---
+name: "Filtered Temperature"
+entity_id: sensor.outdoor_temp
+filter: outlier          # picks which fields step 2 offers — see the table below
+# --- step 2 (the chosen filter's step) ---
+window_size: 4
+radius: 2.0
+precision: 2             # available on every filter type
+```
+
+**Two things are YAML-only here.** The flow creates exactly one filter per config entry, so
+**chains** need YAML. The flow's source picker also accepts `sensor` entities only, while the
+YAML platform accepts `sensor`, `binary_sensor`, **and** `input_number` — so filtering a
+binary sensor or an input_number needs YAML too. For a chain, write the `filters:` list:
+
+```yaml
+# YAML platform shape — required for chains
 sensor:
   - platform: filter
     name: "Filtered Temperature"
@@ -821,7 +977,7 @@ sensor:
         precision: 2
 ```
 
-**The UI config flow creates one filter per entry.** For chained pipelines (multiple filters applied in sequence), use YAML as above.
+(You can also chain by pointing one filter helper's `entity_id` at another's output entity.)
 
 **Filter types** (one per UI entry, or multiple in a YAML list):
 
@@ -855,13 +1011,11 @@ template:
 
 **Use this:**
 ```yaml
-# RIGHT - Random helper (proper entity with state class, history, etc.)
-sensor:
-  - platform: random
-    name: "Random Percentage"
-    minimum: 0
-    maximum: 100
-    unit_of_measurement: "%"
+# RIGHT — random → sensor (config-flow fields, after next_step_id: sensor)
+name: "Random Percentage"
+minimum: 0               # default 0
+maximum: 100             # default 20
+unit_of_measurement: "%"
 ```
 
 Menu-based — pick `sensor` (numeric) or `binary_sensor` (boolean).
@@ -876,10 +1030,12 @@ Menu-based — pick `sensor` (numeric) or `binary_sensor` (boolean).
 
 Binary-sensor variant (boolean coin-flip — no min/max needed):
 ```yaml
-binary_sensor:
-  - platform: random
-    name: "Random Boolean"
+# random → binary_sensor (after next_step_id: binary_sensor)
+name: "Random Boolean"
 ```
+
+The YAML platform accepts no `unique_id` for either sub-type, so a YAML-defined random sensor
+is not UI-editable. There is no reason to prefer YAML for this helper.
 
 ---
 
@@ -890,27 +1046,40 @@ binary_sensor:
 **Use for:** Turning a switch (or fan) into a thermostat that follows a temperature sensor.
 
 ```yaml
-climate:
-  - platform: generic_thermostat
-    name: "Bedroom"
-    heater: switch.bedroom_heater
-    target_sensor: sensor.bedroom_temperature
-    ac_mode: false
-    cold_tolerance: 0.3
-    hot_tolerance: 0.3
-    min_temp: 15
-    max_temp: 25
-    min_cycle_duration: "00:05:00"
+# generic_thermostat helper (config-flow submission, TWO steps)
+# --- step 1 (user) ---
+name: "Bedroom"                # required
+heater: switch.bedroom_heater  # required — a switch or fan entity
+target_sensor: sensor.bedroom_temperature   # required — a temperature sensor
+ac_mode: false                 # required — true inverts for cooling
+cold_tolerance: 0.3            # required, default 0.3
+hot_tolerance: 0.3             # required, default 0.3
+min_cycle_duration:            # optional duration mapping
+  minutes: 5
+max_cycle_duration: null       # optional duration mapping
+cycle_cooldown: null           # optional duration mapping
+keep_alive: null               # optional duration mapping
+min_temp: 15                   # optional
+max_temp: 25                   # optional
+# --- step 2 (presets) — all optional ---
+away_temp: 16
+comfort_temp: 21
+eco_temp: 18
+home_temp: 20
+sleep_temp: 17
+activity_temp: 20
 ```
 
-**Parameters (config flow):**
-- Required: `name`, `heater` (switch or fan entity), `target_sensor` (temperature sensor), `ac_mode` (bool — set `true` to invert for cooling).
-- Optional: `cold_tolerance` (default `0.3`), `hot_tolerance` (default `0.3`), `min_cycle_duration`, `max_cycle_duration`, `cycle_cooldown`, `keep_alive`, `min_temp`, `max_temp`, plus a presets step (`away_temp`, `comfort_temp`, `eco_temp`, `home_temp`, `sleep_temp`, `activity_temp`).
+**YAML-only:** `initial_hvac_mode`, `precision`, `target_temp_step`, `target_temp`.
+Needing a fixed startup mode or a custom temperature step is a legitimate
+reason to write the YAML platform.
+
+**Value type differs:** the duration fields are mappings (`minutes: 5`) in the flow; the
+YAML platform also accepts the `"00:05:00"` string form.
 
 **Key behaviors:**
 - `ac_mode: true` inverts logic (heater output activates for cooling)
 - Tolerances prevent rapid cycling near the target
-- YAML platform supports `initial_hvac_mode`, `precision`, `target_temp_step` — not exposed by the UI flow
 
 ---
 
@@ -919,20 +1088,21 @@ climate:
 **Use for:** Turning a switch (or fan) into a humidifier/dehumidifier controller that follows a humidity sensor.
 
 ```yaml
-humidifier:
-  - platform: generic_hygrostat
-    name: "Bathroom Dehumidifier"
-    device_class: dehumidifier
-    humidifier: switch.bathroom_fan
-    target_sensor: sensor.bathroom_humidity
-    dry_tolerance: 3
-    wet_tolerance: 3
-    min_cycle_duration: "00:05:00"
+# generic_hygrostat helper (config-flow fields)
+name: "Bathroom Dehumidifier"   # required
+device_class: dehumidifier      # required — humidifier or dehumidifier
+humidifier: switch.bathroom_fan # required — a switch or fan entity
+target_sensor: sensor.bathroom_humidity   # required — a humidity sensor
+dry_tolerance: 3                # required, default 3
+wet_tolerance: 3                # required, default 3
+min_cycle_duration:             # optional duration mapping
+  minutes: 5
 ```
 
-**Parameters (config flow):**
-- Required: `name`, `device_class` (`humidifier` or `dehumidifier`), `humidifier` (switch or fan entity), `target_sensor` (humidity sensor).
-- Optional: `dry_tolerance` (default `3`), `wet_tolerance` (default `3`), `min_cycle_duration`.
+**YAML-only, and there are many:** `min_humidity`, `max_humidity`, `target_humidity`,
+`keep_alive`, `initial_state`, `away_humidity`, `away_fixed`, `sensor_stale_duration`.
+This helper's flow is markedly thinner than its YAML platform — an away preset
+or a stale-sensor timeout requires YAML.
 
 ---
 
@@ -941,13 +1111,14 @@ humidifier:
 **Use for:** Estimating mold/condensation risk from indoor temperature + humidity vs. a cold-surface (outdoor) temperature — instead of hand-rolling a dew-point template.
 
 ```yaml
-sensor:
-  - platform: mold_indicator
-    indoor_temp_sensor: sensor.indoor_temp
-    indoor_humidity_sensor: sensor.indoor_humidity
-    outdoor_temp_sensor: sensor.outdoor_temp
-    calibration_factor: 2.0
+# mold_indicator helper (config-flow fields)
+name: "Mold Indicator"                        # required, default "Mold Indicator"
+indoor_temp_sensor: sensor.indoor_temp        # required
+indoor_humidity_sensor: sensor.indoor_humidity # required
+outdoor_temp_sensor: sensor.outdoor_temp      # required
+calibration_factor: 2.0                       # required in the flow, optional in YAML
 ```
+
 
 Outputs an estimated humidity-at-cold-surface percentage; mold risk rises above ~70%. **`calibration_factor` must be physically calibrated** to a known condensation point — it is not a value to guess.
 
@@ -976,9 +1147,13 @@ template:
         state: "{{ is_state('switch.lamp_plug', 'on') }}"
 ```
 
-**Use this** (UI / config flow — no YAML equivalent):
-- `entity_id: switch.lamp_plug`
-- `target_domain: light`
+**Use this** (config-flow fields — no YAML equivalent at all):
+```yaml
+# switch_as_x helper (config-flow fields)
+entity_id: switch.lamp_plug   # required — must be a switch.* entity
+target_domain: light          # required
+invert: false                 # default false
+```
 
 `switch_as_x` hides the original switch and registers a proper `light.*` entity that voice assistants and dashboards treat correctly.
 
@@ -992,7 +1167,7 @@ UI-only — no YAML equivalent. The original switch entity is hidden once conver
 
 ## Template Helpers
 
-When no dedicated helper covers your need, use the **Template Helper** — created via the config-entry flow / UI, **not** YAML `template:` platform sensors. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
+When no dedicated helper covers your need, use the **Template Helper** — created through the config flow, **not** YAML `template:` platform sensors, except for the cases in the YAML-only table below. Template helpers are first-class HA helpers: UI-editable, reloadable without restarting, and visible in the helper registry.
 
 ### template
 
@@ -1000,39 +1175,78 @@ When no dedicated helper covers your need, use the **Template Helper** — creat
 
 Menu-based — pick a sub-type first (see [Menu-Based Helpers](#menu-based-helpers) for the full sub-type list), then configure fields.
 
+**`availability` is nested, not flat.** Every sub-type puts `availability` (and
+`location_accuracy`) inside a collapsed **`additional_options`** section. A flat
+`availability:` at the top of the payload fails validation. HA flattens the section when it
+sets the entry up, which is why the YAML platform shape shows the key at the top level.
+
 **template → sensor**
 - Required: `name`, `state` (Jinja template returning the sensor value)
-- Optional: `unit_of_measurement`, `device_class`, `state_class`, `device_id`, `availability` (template)
+- Optional: `unit_of_measurement`, `device_class`, `state_class`, `device_id`; `availability` inside `additional_options`
 
 **template → binary_sensor**
 - Required: `name`, `state` (Jinja template returning truthy/falsy)
-- Optional: `device_class`, `device_id`, `availability` (template)
+- Optional: `device_class`, `device_id`; `availability` inside `additional_options`
 
 **template → device_tracker** (the native replacement for the legacy `device_tracker.see` action)
-- Required: **either** `in_zones` (a list of zone entity_ids the device is considered in) **or** both `latitude` and `longitude` (templates)
-- Optional: `location_accuracy`, plus the common `name`/`unique_id`/`icon`/`picture`/`availability`/`attributes`
-- Not valid here: `location_name`, `battery_level`, `source_type`, `host_name`, `mac_address`, `gps_accuracy`
+- Required: `name`, and **either** `in_zones` (a list of zone entity_ids the device is considered in) **or** both `latitude` and `longitude` (templates)
+- Optional: `device_id`; `availability` and `location_accuracy` inside `additional_options`
+- **YAML-only:** `icon`, `picture` (and `unique_id`, as everywhere)
+- Not valid here in **either** shape: `attributes`. Nor: `location_name`, `battery_level`, `source_type`, `host_name`, `mac_address`, `gps_accuracy`
 
 Other sub-types follow the same shape — a `state` template plus domain-appropriate metadata.
+
+```yaml
+# template → sensor (config-flow fields, after next_step_id: sensor)
+name: "Solar Net"        # required
+state: "{{ states('sensor.solar_production') | float(0) - states('sensor.house_consumption') | float(0) }}"
+unit_of_measurement: "W"
+device_class: power
+state_class: measurement
+device_id: null          # optional — attach the entity to an existing device
+additional_options:      # collapsed section — availability lives HERE, not at top level
+  availability: "{{ has_value('sensor.solar_production') and has_value('sensor.house_consumption') }}"
+```
+
+**Do not submit `unique_id`** — the flow assigns one from the config entry. It is a
+YAML-platform field only.
 
 **State restoration (2026.8+):** `fan`, `cover`, and `device_tracker` template entities
 restore their previous state after a restart, so they resume where they left off instead
 of coming back blank.
 
-**Equivalent YAML platform** (for reference; prefer the helper):
+**The YAML platform shape** — needed for the cases the flow cannot express (below), and for
+defining several entities at once:
 ```yaml
 template:
   - sensor:
       - name: "Solar Net"
-        state: "{{ states('sensor.solar_production') | float - states('sensor.house_consumption') | float }}"
+        unique_id: solar_net
+        state: "{{ states('sensor.solar_production') | float(0) - states('sensor.house_consumption') | float(0) }}"
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
   - binary_sensor:
       - name: "Someone Home"
+        unique_id: someone_home
         state: "{{ is_state('person.alice','home') or is_state('person.bob','home') }}"
         device_class: presence
 ```
+
+**YAML-only for template entities** (verified against the Template Helper flow at 2026.8.3):
+
+| YAML-only | Why the flow cannot do it |
+|---|---|
+| **Trigger-based templates** (`triggers:` / `action:` / `variables:` on the block) | The flow has no trigger step. Its per-sub-type action fields (`press`, `turn_on`, `set_value`, …) are entity *commands*, not a trigger block's `actions:` |
+| `attributes:` (extra state attributes) | No field in the flow |
+| Several entities in one block | One entity per config entry |
+
+(`unique_id` is not in this table: the flow assigns one. See the note at the top of this file.)
+
+Needing a trigger, `attributes:`, or several entities in one block is a legitimate reason to
+write `template:` YAML — see
+[template-guidelines](template-guidelines.md), which covers when templates are the right tool
+at all.
 
 See the [Decision Matrix](#decision-matrix) for when the Template Helper is the right choice vs. a dedicated helper — every pattern that has a dedicated helper (averaging, rate of change, thresholds, time-of-day, scheduling, any-on/all-on) should go through that helper first.
 
@@ -1068,4 +1282,5 @@ See the [Decision Matrix](#decision-matrix) for when the Template Helper is the 
 | Infer an unmeasurable state from several signals | `bayesian` | Template with stacked and/or logic |
 | Switch presented as light/cover/lock | `switch_as_x` | Template light/cover/lock |
 | Random sensor value | `random` | Template with `range()` |
-| Custom logic no other helper covers | `template` helper (via UI flow) | YAML `template:` platform sensor |
+| Custom logic no other helper covers | `template` helper (via config flow) | YAML `template:` platform sensor |
+| Template entity that must update on a trigger, or carry `attributes:` | YAML `template:` block — the flow has no equivalent | Forcing it into the flow |

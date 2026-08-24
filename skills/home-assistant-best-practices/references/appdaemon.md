@@ -1,5 +1,7 @@
 # AppDaemon Best Practices
 
+> **AppDaemon apps are files by design** — Python modules plus `apps.yaml`, read from AppDaemon's own config directory rather than HA's config API. The YAML here is genuine file content. Everything HA-side these apps create (helpers, automations) still goes through the HA config API.
+
 AppDaemon is the right tool when native HA automations reach their limits: complex
 multi-step logic, stateful workflows, external API orchestration, or anything that
 benefits from a real programming language. It is **not** a replacement for HA

@@ -1,5 +1,7 @@
 # Device Control Patterns
 
+> **The YAML below shows config shape, not a file to hand-edit.** Create and update these through the HA config API, which validates the config and needs no restart. Actions and triggers are submitted as part of an automation or script object.
+
 Best practices for controlling devices, triggering from buttons and remotes, and structuring actions.
 
 > **Check for a purpose-specific trigger first.** Since 2026.7 the default building block is
