@@ -77,9 +77,13 @@ graders are compiled with `node`, not Python `re`: the two disagree (`re` reject
 `(?<name>x)` and accepts Python-only `(?P<name>x)`), and without `node` that check is skipped
 with a warning rather than failed.
 
-Three things nothing checks, so all three stay review items: that every reference file is
-still routed from SKILL.md, that `references/examples.yaml` still parses, and that an eval
-grader still means what it was written to mean.
+Four things nothing checks, so all four stay review items: that every reference file is
+still routed from SKILL.md, that `references/examples.yaml` still parses, that an eval
+grader still means what it was written to mean, and that the descriptions in SKILL.md's
+reference table and README's **Skill Contents** table still match what the files cover.
+The last one drifts silently — link checking keeps the *file list* honest while the prose
+beside it goes stale, so a row can point at the right file and still describe an older
+version of it.
 
 ## Reviewing Skill PRs
 
