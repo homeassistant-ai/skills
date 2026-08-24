@@ -640,7 +640,7 @@ triggers:
 The `entered_home`/`left_home` device trigger types and `is_home`/`is_not_home` device condition types for `person` and `device_tracker` domains were **removed in 2026.5**. Use state triggers and conditions instead.
 
 ```yaml
-# WRONG (removed in 2026.5)
+# WRONG — device trigger types removed in 2026.5
 triggers:
   - trigger: device
     domain: person

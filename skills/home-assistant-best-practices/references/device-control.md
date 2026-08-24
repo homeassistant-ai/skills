@@ -166,7 +166,7 @@ Two Zigbee stacks are exceptions:
 ZHA buttons fire `zha_event` events. Use **event triggers** with `device_ieee` (the device's IEEE address), which is **persistent** across re-adds.
 
 ```yaml
-# RIGHT — ZHA button trigger - device_ieee is persistent
+# RIGHT — device_ieee is persistent across re-adds
 triggers:
   - trigger: event
     event_type: zha_event
@@ -189,7 +189,7 @@ For a complete multi-button remote with trigger_id + choose, see [examples.yaml]
 Z2M creates **MQTT device triggers** that are autodiscovered. These are acceptable because Z2M manages the device-to-trigger mapping.
 
 ```yaml
-# RIGHT — Z2M device trigger - autodiscovered
+# RIGHT — Z2M device_id is managed by autodiscovery
 triggers:
   - trigger: device
     device_id: abc123def456  # OK for Z2M, managed by autodiscovery
