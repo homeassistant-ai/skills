@@ -1,5 +1,7 @@
 # Scenes
 
+> **The YAML below shows config shape, not a file to hand-edit.** Create and update these through the HA config API, which validates the config and needs no restart. Scenes have a config API like automations and scripts; editing `scenes.yaml` is the fallback, not the default.
+
 A scene is a **saved snapshot of target entity states, applied atomically** — not a sequential script. Activating it pushes every listed entity toward its stored state at once (optionally with a transition). Use a scene to *restore a set of states*; use a script's `sequence` when you need ordered, conditional, or timed steps.
 
 ## Table of Contents
@@ -14,18 +16,18 @@ A scene is a **saved snapshot of target entity states, applied atomically** — 
 ## Scene Config Shape
 
 ```yaml
-scene:
-  - name: Romantic            # required; `id:` optional but recommended (stable unique id)
-    icon: "mdi:flower-tulip"  # optional
-    entities:
-      light.tv_back_light: "on"          # simple form: entity_id → state string
-      light.ceiling:                      # object form: state + attributes
-        state: "on"
-        brightness: 200                   # 0–255
-        color_temp_kelvin: 2700           # Kelvin — NOT color_temp/mireds (removed 2026.3)
-      climate.living_room:
-        state: "heat"
-        temperature: 21
+# One scene object, as submitted to the config API (no `scene:` file wrapper)
+name: Romantic            # required; `id:` optional but recommended (stable unique id)
+icon: "mdi:flower-tulip"  # optional
+entities:
+  light.tv_back_light: "on"          # simple form: entity_id → state string
+  light.ceiling:                     # object form: state + attributes
+    state: "on"
+    brightness: 200                  # 0–255
+    color_temp_kelvin: 2700          # Kelvin — NOT color_temp/mireds (removed 2026.3)
+  climate.living_room:
+    state: "heat"
+    temperature: 21
 ```
 
 - `entities` is a dict mapping `entity_id` → a state string, or an object with `state` plus the entity's attributes.

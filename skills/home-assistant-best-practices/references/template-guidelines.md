@@ -1,7 +1,16 @@
 > **Prefer a Template Helper over YAML.**
-> Before writing any `template:` block, create a Template Helper via the HA config flow (MCP tool or API) or via the UI:
-> Settings → Devices & Services → Helpers → Create Helper → Template.
-> Use `template:` YAML only when explicitly requested or when neither programmatic nor UI access is available.
+> Before writing any `template:` block, create a Template Helper through the HA config flow
+> (programmatically, or in the UI: Settings → Devices & Services → Helpers → Create Helper →
+> Template). It is UI-editable; a `template:` YAML entry needs a `template.reload` and is not.
+>
+> **Write `template:` YAML when** the user asks for it, when neither path is available, or when
+> the entity needs something the flow has no field for — **trigger-based templates**,
+> **`attributes:`**, or several entities in one block. Those cases are real and are marked
+> *YAML-only* throughout this file; see
+> [helper-selection #template-helpers](helper-selection.md#template-helpers) for the full list.
+> The YAML blocks below show **config shape**. Where one is the thing to write, use managed
+> YAML editing ([yaml-only-integrations](yaml-only-integrations.md)) — never an unchecked
+> hand-edit.
 
 # Template Guidelines
 
@@ -180,7 +189,11 @@ See [automation-patterns](automation-patterns.md) and [helper-selection](helper-
 
 ## Template Sensor Best Practices
 
-### Always Include unique_id
+### Always Include unique_id — in YAML blocks only
+
+A `unique_id` is what gives the entity a registry entry, so the UI can rename it, assign it
+to an area, and customize it — and so a later rename sticks instead of being regenerated from
+`name` on the next reload. **Every `template:` YAML entity needs one.**
 
 ```yaml
 template:
@@ -189,6 +202,10 @@ template:
         unique_id: my_custom_sensor  # Enables UI customization
         state: "{{ states('sensor.source') }}"
 ```
+
+**Do not submit `unique_id` to the Template Helper flow** — it is not a field there; the
+config entry supplies one. This is the single most common key to wrongly carry over when
+converting a YAML block into a helper.
 
 ### Always Define Availability
 
@@ -245,33 +262,42 @@ template:
         state: "{{ states('sensor.amps') | float * 230 }}"
 ```
 
-### Use Trigger-Based for Efficiency
+### Use Trigger-Based to Capture Trigger Context
 
-Trigger-based templates only update when sources change:
+Trigger-based templates re-evaluate only when their trigger fires, and are the **only**
+template form with access to the `trigger` variable. That second property is the real reason
+to reach for them: a state-based template is recomputed from current states and therefore
+cannot know *which* entity changed, or what the previous value was.
 
 ```yaml
+# Trigger-based: records WHICH sensor fired — impossible in a state-based template
 template:
   - triggers:                    # Recommended plural form (HA 2024.10+)
       - trigger: state
         entity_id:
-          - sensor.temp_bedroom
-          - sensor.temp_living
+          - binary_sensor.motion_hall
+          - binary_sensor.motion_kitchen
+        to: "on"
     sensor:
-      - name: "Average Temperature"
-        state: >
-          {% set temps = [
-            states('sensor.temp_bedroom') | float(0),
-            states('sensor.temp_living') | float(0)
-          ] %}
-          {{ (temps | sum / temps | count) | round(1) }}
-        unit_of_measurement: "°C"
-        state_class: measurement
+      - name: "Last Motion"
+        unique_id: last_motion
+        state: "{{ trigger.to_state.name }}"
+        attributes:
+          entity_id: "{{ trigger.entity_id }}"
+          at: "{{ now().isoformat() }}"
 ```
 
-**Benefits of trigger-based:**
-- Only evaluates when trigger fires (not on every state change)
-- Access to `trigger` variable
-- More efficient for complex templates
+**Trigger-based blocks are YAML-only** — the Template Helper flow has no trigger step, and
+no `attributes:` field. This example uses both.
+
+**Use trigger-based when you need:**
+- The `trigger` variable — which entity fired, `from_state` / `to_state`, event data
+- A value captured at an instant rather than recomputed (timestamps, "last X")
+- A deliberately throttled update (a `time_pattern` trigger over an expensive template)
+
+**Do not** reach for it to average or sum entities — that is a `min_max` helper, not a
+template, whether or not a trigger is involved. See
+[helper-selection #numeric-aggregation](helper-selection.md#numeric-aggregation).
 
 ### YAML Block Structure Conventions (HA 2024.10+)
 
@@ -567,22 +593,26 @@ template:
 
 > The legacy per-domain template-sensor form (`sensor:` → `- platform:` → `sensors:` → `value_template:`, i.e. a `template` platform nested under a domain key) was **removed in HA 2026.6** and no longer loads. Use the top-level `template:` integration key with `state:`, as above.
 
-### Use Trigger-Based Templates for Complex Logic
+### Throttle an Expensive Template With a Time Trigger
+
+A `time_pattern` trigger caps how often an expensive template runs, regardless of how often
+its sources change. Use it for genuinely expensive work — not for aggregation, which is a
+[`min_max`](helper-selection.md#numeric-aggregation) helper.
 
 ```yaml
-# EFFICIENT - Only runs when specified triggers fire
+# Runs every 5 minutes instead of on every source change
 template:
   - triggers:
       - trigger: time_pattern
-        minutes: "/5"  # Every 5 minutes
+        minutes: "/5"
     sensor:
-      - name: "Complex Calculation"
+      - name: "Grid Import Cost Today"
+        unique_id: grid_import_cost_today
         state: >
-          {% set total = 0 %}
-          {% for sensor in states.sensor | selectattr('attributes.device_class', 'eq', 'energy') %}
-            {% set total = total + states(sensor.entity_id) | float(0) %}
-          {% endfor %}
-          {{ total }}
+          {{ (states('sensor.grid_import_today') | float(0)
+              * states('input_number.tariff_rate') | float(0)) | round(2) }}
+        unit_of_measurement: "EUR"
+        device_class: monetary
 ```
 
 ### Cache Complex Calculations
