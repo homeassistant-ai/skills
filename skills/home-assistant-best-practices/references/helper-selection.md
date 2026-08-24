@@ -170,7 +170,6 @@ percentile: 50                 # only used by the percentile characteristic
 precision: 2
 ```
 
-
 **Available characteristics — numeric source** (27):
 `average_linear`, `average_step`, `average_timeless`, `change`, `change_sample`,
 `change_second`, `count`, `datetime_newest`, `datetime_oldest`, `datetime_value_max`,
@@ -185,8 +184,6 @@ precision: 2
 The flow offers only the set valid for the chosen source, which is why
 `state_characteristic` is its own step. The binary values are `count_on` / `count_off` —
 `count_binary_on` / `count_binary_off` are the internal constant *names*, not accepted values.
-- `datetime_newest`, `datetime_oldest`, `datetime_value_max`, `datetime_value_min`
-- `value_max`, `value_min`, `quantiles`
 
 **Key behaviors:**
 - Time-based (`max_age`) vs count-based (`sampling_size`) buffering
