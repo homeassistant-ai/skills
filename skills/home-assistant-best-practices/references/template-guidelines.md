@@ -311,7 +311,7 @@ not in separate blocks per entity. Trigger-based blocks (with their own `trigger
 must be separate regardless of entity type, since each block defines its own trigger context:
 
 ```yaml
-# GOOD — state-based sensors: one block, multiple entries:
+# RIGHT — state-based sensors: one block, multiple entries:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -321,7 +321,7 @@ template:
         unique_id: motion_room_b
         state: "{{ ... }}"
 
-# BAD — state-based sensors split across separate blocks:
+# WRONG — state-based sensors split across separate blocks:
 template:
   - binary_sensor:
       - name: "Motion Room A"
@@ -411,20 +411,20 @@ automation:
 Always use `states()` function, not `states.sensor.x.state`:
 
 ```yaml
-# GOOD - Returns 'unknown' if entity doesn't exist
+# RIGHT — Returns 'unknown' if entity doesn't exist
 {{ states('sensor.temperature') }}
 
-# BAD - Errors if entity doesn't exist
+# WRONG — Errors if entity doesn't exist
 {{ states.sensor.temperature.state }}
 ```
 
 ### Safe Numeric Conversion
 
 ```yaml
-# GOOD - Default value if conversion fails
+# RIGHT — Default value if conversion fails
 {{ states('sensor.temperature') | float(0) }}
 
-# BAD - Errors if state is 'unavailable' or 'unknown'
+# WRONG — Errors if state is 'unavailable' or 'unknown'
 {{ states('sensor.temperature') | float }}
 ```
 
@@ -462,13 +462,13 @@ Always use `states()` function, not `states.sensor.x.state`:
 renders the string `None`.
 
 ```yaml
-# BAD - renders "None" while the light is off
+# WRONG — renders "None" while the light is off
 {{ state_attr('light.bedroom', 'brightness') | default(0) }}
 
-# GOOD - the second argument makes default replace any falsy value, None included
+# RIGHT — the second argument makes default replace any falsy value, None included
 {{ state_attr('light.bedroom', 'brightness') | default(0, true) }}
 
-# GOOD - a type filter's default covers None and converts in one step
+# RIGHT — a type filter's default covers None and converts in one step
 {{ state_attr('light.bedroom', 'brightness') | int(0) }}
 ```
 
@@ -704,12 +704,12 @@ The costliest mistake. An imported macro sees the template environment's globals
 | `states`, `state_attr`, `is_state`, `is_state_attr`, `expand`, `has_value`, `now()` and the rest of HA's template functions and filters | `trigger`, `this`, `value_json`, variables bound from a Blueprint `!input`, `repeat`, and anything `{% set %}` in the calling template |
 
 ```jinja
-{# BAD — `this` and `trigger` are undefined here; the attribute access errors #}
+{# WRONG — `this` and `trigger` are undefined here; the attribute access errors #}
 {% macro describe() -%}
   {{ this.entity_id }} fired from {{ trigger.entity_id }}
 {%- endmacro %}
 
-{# GOOD — the caller passes them in #}
+{# RIGHT — the caller passes them in #}
 {% macro describe(entity_id, source) -%}
   {{ entity_id }} fired from {{ source }}
 {%- endmacro %}
