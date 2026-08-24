@@ -4,13 +4,15 @@ on:
   pull_request:
     paths:
       - 'skills/**'
-      # scripts/ holds the eval-case checker below. Without this, editing the
-      # checker itself would not re-run it until the next skills/ change.
+      # evals/ holds the eval cases and scripts/ their checker. Without these,
+      # editing either would not re-run validation until the next skills/ change.
+      - 'evals/**'
       - 'scripts/**'
   push:
     branches: [main]
     paths:
       - 'skills/**'
+      - 'evals/**'
       - 'scripts/**'
 
 permissions:
@@ -37,7 +39,7 @@ jobs:
           else
             base="$PUSH_BEFORE"
           fi
-          if git diff --name-only "$base" HEAD | grep -qE '^(skills|scripts)/'; then
+          if git diff --name-only "$base" HEAD | grep -qE '^(skills|evals|scripts)/'; then
             echo "skills_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "skills_changed=false" >> "$GITHUB_OUTPUT"
@@ -152,4 +154,4 @@ jobs:
 
       - name: No skill changes
         if: steps.changes.outputs.skills_changed == 'false'
-        run: echo "No changes in skills/, skipping validation."
+        run: echo "No changes in skills/, evals/ or scripts/, skipping validation."

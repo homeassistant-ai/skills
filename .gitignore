@@ -4,4 +4,4 @@
 /docs/plans/
 
 # claude plugin eval writes run output next to the cases
-/skills/*/evals/results/
+/evals/results/

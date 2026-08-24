@@ -5,8 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repo Layout
 
 One skill lives under `skills/<name>/`: `SKILL.md` plus `references/` (one level deep only),
-`evals/<case>/case.yaml` (one directory per eval case), and optional `scripts/`/`assets/`.
-`docs/plans/` is gitignored scratch space.
+and optional `scripts/`/`assets/`. `docs/plans/` is gitignored scratch space.
+
+Eval cases live in a top-level `evals/<case>/case.yaml`, **not** under `skills/`. `claude
+plugin eval` rejects any eval directory whose first segment names a loaded component directory
+(`commands`, `skills`, `agents`, `hooks`, `themes`, `output-styles`, `monitors`, `workflows`,
+`bin`) — and rejects it *softly*: it warns, falls back to the default `evals/`, and finds
+nothing, so cases in the wrong place silently never run. `evals/` at the plugin root is the
+default and needs no `experimental.evals` key.
 
 **SKILL.md is in context on every trigger; `references/` load only when read.** That is why
 SKILL.md body size is capped and why domain-niche content belongs in a reference file behind
@@ -66,10 +72,14 @@ that same local check on PRs touching `.md`/`.yaml`, plus external URLs weekly, 
 excluded; it cannot see references written as inline code. `check_eval_cases.py` validates the
 shape of eval cases against the `claude plugin eval` 1.1 schema — that command is gated behind
 early access, so its own parser never runs here; the schema is transcribed by hand and needs
-re-deriving if `schema_version` moves. It checks structure only and never runs a case. Three
-things nothing checks, so all three stay review items: that every reference file is still
-routed from SKILL.md, that `references/examples.yaml` still parses, and that an eval grader
-still means what it was written to mean.
+re-deriving if `schema_version` moves. It checks structure only and never runs a case. Regex
+graders are compiled with `node`, not Python `re`: the two disagree (`re` rejects JS-valid
+`(?<name>x)` and accepts Python-only `(?P<name>x)`), and without `node` that check is skipped
+with a warning rather than failed.
+
+Three things nothing checks, so all three stay review items: that every reference file is
+still routed from SKILL.md, that `references/examples.yaml` still parses, and that an eval
+grader still means what it was written to mean.
 
 ## Reviewing Skill PRs
 
