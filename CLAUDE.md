@@ -49,11 +49,20 @@ To validate locally:
 uvx --from skills-ref agentskills validate skills/<skill-name>
 ```
 
-`.github/workflows/links.yml` runs lychee over the repo's markdown, dot-directories
-excluded: local file links and their `#anchors` (`--offline --include-fragments`) on PRs
-that touch `.md`/`.yaml`, and external URLs weekly. It cannot see references written as
-inline code, and nothing checks that every reference file is still routed from SKILL.md —
-that stays a review item.
+Two more checks gate a merge, as release binaries pinned in `.github/workflows/` — install
+those versions (lychee's release tag is `lychee-vX.Y.Z`, not `vX.Y.Z`):
+
+```bash
+agnix skills/ --target claude-code                              # spec conformance
+lychee --offline --include-fragments --no-progress './**/*.md'  # local links + #anchors
+```
+
+agnix catches what skills-ref's unenforced `metadata: dict[str, str]` annotation lets pass —
+e.g. an unquoted integer version, which strict clients refuse. In CI (`links.yml`) lychee runs
+that same local check on PRs touching `.md`/`.yaml`, plus external URLs weekly, dot-directories
+excluded; it cannot see references written as inline code. Two things nothing checks, so both
+stay review items: that every reference file is still routed from SKILL.md, and that
+`references/examples.yaml` still parses.
 
 ## Reviewing Skill PRs
 
@@ -63,3 +72,5 @@ that stays a review item.
 - UI renames, terminology, and default changes appear only in release blog posts, not core source: `source/_posts/<date>-release-<version>.markdown` in the docs repo (e.g. `2026-08-05-release-20268.markdown`). Use `gh api` — plain `curl` is sandboxed here and returns empty
 - **The blog says *what* changed, not *which version* it landed in.** Its prose often implies a feature pre-existed ("X now has conditions to match its triggers") when the whole component is new. Date a feature by fetching its path at the *previous* tag — a 404 at the previous tag that exists at the current one means the whole thing is new
 - Community PRs come from forks: base-repo `?ref=<pr-branch>` 404s; get the fork with `gh pr view <pr> --json headRepository` and fetch files from there
+- Helper claims need **both** `config_flow.py` (flow submission) and the platform file's `PLATFORM_SCHEMA` (YAML) — they diverge in key names, value types, and which keys exist. Traps: `vol.Required(` usually puts the `CONF_*` on the *next* line, so grep drops fields and mis-attributes Required/Optional; resolve `CONF_*` to its string (`CONF_ROUND_DIGITS` is `"round"` in derivative, `"round_digits"` in min_max); `options_flow`-only fields are rejected at creation
+- Verifying a claim confirms what it says, not whether it over-generalizes. Add a pass that tries to disprove ("which helpers does this NOT hold for?"), mechanically where possible — e.g. diff the two schemas' key sets in a script
