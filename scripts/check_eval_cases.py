@@ -180,6 +180,12 @@ def check_case(path, skill, err, probes):
             for k in ("min", "max"):
                 if k in g:
                     num(g[k], 0, 10 ** 6, f"grader {name}: {k}", w)
+            lo, hi = g.get("min"), g.get("max")
+            # min: 0, max: 0 is the documented "must not call" idiom, but min > max
+            # describes a call count no run can produce.
+            if isinstance(lo, int) and isinstance(hi, int) and not isinstance(lo, bool) \
+                    and not isinstance(hi, bool) and lo > hi:
+                w(f"grader {name}: min {lo} exceeds max {hi} — no call count satisfies it")
         if g["type"] == "regex":
             if not re.fullmatch(r"[dgimsuvy]*", str(g.get("flags", ""))):
                 w(f"grader {name}: flags must be JS RegExp flags (d g i m s u v y)")
