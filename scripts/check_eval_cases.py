@@ -224,7 +224,7 @@ def check_skill_fired(rel, skill, g, err, probes):
     if g.get("tool") != "Skill":
         w(f"skill-fired must set tool: Skill, not {g.get('tool')!r}")
     min_calls = g.get("min", 1)
-    if not isinstance(min_calls, int) or isinstance(min_calls, bool) or min_calls < 1:
+    if not whole(min_calls) or min_calls < 1:
         w(f"skill-fired must require at least one call (min >= 1), got {min_calls!r}")
     pattern = g.get("input_match")
     if not isinstance(pattern, str) or not pattern:
