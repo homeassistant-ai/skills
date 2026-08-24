@@ -96,6 +96,12 @@ def check_regexes(probes, err):
     err.extend(json.loads(r.stdout))
 
 
+def whole(value):
+    """True for a numeric whole number. YAML `2.0` is one; `True` and "2" are not."""
+    return (isinstance(value, (int, float)) and not isinstance(value, bool)
+            and float(value).is_integer())
+
+
 def num(value, lo, hi, label, w, integer=True):
     """Range-check a numeric field, reporting a bad type rather than raising on it.
 
@@ -105,7 +111,7 @@ def num(value, lo, hi, label, w, integer=True):
     if value is None or isinstance(value, bool) or not isinstance(value, (int, float)):
         w(f"{label} must be a number, got {value!r}")
         return
-    if integer and not float(value).is_integer():
+    if integer and not whole(value):
         w(f"{label} must be a whole number, got {value!r}")
         return
     if not lo <= value <= hi:
@@ -182,9 +188,9 @@ def check_case(path, skill, err, probes):
                     num(g[k], 0, 10 ** 6, f"grader {name}: {k}", w)
             lo, hi = g.get("min"), g.get("max")
             # min: 0, max: 0 is the documented "must not call" idiom, but min > max
-            # describes a call count no run can produce.
-            if isinstance(lo, int) and isinstance(hi, int) and not isinstance(lo, bool) \
-                    and not isinstance(hi, bool) and lo > hi:
+            # describes a call count no run can produce. Uses whole() so that the
+            # values num() just accepted — 2.0 as well as 2 — are also compared here.
+            if whole(lo) and whole(hi) and lo > hi:
                 w(f"grader {name}: min {lo} exceeds max {hi} — no call count satisfies it")
         if g["type"] == "regex":
             if not re.fullmatch(r"[dgimsuvy]*", str(g.get("flags", ""))):
