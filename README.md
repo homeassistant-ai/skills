@@ -44,7 +44,7 @@ Both apps share the same Customize UI, reached via the left sidebar (Claude Desk
 2. Customize → Plugins → Add → Add marketplace → Add from a repository
 3. Select or enter `homeassistant-ai/skills` (or the full URL, `https://github.com/homeassistant-ai/skills`) → Sync
 
-This installs the skill as a plugin synced from this repo — no download or zip needed. To update later, go to Plugins → **Browse** → **Personal**, open the `⋯` menu on the `skills` marketplace tag, and choose **Check for updates** (or toggle **Sync automatically**).
+This installs the skill as a plugin synced from this repo — no download or zip needed. **Sync automatically** is on by default, so later updates arrive on their own.
 
 <details>
 <summary>Alternative: upload the skill manually as a zip</summary>
