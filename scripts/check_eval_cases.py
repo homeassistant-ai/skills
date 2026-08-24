@@ -96,6 +96,23 @@ def check_regexes(probes, err):
     err.extend(json.loads(r.stdout))
 
 
+def num(value, lo, hi, label, w, integer=True):
+    """Range-check a numeric field, reporting a bad type rather than raising on it.
+
+    A YAML author writing `min: "1"` or `runs: null` used to crash the checker
+    with a TypeError, which reads as a broken tool rather than a broken case.
+    """
+    if value is None or isinstance(value, bool) or not isinstance(value, (int, float)):
+        w(f"{label} must be a number, got {value!r}")
+        return
+    if integer and not float(value).is_integer():
+        w(f"{label} must be a whole number, got {value!r}")
+        return
+    if not lo <= value <= hi:
+        rng = "positive" if hi == float("inf") else f"{lo}..{hi}"
+        w(f"{label} must be {rng}, got {value!r}")
+
+
 def check_case(path, skill, err, probes):
     """Validate one case.yaml. Appends messages to err and probes; returns the parsed dict."""
     rel = os.path.relpath(path)
@@ -129,12 +146,12 @@ def check_case(path, skill, err, probes):
         w("execution.prompt is empty — the case has nothing to run")
     if execution.get("allowed_tools"):
         w("allowed_tools is non-empty — the case then needs an --allow-tools grant to run")
-    if not 0 < d.get("runs", 3) <= 50:
-        w("runs must be 1..50")
-    if not 0 < execution.get("max_turns", 10) <= 200:
-        w("max_turns must be 1..200")
-    if not 0 < execution.get("timeout_seconds", 300) <= 3600:
-        w("timeout_seconds must be 1..3600")
+    if "runs" in d:
+        num(d["runs"], 1, 50, "runs", w)
+    if "max_turns" in execution:
+        num(execution["max_turns"], 1, 200, "max_turns", w)
+    if "timeout_seconds" in execution:
+        num(execution["timeout_seconds"], 1, 3600, "timeout_seconds", w)
 
     graders = d.get("graders") or []
     if not graders:
@@ -157,6 +174,12 @@ def check_case(path, skill, err, probes):
         if name in seen:
             w(f"duplicate grader name {name}")
         seen[name] = g
+        if "weight" in g:
+            num(g["weight"], 1e-9, float("inf"), f"grader {name}: weight", w, integer=False)
+        if g["type"] == "tool_used":
+            for k in ("min", "max"):
+                if k in g:
+                    num(g[k], 0, 10 ** 6, f"grader {name}: {k}", w)
         if g["type"] == "regex":
             if not re.fullmatch(r"[dgimsuvy]*", str(g.get("flags", ""))):
                 w(f"grader {name}: flags must be JS RegExp flags (d g i m s u v y)")
@@ -188,8 +211,9 @@ def check_skill_fired(rel, skill, g, err, probes):
         return
     if g.get("tool") != "Skill":
         w(f"skill-fired must set tool: Skill, not {g.get('tool')!r}")
-    if g.get("min", 1) < 1:
-        w("skill-fired must require at least one call (min >= 1)")
+    min_calls = g.get("min", 1)
+    if not isinstance(min_calls, int) or isinstance(min_calls, bool) or min_calls < 1:
+        w(f"skill-fired must require at least one call (min >= 1), got {min_calls!r}")
     pattern = g.get("input_match")
     if not isinstance(pattern, str) or not pattern:
         w("skill-fired needs an input_match, or it passes when any skill loads")
