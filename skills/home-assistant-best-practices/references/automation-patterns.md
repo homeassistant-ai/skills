@@ -448,11 +448,11 @@ triggers:
 **Multi-trigger guard for `trigger.event`:** In automations mixing event and non-event triggers, `trigger.event` is `LoggingUndefined` for non-event triggers. Attribute access (`.data`, `.split()`) raises `UndefinedError`; `in` on a bare `LoggingUndefined` silently returns `False`. Use `trigger.platform == 'event'` as a short-circuit guard:
 
 ```yaml
-# AVOID — trigger.event.data raises UndefinedError when a non-event trigger fires
+# WRONG — trigger.event.data raises UndefinedError when a non-event trigger fires
 conditions:
   - "{{ 'light.kitchen' in trigger.event.data.entity_id }}"
 
-# CORRECT — guard prevents evaluating trigger.event on non-event triggers
+# RIGHT — guard prevents evaluating trigger.event on non-event triggers
 conditions:
   - "{{ trigger.platform == 'event' and 'light.kitchen' in trigger.event.data.entity_id }}"
 ```
@@ -640,20 +640,20 @@ triggers:
 The `entered_home`/`left_home` device trigger types and `is_home`/`is_not_home` device condition types for `person` and `device_tracker` domains were **removed in 2026.5**. Use state triggers and conditions instead.
 
 ```yaml
-# AVOID (removed in 2026.5)
+# WRONG (removed in 2026.5)
 triggers:
   - trigger: device
     domain: person
     type: entered_home
     entity_id: person.john
 
-# CORRECT — state trigger
+# RIGHT — state trigger
 triggers:
   - trigger: state
     entity_id: person.john
     to: "home"
 
-# CORRECT — state condition
+# RIGHT — state condition
 condition: state
 entity_id: person.john
 state: "home"
@@ -932,12 +932,12 @@ variables:
 A `variables:` block renders one key at a time, each rendered result feeding the context for the next. A key that reads a name declared **further down the same block** reads it while it is still undefined.
 
 ```yaml
-# AVOID — `total` is still undefined when `msg` renders
+# WRONG — `total` is still undefined when `msg` renders
 variables:
   msg: "Total: {{ total }}"
   total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
 
-# CORRECT — declare before use
+# RIGHT — declare before use
 variables:
   total: "{{ states('sensor.a') | float(0) + states('sensor.b') | float(0) }}"
   msg: "Total: {{ total }}"
@@ -1209,10 +1209,10 @@ Disabling an automation via *Settings → Automations → open automation → �
 
 **Note:** The list toggle on the Automations page (`/config/automation/dashboard`) calls `automation.turn_on`/`turn_off` (Method 1). The *Enabled toggle* under *Settings → Automations → open automation → ⋮ → Settings → Enabled toggle* modifies the entity registry (Method 2). Both can be active simultaneously — an automation can be registry-enabled but in state `off`, or registry-disabled but with a stored `on` state.
 
-### AVOID: `enabled: false` in automations.yaml
+### WRONG: `enabled: false` in automations.yaml
 
 ```yaml
-# AVOID — enabled: is not a valid top-level key
+# WRONG — enabled: is not a valid top-level key
 - alias: My Automation
   enabled: false       # not a valid top-level key
   triggers: ...
@@ -1221,12 +1221,12 @@ Disabling an automation via *Settings → Automations → open automation → �
 `enabled:` is **not** a valid top-level key in `automations.yaml`. Home Assistant rejects unknown keys during schema validation, so the automation loads as `unavailable`.
 
 ```yaml
-# CORRECT — disable temporarily via action (Method 1)
+# RIGHT — disable temporarily via action (Method 1)
 - action: automation.turn_off
   target:
     entity_id: automation.my_automation
 
-# CORRECT — disable permanently via entity registry (Method 2)
+# RIGHT — disable permanently via entity registry (Method 2)
 # UI: Settings → Automations → open automation → ⋮ → Settings → Enabled toggle
 # Or via WebSocket API: config/entity_registry/update (disabled_by: user)
 ```

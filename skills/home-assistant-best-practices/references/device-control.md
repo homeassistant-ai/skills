@@ -41,14 +41,14 @@ Best practices for controlling devices, triggering from buttons and remotes, and
 ### Device Triggers vs State Triggers
 
 ```yaml
-# ❌ WRONG - device_id changes if device is re-added
+# WRONG — device_id changes if device is re-added
 triggers:
   - trigger: device
     device_id: abc123def456
     domain: binary_sensor
     type: motion
 
-# ✅ RIGHT - entity_id is stable and renameable
+# RIGHT — entity_id is stable and renameable
 #    (generic fallback — check motion.detected with an area target first)
 triggers:
   - trigger: state
@@ -166,7 +166,7 @@ Two Zigbee stacks are exceptions:
 ZHA buttons fire `zha_event` events. Use **event triggers** with `device_ieee` (the device's IEEE address), which is **persistent** across re-adds.
 
 ```yaml
-# ✅ ZHA button trigger - device_ieee is persistent
+# RIGHT — ZHA button trigger - device_ieee is persistent
 triggers:
   - trigger: event
     event_type: zha_event
@@ -189,7 +189,7 @@ For a complete multi-button remote with trigger_id + choose, see [examples.yaml]
 Z2M creates **MQTT device triggers** that are autodiscovered. These are acceptable because Z2M manages the device-to-trigger mapping.
 
 ```yaml
-# ✅ Z2M device trigger - autodiscovered
+# RIGHT — Z2M device trigger - autodiscovered
 triggers:
   - trigger: device
     device_id: abc123def456  # OK for Z2M, managed by autodiscovery
@@ -413,17 +413,17 @@ actions:
 
 ## Common Mistakes
 
-### ❌ Using entity_id in data instead of target
+### Using entity_id in data instead of target
 
 ```yaml
-# WRONG (deprecated)
+# WRONG — entity_id inside data: is the pre-2024.8 form
 actions:
   - action: light.turn_on
     data:
       entity_id: light.living_room
       brightness: 255
 
-# RIGHT
+# RIGHT — entities go in target:, parameters in data:
 actions:
   - action: light.turn_on
     target:
@@ -432,33 +432,33 @@ actions:
       brightness: 255
 ```
 
-### ❌ Hardcoding device_id for regular devices
+### Hardcoding device_id for regular devices
 
 ```yaml
-# WRONG - breaks on device re-add
+# WRONG — breaks on device re-add
 actions:
   - action: light.turn_on
     target:
       device_id: abc123def456
 
-# RIGHT
+# RIGHT — entity_id survives a device re-add
 actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
 ```
 
-### ❌ Forgetting action data structure
+### Forgetting action data structure
 
 ```yaml
-# WRONG - brightness_pct at wrong level
+# WRONG — brightness_pct at wrong level
 actions:
   - action: light.turn_on
     target:
       entity_id: light.living_room
     brightness_pct: 100
 
-# RIGHT - brightness_pct inside data
+# RIGHT — brightness_pct inside data
 actions:
   - action: light.turn_on
     target:

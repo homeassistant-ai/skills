@@ -19,11 +19,12 @@ skills/
 
 - **YAML frontmatter** with `name` (letters, numbers, hyphens only; 64 chars max) and `description` (1024 chars max).
 - **`metadata.version`** a monotonically incrementing integer written as a string (e.g. `"1"`) — the spec requires metadata values to be strings. Set to `0` when creating a new skill — CI assigns the real version automatically on merge. Do not edit this field manually.
-- **`description`** in third person. Describe what the skill does and when to use it. Include keywords that help agents match tasks. Don't summarize the skill's workflow.
+- **`description`** in third person. Describe what the skill does and when to use it. Include keywords that help agents match tasks. Don't summarize the skill's workflow. Err toward over-triggering rather than under-triggering — a skill that loads when marginally relevant costs tokens; one that fails to load costs a wrong answer. Explicit `TRIGGER THIS SKILL WHEN` and `SYMPTOMS` sections listing observable agent behaviours match better than prose.
 - **Body** under 500 lines. Split into reference files if approaching this limit.
 - **Reference files** one level deep from SKILL.md—no nested references.
 - **Cross-reference them with markdown links**, not inline code — CI validates both the path and the `#anchor`. Links resolve relative to the containing file, so inside `references/` a sibling is `x.md`, not `references/x.md`.
 - **Forward slashes** in all file paths.
+- **Bundled scripts**, if any, must be introduced by SKILL.md — when to reach for them and how to invoke them. An unreferenced script is dead weight the agent never finds.
 
 See Anthropic's [skill authoring best practices](https://docs.anthropic.com/en/docs/agents-and-tools/agent-skills/best-practices) for additional guidance.
 
@@ -35,7 +36,11 @@ See Anthropic's [skill authoring best practices](https://docs.anthropic.com/en/d
 
 **Concise over verbose.** Provide patterns and quick-reference tables, not narrative explanations.
 
-**Consistent terminology.** Choose one term for each concept and stick to it throughout the skill.
+**Consistent terminology.** Choose one term for each concept and stick to it throughout the skill. Contrasting code blocks are marked `# WRONG — why` and `# RIGHT — why`, in that order; do not introduce AVOID/CORRECT, BAD/GOOD, or ❌/✅ variants. Reserve ❌/✅ for table status columns.
+
+**Renamed HA terms keep a pointer to the old name.** When HA renames something user-facing, use the new term and note the old one with the version it changed in — `**Tools → Events** (named **Developer Tools** before 2026.8)`. Readers on older releases still see the old label in their UI, so a bare swap strands them. This has come up three times in two years: services → actions (2024.8), add-ons → Apps (2026.2), Developer Tools → Tools (2026.8).
+
+**Explain the *why*, not bare commands.** A rule an agent understands survives paraphrase and transfers to the next case; a bare MUST/NEVER gets dropped the moment the situation differs slightly. Give the mechanism — *`device_id` breaks on re-add* beats *never use `device_id`*.
 
 **Don't couple skills to specific tool names.** Reference HA concepts and REST APIs instead of naming specific MCP tools (e.g. `ha_rename_entity`, `ha_get_integration`). Tool names change and not all agents have the same toolset; the underlying HA APIs and concepts are stable.
 

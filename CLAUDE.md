@@ -25,19 +25,18 @@ description: >
 ```
 
 Full authoring constraints: `CONTRIBUTING.md`. The one CI cannot catch:
-- `metadata.version` must be `"0"` on new skills — do not edit manually; CI assigns the real version on merge
+- `metadata.version` must be `"0"` on new skills — do not edit manually; CI assigns the real version on merge and syncs it into `.claude-plugin/plugin.json` (`.version`) and `.claude-plugin/marketplace.json` (`.metadata.version`) — three files, one source of truth
 - `description` is capped at 1024 chars and runs close to it — measure the parsed length before adding trigger/symptom bullets
 
 ## Skill Authoring Principles
 
 The wording of these content-quality principles is mirrored in `CONTRIBUTING.md`
-(contributors) and `.gemini/config.yaml` (automated PR review); each file also carries
-guidance the others omit. When you change a shared principle, change all three — they have
-drifted before.
+(contributors); each file also carries guidance the other omits. When you change a shared
+principle, change both — they have drifted before.
 
 - **Context window conservation** — keep what is HA-specific, cut general programming advice; the test is the content itself, not whether a given model already knows it (skills run on frontier and small local models alike)
 - **Conciseness** — provide patterns and quick-reference tables, not tutorials
-- **Consistent terminology** — one term per concept throughout a skill
+- **Consistent terminology** — one term per concept throughout a skill; contrasting code blocks are `# WRONG — why` / `# RIGHT — why` (emoji only in table status columns). A renamed HA term uses the new name and cites the old one with its version ("named Developer Tools before 2026.8") — never a bare swap, since readers on older releases still see the old label
 - **Symptom-based triggering** — the `description` frontmatter should describe observable agent behaviors that signal the skill is needed
 - **No tool names** — reference HA REST APIs and concepts, never specific MCP tool names (e.g. `ha_rename_entity`); tool names vary by agent setup
 
@@ -49,12 +48,14 @@ To validate locally:
 uvx --from skills-ref agentskills validate skills/<skill-name>
 ```
 
-Two more checks gate a merge, as release binaries pinned in `.github/workflows/` — install
-those versions (lychee's release tag is `lychee-vX.Y.Z`, not `vX.Y.Z`):
+Three more checks gate a merge. `agnix` and `lychee` run as release binaries pinned in
+`.github/workflows/` — install those versions (lychee's release tag is `lychee-vX.Y.Z`, not
+`vX.Y.Z`); `claude plugin validate` ships with the Claude Code CLI:
 
 ```bash
 agnix skills/ --target claude-code                              # spec conformance
 lychee --offline --include-fragments --no-progress './**/*.md'  # local links + #anchors
+claude plugin validate .                                        # plugin manifests
 ```
 
 agnix catches what skills-ref's unenforced `metadata: dict[str, str]` annotation lets pass —

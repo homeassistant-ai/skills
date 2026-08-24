@@ -102,7 +102,7 @@ cannot be renamed or given an area from the UI.)
 
 **Instead of:**
 ```yaml
-# WRONG - Template sensor for averaging
+# WRONG — Template sensor for averaging
 template:
   - sensor:
       - name: "Average Temperature"
@@ -146,7 +146,7 @@ Note the key is `round_digits` here — `derivative` and `integration` spell the
 
 **Instead of:**
 ```yaml
-# WRONG - Complex template tracking history
+# WRONG — Complex template tracking history
 template:
   - sensor:
       - name: "Temperature Change"
@@ -205,7 +205,7 @@ The flow offers only the set valid for the chosen source, which is why
 
 **Instead of:**
 ```yaml
-# WRONG - Template calculating delta manually
+# WRONG — Template calculating delta manually
 template:
   - sensor:
       - name: "Power Rate"
@@ -254,7 +254,7 @@ legitimate reason to write the YAML platform.
 
 **Instead of:**
 ```yaml
-# WRONG - Template binary sensor
+# WRONG — Template binary sensor
 template:
   - binary_sensor:
       - name: "High Temperature"
@@ -301,7 +301,7 @@ With upper: 25 and hysteresis: 1:
 
 **Instead of:**
 ```yaml
-# WRONG - Template comparing against a stored previous value
+# WRONG — Template comparing against a stored previous value
 template:
   - binary_sensor:
       - name: "Temperature Rising"
@@ -360,7 +360,7 @@ binary_sensor:
 
 **Instead of:**
 ```yaml
-# WRONG - Automation with counter tracking monthly usage
+# WRONG — Automation with counter tracking monthly usage
 automation:
   - alias: "Reset monthly energy"
     triggers:
@@ -640,7 +640,7 @@ icon: mdi:bell
 
 **Instead of:**
 ```yaml
-# WRONG - input_number with automation
+# WRONG — input_number with automation
 input_number:
   coffee_count:
     min: 0
@@ -684,7 +684,7 @@ restore: true            # default true
 
 **Instead of:**
 ```yaml
-# WRONG - Delay in automation
+# WRONG — Delay in automation
 actions:
   - delay:
       minutes: 5
@@ -747,7 +747,7 @@ tuesday:
 
 **Instead of:**
 ```yaml
-# WRONG - Template with weekday checks
+# WRONG — Template with weekday checks
 template:
   - binary_sensor:
       - name: "Work Hours"
@@ -848,7 +848,7 @@ domain. Prefer the helper.
 
 **Instead of:**
 ```yaml
-# WRONG - Template binary sensor for any-on logic
+# WRONG — Template binary sensor for any-on logic
 template:
   - binary_sensor:
       - name: "Any Door Open"
@@ -930,7 +930,7 @@ binary_sensor:
 
 **Instead of:**
 ```yaml
-# WRONG - Template sensor doing manual smoothing math
+# WRONG — Template sensor doing manual smoothing math
 template:
   - sensor:
       - name: "Smoothed Power"
@@ -999,7 +999,7 @@ All filters accept optional `precision` (default `2`).
 
 **Instead of:**
 ```yaml
-# WRONG - Template with range() / random()
+# WRONG — Template with range() / random()
 template:
   - sensor:
       - name: "Random Number"
@@ -1129,7 +1129,7 @@ Outputs an estimated humidity-at-cold-surface percentage; mold risk rises above 
 
 **Instead of:**
 ```yaml
-# WRONG - Template light wrapping a switch
+# WRONG — Template light wrapping a switch
 template:
   - light:
       - name: "Lamp"
