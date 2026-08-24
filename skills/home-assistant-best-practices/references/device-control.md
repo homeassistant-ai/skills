@@ -473,7 +473,7 @@ actions:
 
 ```yaml
 actions:
-  - action: domain.service_name   # Required
+  - action: <domain>.<name>       # Required
     target:                       # Optional but recommended
       entity_id: entity.id        # Single or list
       area_id: area_name          # Single or list
