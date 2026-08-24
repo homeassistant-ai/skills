@@ -1,0 +1,54 @@
+schema_version: "1.1"
+name: rename-entity-impact-analysis
+description: >
+  An entity registry rename does not rewrite every consumer. Checks the agent
+  finds the references first and knows which stores the registry never touches.
+tags: [entities, safety]
+
+execution:
+  prompt: >-
+    rename sensor.shellyplug_s_a1b2c3_power to sensor.office_heater_power, it's
+    driving me nuts seeing the manufacturer name on my energy dashboard
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: searches-before-renaming
+    criteria: >-
+      The response searches for consumers of the old entity ID BEFORE performing the
+      rename, not after.
+
+      FAIL if the rename is the first step and the impact search follows it, or if
+      no search is proposed at all.
+
+  - type: llm
+    name: covers-storage-dashboards
+    criteria: >-
+      The response accounts for storage-mode Lovelace dashboards, which an entity
+      registry rename does not update.
+
+  - type: llm
+    name: covers-config-entry-data
+    criteria: >-
+      The response accounts for Config Entry data/options — helpers such as
+      min_max, threshold, or generic_thermostat that store the entity ID in their
+      config entry — which a registry rename does not update.
+
+  - type: llm
+    name: checks-device-siblings
+    criteria: >-
+      The response considers the other entities on the same device rather than
+      renaming this one in isolation.
+
+expected_outcome: >-
+  Searches consumers first — automations, scripts, scenes, storage-mode dashboards,
+  Config Entry data — then renames and verifies no stale references remain.

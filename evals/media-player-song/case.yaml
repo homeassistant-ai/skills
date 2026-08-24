@@ -1,0 +1,52 @@
+schema_version: "1.1"
+name: media-player-song
+description: >
+  Pulling one attribute off an existing entity is the Template Helper's job.
+  Same doctrine as vacuum-last-clean, reached via attribute extraction.
+tags: [templates, helpers]
+
+execution:
+  prompt: I want a sensor showing my media player's current song title
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: recommends-template-helper
+    criteria: >-
+      The response recommends creating a Template Helper — through the UI
+      (Settings → Devices & Services → Helpers → Create Helper → Template) or a
+      config-entry flow / API call — to extract the media title attribute.
+
+      FAIL if the recommendation is to add a `template:` entry to
+      configuration.yaml instead.
+
+  - type: llm
+    name: no-yaml-template-first
+    criteria: >-
+      The response does NOT lead with, or exclusively offer, writing `template:`
+      YAML in configuration.yaml.
+
+      FAIL if the first actionable instruction is to edit a YAML file, or if
+      editing YAML is the only path offered.
+
+  - type: llm
+    name: no-yaml-platform-block
+    criteria: >-
+      The response does not present a YAML platform/template block as the thing to
+      write — the helper is created through the UI or a config-entry flow.
+
+      PASS if a YAML-shaped snippet appears but is labelled as the helper's config
+      shape rather than a file to hand-edit. FAIL if the actionable instruction is
+      to paste the block into a configuration file.
+
+expected_outcome: >-
+  Recommends a Template Helper for attribute extraction, not YAML.

@@ -1,0 +1,61 @@
+schema_version: "1.1"
+name: button-event-entity
+description: >
+  The user asks for an event the hardware does not emit. Hue exposes
+  initial_press / repeat / short_release / long_press / long_release and no
+  double-press, so the correct answer surfaces the limitation instead of
+  inventing an event type that will never fire.
+tags: [automations, devices]
+
+execution:
+  prompt: >-
+    I've got a Hue dimmer switch. when I double-press the on button I want the
+    living room lamp to go to 30%. how do I wire that up?
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: uses-event-entity
+    criteria: >-
+      The automation targets the button's `event.*` entity rather than a device
+      trigger or a raw event-bus listener.
+
+  - type: llm
+    name: reads-event-types
+    criteria: >-
+      The response reads the valid event types from the entity's `event_types`
+      attribute rather than asserting them from memory.
+
+      FAIL if it states which event types the device emits without indicating that
+      they should be read off the entity.
+
+  - type: llm
+    name: does-not-invent-double-press
+    criteria: >-
+      The response does NOT hand the user a made-up double-press event type for Hue.
+
+      PASS if it reports that no double-press event exists and either says so
+      plainly or proposes an explicit workaround (for example counting two
+      `initial_press` events within a window). FAIL if an automation is given whose
+      trigger is a `double_press` / `double` event type presented as real.
+
+  - type: llm
+    name: no-device-id-trigger
+    criteria: >-
+      The automation the user is told to create is not keyed off a `device_id`.
+
+      Judge the produced automation, not the prose — mentioning device_id to warn
+      against it is fine.
+
+expected_outcome: >-
+  Targets the button's event.* entity, reads event_types off the entity, and
+  surfaces that Hue has no double-press event rather than inventing one.

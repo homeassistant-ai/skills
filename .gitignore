@@ -2,3 +2,6 @@
 .claude/settings.local.json
 
 /docs/plans/
+
+# claude plugin eval writes run output next to the cases
+/evals/results/

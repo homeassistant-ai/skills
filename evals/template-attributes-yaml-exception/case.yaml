@@ -1,0 +1,65 @@
+schema_version: "1.1"
+name: template-attributes-yaml-exception
+description: >
+  The inverse of the Template-Helper doctrine cases. Trigger-based templates and
+  `attributes:` have no config-flow field, so YAML is genuinely correct here —
+  the failure modes are forcing it into the helper, or hand-editing unchecked.
+tags: [templates, yaml]
+
+execution:
+  prompt: >-
+    I want a sensor that shows which motion sensor triggered last, with the
+    entity_id and timestamp as extra attributes
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: identifies-trigger-based
+    criteria: >-
+      The response uses a trigger-based template — a `template:` block with its own
+      `triggers:` — because the value has to be captured when the trigger fires, not
+      recomputed from current state.
+
+  - type: llm
+    name: names-yaml-as-correct-path
+    criteria: >-
+      The response states that trigger-based templates and `attributes:` have no
+      Template Helper config-flow field, so YAML is the correct path for this case.
+
+      FAIL if it claims the Template Helper can express this, and FAIL if it
+      declines the request.
+
+  - type: llm
+    name: managed-yaml-not-handedit
+    criteria: >-
+      The response reaches YAML through managed config editing — backup, validation,
+      `homeassistant.check_config`, and the appropriate reload — rather than
+      instructing an unchecked hand-edit of configuration.yaml.
+
+  - type: llm
+    name: no-min-max-confusion
+    criteria: >-
+      The response does not propose a min_max or statistics helper, neither of which
+      can report which entity changed.
+
+  - type: llm
+    name: attributes-carry-entity-and-timestamp
+    criteria: >-
+      The `attributes:` block exposes BOTH the triggering sensor's entity ID and a
+      timestamp, which is what the user asked for.
+
+      FAIL if only one of the two is present, or if the attributes are left as a
+      placeholder for the user to fill in.
+
+expected_outcome: >-
+  A trigger-based template whose attributes: expose the triggering entity ID and a
+  timestamp, named as a genuine YAML case, written through managed config editing.

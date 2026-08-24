@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: assist-shortcut-card
+description: >
+  The shortcut card (2026.5) exists for exactly this. Checks the agent does not
+  fall back to hand-wiring a button card with a tap_action.
+tags: [dashboards]
+
+execution:
+  prompt: add a card to my dashboard to quickly launch Assist
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: recommends-shortcut-card
+    criteria: >-
+      The response recommends the `shortcut` card type for launching Assist from a
+      dashboard.
+
+  - type: llm
+    name: not-just-button-card
+    criteria: >-
+      The response does not exclusively recommend a button card with a `tap_action`.
+
+      PASS if a button card is offered as an alternative alongside the shortcut
+      card. FAIL if the button card is the only option given.
+
+expected_outcome: >-
+  Recommends the shortcut card type, not only a hand-wired button card.

@@ -1,0 +1,83 @@
+schema_version: "1.1"
+name: blueprint-authoring
+description: >
+  Turning a working automation into a shareable blueprint. The trap is
+  referencing `!input` directly inside Jinja, which does not resolve — it has to
+  be bound to a `variables:` entry first.
+tags: [blueprints]
+
+execution:
+  prompt: |-
+    I have this motion light automation working in 3 rooms with copy-paste. turn it into a blueprint I can share on the forum
+
+    alias: Hallway motion light
+    mode: restart
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.hallway_motion
+        to: "on"
+    actions:
+      - action: light.turn_on
+        target:
+          entity_id: light.hallway
+        data:
+          brightness_pct: 80
+      - wait_for_trigger:
+          - trigger: state
+            entity_id: binary_sensor.hallway_motion
+            to: "off"
+            for: "00:03:00"
+      - action: light.turn_off
+        target:
+          entity_id: light.hallway
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: source_url is required for re-import and sharing, so a correct blueprint
+  # contains the literal, and it is never an anti-pattern being warned against.
+  # Anchored to a YAML key so "remember to set source_url" in prose does not pass
+  # for a blueprint that omits the field.
+  - type: regex
+    name: sets-source-url
+    pattern: '^\s*source_url\s*:'
+    flags: mi
+    match: contains
+
+  - type: llm
+    name: typed-selectors
+    criteria: >-
+      Every entity, device, or area input in the blueprint uses a typed selector
+      (for example `selector: entity: domain: binary_sensor`) rather than a free
+      text field.
+
+      FAIL if any such input is declared with `selector: text:` or with no selector.
+
+  - type: llm
+    name: no-hardcoded-entities
+    criteria: >-
+      No entity IDs are hardcoded in the blueprint body — the original
+      `binary_sensor.hallway_motion` and `light.hallway` are replaced by inputs.
+
+      Judge the blueprint produced, not the quoted original automation.
+
+  - type: llm
+    name: input-not-in-template
+    criteria: >-
+      Where an `!input` value is used inside a Jinja template, it is first bound to
+      a `variables:` entry and the template references that variable.
+
+      FAIL if `!input` is referenced directly inside a Jinja expression. PASS if the
+      blueprint uses no templates over inputs at all.
+
+expected_outcome: >-
+  Typed `!input` selectors, `source_url` set, inputs bound to `variables:` before
+  templating, and no hardcoded entity IDs.

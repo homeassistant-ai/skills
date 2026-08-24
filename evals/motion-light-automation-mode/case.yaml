@@ -1,0 +1,52 @@
+schema_version: "1.1"
+name: motion-light-automation-mode
+description: >
+  A motion light with a timeout is broken by the default `mode: single` — a
+  re-trigger during the wait is dropped and the light goes dark with someone there.
+tags: [automations]
+
+execution:
+  prompt: >-
+    automation: when the hallway motion sensor trips, turn on the hallway light and
+    switch it off 5 minutes after motion stops
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: `mode: restart` is the correct answer here, so it cannot appear as an
+  # anti-pattern the response is warning against. Positive literal, no carve-out.
+  - type: regex
+    name: uses-restart-mode
+    pattern: '^\s*"?mode"?\s*:\s*["'']?restart'
+    flags: mi
+    match: contains
+
+  - type: llm
+    name: prefers-purpose-specific-trigger
+    criteria: >-
+      The trigger is a purpose-specific motion trigger (optionally with an area
+      target) rather than a generic `trigger: state` block on a single
+      `binary_sensor` entity.
+
+  - type: llm
+    name: delay-starts-after-motion-clears
+    criteria: >-
+      The five-minute timeout begins when motion STOPS, not when motion is detected
+      — the automation waits for the sensor to clear (a `wait_for_trigger` on the
+      off state, a `for:` duration on a cleared state, or an equivalent) and only
+      then counts down before switching the light off.
+
+      FAIL if the light is switched off five minutes after motion is DETECTED,
+      which is what a bare `delay:` after `light.turn_on` does.
+
+expected_outcome: >-
+  `mode: restart` so a re-trigger resets the timeout, with a purpose-specific
+  motion trigger, and the five minutes counted from when motion clears.

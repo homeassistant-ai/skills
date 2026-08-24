@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: timer-finished-automation
+description: >
+  Timers fire a bus event on completion. Guards against the polling and
+  wait_template workarounds agents reach for when they miss the event.
+tags: [automations, triggers]
+
+execution:
+  prompt: make an automation that announces on my speaker when my kitchen timer finishes
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: uses-timer-finished-event
+    criteria: >-
+      The automation triggers on the `timer.finished` event — an event trigger with
+      `event_type: timer.finished` — or on a purpose-specific timer trigger that
+      fires on completion.
+
+  - type: llm
+    name: no-polling-workaround
+    criteria: >-
+      The response does NOT propose polling the timer's state on an interval, nor a
+      `wait_template` / template-state workaround, as the way to detect completion.
+
+      PASS if such an approach is mentioned only to rule it out.
+
+  - type: llm
+    name: targets-the-kitchen-timer
+    criteria: >-
+      The trigger fires only for the kitchen timer, not for every timer in the
+      house — a `target:` naming the kitchen `timer.*` entity on the purpose-specific
+      trigger, or an `event_data.entity_id` filter on a legacy event trigger.
+
+      FAIL if the trigger is a bare `timer.finished` with no target and no filter,
+      which announces whenever any timer anywhere finishes.
+
+expected_outcome: >-
+  A `timer.finished` trigger targeting the kitchen timer specifically. No polling,
+  no wait_template.

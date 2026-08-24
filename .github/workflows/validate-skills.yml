@@ -4,10 +4,16 @@ on:
   pull_request:
     paths:
       - 'skills/**'
+      # evals/ holds the eval cases and scripts/ their checker. Without these,
+      # editing either would not re-run validation until the next skills/ change.
+      - 'evals/**'
+      - 'scripts/**'
   push:
     branches: [main]
     paths:
       - 'skills/**'
+      - 'evals/**'
+      - 'scripts/**'
 
 permissions:
   contents: read
@@ -33,7 +39,7 @@ jobs:
           else
             base="$PUSH_BEFORE"
           fi
-          if git diff --name-only "$base" HEAD | grep -q '^skills/'; then
+          if git diff --name-only "$base" HEAD | grep -qE '^(skills|evals|scripts)/'; then
             echo "skills_changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "skills_changed=false" >> "$GITHUB_OUTPUT"
@@ -44,9 +50,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install skills-ref
+      - name: Install validation dependencies
         if: steps.changes.outputs.skills_changed == 'true'
-        run: pip install skills-ref
+        # PyYAML is not a skills-ref dependency — the eval-case checker needs it.
+        run: pip install skills-ref pyyaml
 
       - name: Validate all skills
         if: steps.changes.outputs.skills_changed == 'true'
@@ -59,6 +66,19 @@ jobs:
             fi
           done
           exit $exit_code
+
+      - name: Validate eval cases
+        # `claude plugin eval` is the real consumer of evals/<case>/case.yaml, but
+        # it is gated behind early access, so its parser never runs in CI. Without
+        # this, a malformed case merges unnoticed and only surfaces whenever
+        # someone next runs the suite — an unknown key the strict grader schema
+        # rejects, a regex that will not compile, a case named off its directory.
+        #
+        # Structure only. Nothing here executes a case, spawns an agent, or costs
+        # tokens; whether the skill actually passes its evals is a separate
+        # question that needs `claude plugin eval` and credentials.
+        if: steps.changes.outputs.skills_changed == 'true'
+        run: python scripts/check_eval_cases.py
 
       - name: Lint skills with agnix
         # Second opinion on spec conformance. skills-ref declares
@@ -134,4 +154,4 @@ jobs:
 
       - name: No skill changes
         if: steps.changes.outputs.skills_changed == 'false'
-        run: echo "No changes in skills/, skipping validation."
+        run: echo "No changes in skills/, evals/ or scripts/, skipping validation."

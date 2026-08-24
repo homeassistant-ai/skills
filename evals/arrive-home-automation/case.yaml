@@ -1,0 +1,41 @@
+schema_version: "1.1"
+name: arrive-home-automation
+description: >
+  The obvious presence automation. Guards against the `entered_home` device
+  trigger type, removed in 2026.5, which pre-2026.5 training data still suggests.
+tags: [automations, triggers]
+
+execution:
+  prompt: create an automation that turns on the lights when I get home
+  allowed_tools: []
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: uses-state-trigger
+    criteria: >-
+      The automation triggers on a state change of a `person.*` or
+      `device_tracker.*` entity with `to: home` (a `trigger: state` block, or a
+      purpose-specific presence trigger that targets a person entity).
+
+  - type: llm
+    name: no-entered-home-trigger
+    criteria: >-
+      The automation does NOT use the `entered_home` device trigger type, which was
+      removed in Home Assistant 2026.5.
+
+      Judge the automation the response tells the user to create. PASS if
+      `entered_home` appears only in prose explaining that it was removed and must
+      not be used. FAIL if it appears in a trigger block the user is told to use.
+
+expected_outcome: >-
+  A state trigger on a person or device_tracker entity with `to: home`. No
+  `entered_home` device trigger.
