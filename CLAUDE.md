@@ -4,9 +4,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repo Layout
 
-One skill lives under `skills/<name>/`: `SKILL.md` plus `references/` (one level deep only),
-and optional `scripts/`/`assets/`. `docs/plans/` is gitignored scratch space.
-
 Eval cases live in a top-level `evals/<case>/case.yaml`, **not** under `skills/`. `claude
 plugin eval` rejects any eval directory whose first segment names a loaded component directory
 (`commands`, `skills`, `agents`, `hooks`, `themes`, `output-styles`, `monitors`, `workflows`,
@@ -20,19 +17,9 @@ a single routing row, not in the always-loaded table.
 
 ## Skill Format
 
-Every skill is a `SKILL.md` file with YAML frontmatter:
-
-```yaml
----
-name: skill-name-here
-description: >
-  When to activate this skill and what symptoms it addresses.
----
-```
-
-Full authoring constraints: `CONTRIBUTING.md`. The one CI cannot catch:
+Every skill is a `SKILL.md` with `name`/`description` frontmatter. Full authoring constraints: `CONTRIBUTING.md`. The one CI cannot catch:
 - `metadata.version` must be `"0"` on new skills — do not edit manually; CI assigns the real version on merge and syncs it into `.claude-plugin/plugin.json` (`.version`) and `.claude-plugin/marketplace.json` (`.metadata.version`) — three files, one source of truth
-- `description` is capped at 1024 chars and runs close to it — measure the parsed length before adding trigger/symptom bullets
+- `description` is capped at 1024 chars and runs close to it — measure the parsed length before adding trigger/symptom bullets: `uvx --from skills-ref agentskills read-properties skills/<skill-name> | jq '.description | length'`
 
 ## Skill Authoring Principles
 
@@ -84,6 +71,21 @@ reference table and README's **Skill Contents** table still match what the files
 The last one drifts silently — link checking keeps the *file list* honest while the prose
 beside it goes stale, so a row can point at the right file and still describe an older
 version of it.
+
+To check that a prompt actually triggers the skill (the eval suite cannot run yet), run it in
+a fresh session from an empty directory and look for the `Skill` call in the stream:
+
+```bash
+claude -p "<prompt>" --plugin-dir <repo-root> --output-format stream-json --verbose --max-turns 1 --allowedTools Skill
+```
+
+`--max-turns 1` is enough — the call appears in the first response — so a check is one API
+call (~25k tokens of system prompt and skill descriptions; `--model haiku` is the cheapest and
+also the stricter test). `--plugin-dir` tests the working tree, not the installed plugin,
+which may be releases behind. Disable other plugins for the run (`--settings` with an
+`enabledPlugins` map): a plugin hook that orders skill use makes any prompt pass. The `Base
+directory for this skill:` line in the output confirms which copy loaded. From inside a
+Claude Code session, prefix `env -u CLAUDECODE` or the nested `claude` refuses to start.
 
 ## Reviewing Skill PRs
 
