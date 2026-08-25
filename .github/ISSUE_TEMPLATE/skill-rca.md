@@ -18,9 +18,11 @@ For the agent: write the report in Markdown, then either file it yourself:
     --title "[RCA] <skill>: <one-line failure>" \
     --body-file report.md --label rca
 
-If --label is rejected (it needs triage access), drop it — the [RCA] title
-prefix is enough. Without GitHub access at all, hand the Markdown back to
-the user to paste into the "New issue" form. Paste Markdown, not rendered HTML.
+If --label is rejected (it needs triage access), either file through the
+"New issue" web form — the template applies the label for you — or drop the
+flag; the [RCA] title prefix is enough for triage. Without GitHub access at
+all, hand the Markdown back to the user to paste into that form. Paste
+Markdown, not rendered HTML.
 
 INSTRUCTIONS FOR THE AGENT
 
@@ -32,11 +34,15 @@ BEFORE FILING:
   Open a new issue only when the failure is unreported.
 - Did the skill actually load? If it never triggered, this is a triggering
   failure, not a content failure: write "Skill did not trigger" in 3a, keep
-  the user's request verbatim (it is the prompt that failed to trigger the
-  skill), and skip 3b and 3c.
+  the user's request verbatim apart from redactions (it is the prompt that
+  failed to trigger the skill), and skip 3b and 3c.
 - Did you follow the skill's guidance? If you skipped guidance that would
   have prevented the failure, that is not a skill bug. Report only what the
   skill got wrong or left out.
+- Redact before filing: tokens, URLs, IP addresses, email addresses, names,
+  and anything from the user's setup the public need not see — replace each
+  with [REDACTED] and keep the wording otherwise. Show the user the finished
+  report and get an explicit go-ahead before you file it.
 
 Fill out each section below. Quote the skill content that misled you,
 list affected entities and configs, and mark the first failure point.
@@ -48,7 +54,7 @@ Write "N/A" for any section that is irrelevant.
 
 - **Skill name:**  <!-- e.g. home-assistant-best-practices -->
 - **Skill version:**  <!-- metadata.version in SKILL.md frontmatter; plugin version 0.N.0 is skill version N. If main is ahead, say so — a stale install may already be fixed -->
-- **What the user originally asked you to do:**  <!-- verbatim if possible -->
+- **What the user originally asked you to do:**  <!-- verbatim apart from redactions -->
 
 ## 2. Timeline
 

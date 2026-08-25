@@ -17,11 +17,11 @@ An **Agent Skill** is a portable Markdown knowledge pack that teaches AI coding 
 Agents make a predictable set of mistakes with Home Assistant config — Jinja templates where a native trigger, condition, or helper exists, `device_id` where `entity_id` belongs, `mode: single` on a motion light, renames that silently break dashboards and scripts — and the anti-pattern table names each one with its fix. A typical entry:
 
 ```yaml
-# Without the skill — template condition, checked only at runtime
+# Without the skill — template condition: a typo or wrong entity ID surfaces only when it runs
 condition: template
 value_template: "{{ states('sensor.living_room_temperature') | float > 25 }}"
 
-# With the skill — native condition, validated when the automation loads
+# With the skill — native condition: config validated when the automation loads
 condition: numeric_state
 entity_id: sensor.living_room_temperature
 above: 25
@@ -43,7 +43,7 @@ Works with AI coding agents that support the [Agent Skills standard](https://age
 
 ### Claude Code plugin
 
-Claude Code also accepts the installer above, which places the skill files in your `.claude/skills/` directory. This route installs it as a plugin instead, kept in Claude Code's own plugin cache.
+Claude Code also accepts the installer above, which places the skill files in your `.claude/skills/` directory. The commands below install it as a plugin instead, kept in Claude Code's own plugin cache.
 
 Run each command separately inside Claude Code:
 
