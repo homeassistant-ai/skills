@@ -1,13 +1,12 @@
 name: Validate Skills
 
 on:
+  # No path filter on pull requests: `validate` is a required status check on
+  # main, and a workflow that path filtering skips reports nothing, so the check
+  # stays "expected" forever and blocks docs-only PRs. The job runs on every PR
+  # and its "Check for skill changes" step skips the real work when nothing
+  # under skills/, evals/ or scripts/ changed.
   pull_request:
-    paths:
-      - 'skills/**'
-      # evals/ holds the eval cases and scripts/ their checker. Without these,
-      # editing either would not re-run validation until the next skills/ change.
-      - 'evals/**'
-      - 'scripts/**'
   push:
     branches: [main]
     paths:
