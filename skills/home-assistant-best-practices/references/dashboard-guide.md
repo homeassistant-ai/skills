@@ -576,9 +576,14 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 
 ## Visual Iteration Workflow
 
-Where browser automation is available, render the dashboard and look at it rather than
-reasoning about the JSON: write the config through the HA API, open
-`{base_url}/lovelace/{url_path}`, screenshot, adjust, repeat.
+Render the dashboard and look at it rather than reasoning about the JSON. Check the
+connected MCP server's tool list for a native dashboard-screenshot capability first —
+some servers ship one (sometimes as an opt-in/beta feature the user must enable), and it
+renders a view directly with no browser stack. Prefer the screenshot-only call for
+re-checks when you already hold the config; a combined config+screenshot call earns its
+payload only when you need both. Otherwise, where browser automation is available: write
+the config through the HA API, open `{base_url}/lovelace/{url_path}`, screenshot, adjust,
+repeat.
 
 **Read `{base_url}` from the instance; never assume `:8123`.** Since 2026.8 a new Home
 Assistant OS install serves on a plain web address with no port suffix, and the port is
