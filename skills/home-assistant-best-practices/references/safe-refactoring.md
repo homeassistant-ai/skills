@@ -90,7 +90,7 @@ Example — renaming a smart plug's entities from manufacturer defaults to room-
 | Registry | Integration-supplied | User override |
 |---|---|---|
 | entity | `original_name` | `name` |
-| device | `default_name` | `name_by_user` |
+| device | `name` | `name_by_user` |
 
 The override takes precedence for as long as it is set. If the integration later reports a corrected name — the device is renamed in its vendor app, a firmware update fixes a typo — the new value lands in the integration-supplied field and never reaches the UI, so the stale override looks like an integration bug to whoever finds it later.
 
