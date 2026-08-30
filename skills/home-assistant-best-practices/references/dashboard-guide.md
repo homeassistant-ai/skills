@@ -110,6 +110,7 @@ How sections views lay out — required background for sizing cards across scree
 - Each section is a **12-column grid** (cell height 56px, gap 8px). Cards default to the full 12 columns.
 - Size cards with `grid_options`: `{"columns": 6, "rows": 2}`. `columns` accepts 1–12 or `"full"`; `rows` accepts a number or `"auto"`. The older `layout_options` (`grid_columns`/`grid_rows`) is deprecated — still parsed, never write it.
 - Section columns reflow by available width (viewport minus sidebar; minimum section column width is 320px), clamped to the view's `max_columns` (default 4): roughly 1 column on phones, 2 around 700px, 3 around 1050px, more as width allows. Cards never reflow *within* a section — a card's `columns` value is fixed; what changes with width is the number of section columns shown, and the grid width of spanned sections (next point).
+- **Widescreen vs mobile layout balancing**: In `type: sections` views, setting `max_columns: 2` or stacking all cards into a single section creates excessive vertical height and wide empty margins on widescreen monitors. For multi-domain dashboards (e.g. Energy, EV, Climate), aim for **3 to 4 balanced sections** (`max_columns: 3` or `4`) where each section column has roughly equal vertical height (~500–600px). This provides a zero-scroll experience on widescreen displays while Home Assistant automatically reflows sections into a single vertical column on mobile.
 - A spanned section's grid widens with it: a `column_span: 2` section has a **24-column grid** (span × 12) on wide screens, but is 12 columns again once the layout collapses to one section column. Pick values that degrade well: in a `column_span: 2` section, `"columns": 6` gives 4-up on desktop and 2-up on phones; `"columns": 12` gives 2-up on desktop and full-width on phones; `"columns": "full"` is always a full row.
 - Give graph/map cards explicit `grid_options` (`"columns": "full"` plus fixed `rows`) so they are never squeezed unreadable in a shared row.
 - Responsive show/hide uses the `screen` visibility condition with any CSS media query: `{"condition": "screen", "media_query": "(max-width: 767px)"}`. These are **visibility-targeting examples you choose**, *not* section-reflow thresholds — sections reflow on content width (previous bullet), not on these fixed viewport widths. Convenient values: `(max-width: 767px)`, `(min-width: 768px) and (max-width: 1023px)`, `(min-width: 1024px)`; `(pointer: coarse)` targets touch devices.
@@ -459,6 +460,20 @@ Search HACS for community cards by name/category, review repository details, the
 
 Custom cards predating sections views (early 2024) that haven't updated since are often dormant or superseded by native equivalents — check a repository's release activity before recommending it.
 
+### Custom Web Component Cache-Busting
+
+Home Assistant Companion Apps (iOS / Android WebViews) and mobile browsers cache registered custom element definitions and JavaScript resources aggressively. When updating the code of a custom card registered via dashboard resources or an inline module:
+
+```yaml
+# WRONG — editing card JavaScript in-place without cache-busting; mobile WebViews continue running the stale component indefinitely
+type: custom:my-weather-card
+
+# RIGHT — version the element tag name or append a version query parameter to the resource URL to force instant client cache invalidation
+url: /local/my-weather-card.js?v=2.0.0
+# or for inline registered elements:
+type: custom:my-weather-card-v2
+```
+
 ---
 
 ## Complete Example: Multi-View Dashboard
@@ -540,6 +555,8 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 | Map card markers show entity-name initials instead of values | `label_mode` is a **per-entity** option, not card-level: `"entities": [{"entity": "sensor.x", "label_mode": "state"}]` |
 | Cards lay out differently in spanned sections | A spanned section's grid widens with it (24 columns in a `column_span: 2` section) but is 12 when collapsed — see [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout) |
 | Map entities missing from map card | Only entities with `latitude`/`longitude` attributes are plotted — use template sensors carrying coordinates as attributes for fixed locations |
+| Mobile app shows stale custom card after update | Version the element tag (`custom:my-card-v2`) or append `?v=X.Y.Z` to the resource URL in Lovelace resources — see [Custom Web Component Cache-Busting](#custom-web-component-cache-busting) |
+| Dashboard stretched vertically with large margins on PC | Increase `max_columns` to 3 or 4 and distribute cards across balanced sections (~500–600px height per column) |
 
 ---
 
