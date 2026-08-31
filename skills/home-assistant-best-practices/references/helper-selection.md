@@ -140,7 +140,7 @@ Note the key is `round_digits` here — `derivative` and `integration` spell the
 
 #### Multi-Port Solar Micro-Inverter Aggregation (Energy Dashboard)
 
-For multi-port solar micro-inverters (e.g. Hoymiles dual-port HMS-1000W-2T with individual DC Port 1 & 2 sensors, Enphase, APSystems), the Home Assistant Energy Dashboard requires a single cumulative energy entity. `min_max` with `type: sum` does not pass through `state_class: total_increasing` or `device_class: energy`, so use a **Template Helper**:
+For multi-port solar micro-inverters (e.g. Hoymiles dual-port HMS-1000W-2T with individual DC Port 1 & 2 sensors, Enphase, APSystems), the Home Assistant Energy Dashboard requires a single cumulative energy entity. While `min_max` with `type: sum` inherits `device_class: energy` when all source entities share it, it sets `state_class: measurement` rather than preserving `state_class: total_increasing`. For cumulative solar energy tracking in the Energy Dashboard, use a **Template Helper**:
 
 ```yaml
 # WRONG — adding raw instantaneous power (W) or a template sensor without cumulative energy attributes to the Energy Dashboard
@@ -156,7 +156,7 @@ unit_of_measurement: "Wh"     # or "kWh" matching input sensors
 device_class: energy          # required by Energy Dashboard
 state_class: total_increasing # required for cumulative meter tracking
 additional_options:
-  availability: "{{ has_value('sensor.inverter_dc_port_1_energy') and has_value('sensor.inverter_dc_port_2_energy') }}"
+  availability: "{{ is_number(states('sensor.inverter_dc_port_1_energy')) and is_number(states('sensor.inverter_dc_port_2_energy')) }}"
 ```
 
 Also ensure grid tariff index sensors (e.g. Peak / Off-peak) carry distinct friendly names to prevent ambiguous duplicate headers in Energy Dashboard summary tables.
