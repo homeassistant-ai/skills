@@ -244,7 +244,7 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 
 | Domain | Feature types |
 |--------|--------------|
-| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `climate-swing-modes`, `climate-swing-horizontal-modes`, `target-temperature`, `target-humidity` (climate entities since 2026.9; humidifiers before that) |
+| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `climate-swing-modes`, `climate-swing-horizontal-modes`, `target-temperature`, `target-humidity` (humidifier entities, and climate entities that support it since 2026.9) |
 | Light | `light-brightness`, `light-color-temp`, `light-color-favorites`, `light-effect` (`effects:` filter list) |
 | Cover/Valve | `cover-open-close`, `cover-position`, `cover-position-favorite`, `cover-tilt`, `cover-tilt-position`, `cover-tilt-favorite`, `valve-open-close`, `valve-position`, `valve-position-favorite` |
 | Fan | `fan-speed`, `fan-preset-modes`, `fan-direction`, `fan-oscillate` |

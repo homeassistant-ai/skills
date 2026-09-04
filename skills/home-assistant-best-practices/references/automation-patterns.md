@@ -280,7 +280,7 @@ conditions:
 
 | Version | Added to the catalog |
 |---|---|
-| 2026.7 | Sun family: `sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers |
+| 2026.7 | Sun family: `sun.sunrise`, `sun.sunset`, `sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers |
 | 2026.8 | Moon family (`moon.phase_changed` trigger; `moon.is_phase` / `moon.is_waning` / `moon.is_waxing` conditions) and vibration family (`vibration.detected` / `vibration.cleared` triggers; `vibration.is_detected` / `vibration.is_not_detected` conditions). Do not emit either on 2026.7 |
 | 2026.9 | Sun family again: `sun.golden_hour_started` / `_ended` and `sun.blue_hour_started` / `_ended`, each taking `options.period`: `any` (default) / `morning` / `evening`, plus `sun.midnight_sun_started` / `_ended` and `sun.polar_night_started` / `_ended` for polar latitudes; conditions `sun.is_golden_hour` / `sun.is_blue_hour` with the same `options.period`, and `sun.is_midnight_sun` / `sun.is_polar_night` |
 
