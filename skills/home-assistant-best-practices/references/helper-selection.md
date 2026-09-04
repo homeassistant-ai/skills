@@ -132,11 +132,14 @@ Note the key is `round_digits` here — `derivative` and `integration` spell the
 - Ignores `unknown` states (except `sum` which goes to unknown)
 - Returns error if unit of measurement differs between sensors
 - For spiky values, filter with statistics sensor first
+- Always `state_class: measurement`, so the recorder compiles `mean`/`min`/`max` and never `sum` (`DEFAULT_STATISTICS` in `sensor/recorder.py`)
+- Energy Dashboard consequence: a `sum` of energy (kWh) sensors plots nothing and is flagged `entity_state_class_measurement_no_last_reset`. Adding `last_reset` silences that issue but still plots nothing; energy sources need `total` or `total_increasing`. Add each energy sensor as its own dashboard source instead, which the dashboard sums for display. The grid, gas and water power slots (`stat_rate`) are the opposite case: they require `measurement`, which a `sum` of power sensors satisfies
+- Since 2026.3, `device_class` is inherited only when every entity in `entity_ids` carries the same one, evaluated once at setup
 
 **Common uses:**
 - Average house temperature from multiple room sensors
 - Maximum power consumption across circuits
-- Sum of all solar panel production sensors
+- Sum of solar power (W) across arrays; for kWh use [integration](#integration-riemann-sum)
 
 ---
 
@@ -1255,6 +1258,7 @@ See the [Decision Matrix](#decision-matrix) for when the Template Helper is the 
 |------|--------|-----|
 | Average of multiple sensors | `min_max` (type: mean) | Template with math |
 | Sum of multiple sensors | `min_max` (type: sum) | Template with math |
+| Sum of energy (kWh) sensors for the Energy Dashboard | Add each sensor as its own dashboard source | `min_max` (type: sum): `measurement` never compiles `sum` statistics |
 | Average over time | `statistics` | Template tracking history |
 | Rate of change | `derivative` | Template calculating delta |
 | On/off at threshold | `threshold` | Template binary sensor |
