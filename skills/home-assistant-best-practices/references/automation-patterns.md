@@ -341,6 +341,39 @@ triggers:
       minutes: 5
 ```
 
+### `unavailable` arms a numeric state trigger
+
+The trigger tracks each entity as *armed* or not. An entity becomes armed when it evaluates as
+**not matching**, and a fire needs an armed entity to then match. `unavailable` and `unknown`
+count as not matching: `condition.async_numeric_state` returns `False` for them rather than
+raising, so they arm the trigger instead of being ignored.
+
+Two consequences, both firing without any threshold being crossed:
+
+- **After a restart.** The trigger primes its armed set at setup. An entity still `unavailable`
+  while its integration loads is armed, so its first real reading fires when that reading is
+  already past the threshold.
+- **After a connectivity blip.** A cloud-, Wi-Fi- or hub-backed entity that flicks to
+  `unavailable` and back is re-armed, so the same unchanged value fires again.
+
+An entity that is present and numeric at setup behaves as expected: if it already matches it is
+not armed, so it stays quiet until it drops past the threshold and returns.
+
+Guard on the previous state wherever a false fire is costly (switching high-power loads, sending
+notifications):
+
+```yaml
+triggers:
+  - trigger: numeric_state
+    entity_id: sensor.solar_surplus
+    above: 1500
+conditions:
+  - condition: template
+    value_template: >
+      {{ trigger.from_state is not none
+         and trigger.from_state.state not in ['unavailable', 'unknown'] }}
+```
+
 ### `for:` duration resets on restart and on `unavailable`
 
 A `for:` clause (on `state` / `numeric_state` triggers, and on the `state` condition) measures
