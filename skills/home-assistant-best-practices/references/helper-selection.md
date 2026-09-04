@@ -133,7 +133,7 @@ Note the key is `round_digits` here — `derivative` and `integration` spell the
 - Returns error if unit of measurement differs between sensors
 - For spiky values, filter with statistics sensor first
 - Always `state_class: measurement`, so the recorder compiles `mean`/`min`/`max` and never `sum` (`DEFAULT_STATISTICS` in `sensor/recorder.py`)
-- Energy Dashboard consequence: a `sum` of energy (kWh) sensors plots nothing and is flagged `entity_state_class_measurement_no_last_reset`. Adding `last_reset` silences that issue but still plots nothing; energy sources need `total` or `total_increasing`. Add each energy sensor as its own dashboard source instead, which the dashboard sums for display. The grid, gas and water power slots (`stat_rate`) are the opposite case: they require `measurement`, which a `sum` of power sensors satisfies
+- Energy Dashboard consequence: a `sum` of energy (kWh) sensors plots nothing and is flagged `entity_state_class_measurement_no_last_reset`. Adding `last_reset` silences that issue but still plots nothing; energy sources need `total` or `total_increasing`. Add each energy sensor as its own dashboard source instead, which the dashboard sums for display. The grid `stat_rate` slot is the opposite case: it requires `measurement` with `device_class: power`, which a `sum` of power sensors satisfies (gas and water `stat_rate` take `volume_flow_rate` instead)
 - Since 2026.3, `device_class` is inherited only when every entity in `entity_ids` carries the same one, evaluated once at setup
 
 **Common uses:**
