@@ -341,39 +341,6 @@ triggers:
       minutes: 5
 ```
 
-### `unavailable` arms a numeric state trigger
-
-The trigger tracks each entity as *armed* or not. An entity becomes armed when it evaluates as
-**not matching**, and a fire needs an armed entity to then match. `unavailable` and `unknown`
-count as not matching: `condition.async_numeric_state` returns `False` for them rather than
-raising, so they arm the trigger instead of being ignored.
-
-Two consequences, both firing without any threshold being crossed:
-
-- **After a restart.** The trigger primes its armed set at setup. An entity still `unavailable`
-  while its integration loads is armed, so its first real reading fires when that reading is
-  already past the threshold.
-- **After a connectivity blip.** A cloud-, Wi-Fi- or hub-backed entity that flicks to
-  `unavailable` and back is re-armed, so the same unchanged value fires again.
-
-An entity that is present and numeric at setup behaves as expected: if it already matches it is
-not armed, so it stays quiet until it drops past the threshold and returns.
-
-Guard on the previous state wherever a false fire is costly (switching high-power loads, sending
-notifications):
-
-```yaml
-triggers:
-  - trigger: numeric_state
-    entity_id: sensor.solar_surplus
-    above: 1500
-conditions:
-  - condition: template
-    value_template: >
-      {{ trigger.from_state is not none
-         and trigger.from_state.state not in ['unavailable', 'unknown'] }}
-```
-
 ### `for:` duration resets on restart and on `unavailable`
 
 A `for:` clause (on `state` / `numeric_state` triggers, and on the `state` condition) measures
@@ -421,6 +388,47 @@ that was a restart re-stamp, not a real state change.
 > 2026.7+ primes `options.for` duration tracking for purpose-specific **conditions** from recorded
 > history, so those don't restart from zero on creation/reload. The resets described here still
 > apply to trigger `for:` clauses and to `last_changed`-based template math.
+
+### `unavailable` arms a numeric state trigger
+
+The trigger tracks each entity as *armed* or not. An entity becomes armed when it evaluates as
+**not matching**, and a fire needs an armed entity to then match. On the plain-state path,
+`unavailable`, `unknown` and a missing previous state count as not matching rather than raising, so
+they arm the trigger instead of being ignored. Any *other* non-numeric case (an entity absent from
+the state machine, or a text state such as `idle`) raises instead, which logs a warning and leaves
+the entity unarmed.
+
+Two consequences, neither involving a threshold being crossed:
+
+- **After a restart.** The trigger builds its armed set when it attaches, and HA writes
+  `unavailable` for every registry entity that has no state yet, so the entity is armed. Its first
+  real reading past the threshold then fires.
+- **After a blip.** An entity that flicks to `unavailable` and back is re-armed, so the same
+  unchanged value fires again.
+
+`for:` does not prevent either case. The re-armed entity matches, the unchanged value keeps
+matching for the whole window, so the trigger fires late rather than not at all.
+
+**A guard costs real crossings.** Rejecting a non-numeric `from_state` also drops genuine
+crossings that passed through `unavailable` (1400 to `unavailable` to 1600), and with `for:` a blip
+inside the window cancels the timer and re-arms, so that crossing never fires at all. Guard only
+where a false fire costs more than a missed one, such as switching a high-power load. As with
+[`trigger.event`](#event-trigger), `trigger.from_state` is `LoggingUndefined` for non-state
+triggers, so short-circuit on `trigger.platform` first:
+
+```yaml
+# WRONG — raises UndefinedError when a non-state trigger fires the same automation
+conditions:
+  - "{{ trigger.from_state.state not in ['unavailable', 'unknown'] }}"
+
+# RIGHT — platform check first; from_state is null when the entity is newly created
+conditions:
+  - condition: template
+    value_template: >
+      {{ trigger.platform == 'numeric_state'
+         and trigger.from_state is not none
+         and trigger.from_state.state not in ['unavailable', 'unknown'] }}
+```
 
 ### Time Trigger
 
