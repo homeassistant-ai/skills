@@ -29,9 +29,15 @@ INSTRUCTIONS FOR THE AGENT
 A skill in this repository misled you, and your user saw the result.
 
 BEFORE FILING:
-- Search existing issues for the same skill and failure. If a matching
-  issue exists, react with thumbs-up or comment with additional context.
-  Open a new issue only when the failure is unreported.
+- Do not re-run any step that changed the user's config. Decide from
+  evidence you already have whether the failure is HA's or your tool's:
+  compare the bytes your tool sent with what HA stored, read HA's own log
+  line, check the state the entity actually holds. Corrupted text is
+  usually the tool. A stale cache or an unapplied write can be either; the
+  core file or docs page that produces the behaviour decides. If the
+  evidence points at the tool, there is no skill gap: do not file. If you
+  cannot tell, say so in 3b and file only if the skill's guidance would
+  still have changed what you did.
 - Did the skill actually load? If it never triggered, this is a triggering
   failure, not a content failure: write "Skill did not trigger" in 3a, keep
   the user's request verbatim apart from redactions (it is the prompt that
@@ -39,6 +45,17 @@ BEFORE FILING:
 - Did you follow the skill's guidance? If you skipped guidance that would
   have prevented the failure, that is not a skill bug. Report only what the
   skill got wrong or left out.
+- Did your fix break a rule? A step you marked Success that does something
+  the Critical Anti-Patterns table in the skill's SKILL.md forbids is a
+  second failure, not a fix. The test is the path, not the tool: anything
+  you wrote under .storage/, or any configuration.yaml edit for a
+  UI-configured integration, counts. Mark that row Failure, and in 3c give
+  the supported path or say you did not find one.
+- One failure per report. If your timeline has two unrelated [GAP] rows,
+  file two reports.
+- Search existing issues for the same skill and failure. If a matching
+  issue exists, react with thumbs-up or comment with additional context.
+  Open a new issue only when the failure is unreported.
 - Redact before filing: tokens, URLs, IP addresses, email addresses, names,
   and anything from the user's setup the public need not see — replace each
   with [REDACTED] and keep the wording otherwise. Show the user the finished
@@ -61,6 +78,8 @@ Write "N/A" for any section that is irrelevant.
 List each action you took. For each, record what you did, what resulted, and its status (e.g., Success, Failure).
 
 Mark the first failing step with **[GAP]** in the `Status` column.
+
+One change per row. If one step changed several things, keep them in one row and write "not attributed" in Result; do not split them and assign results you did not observe separately.
 
 | Step | Action | Result | Status |
 |------|--------|--------|-----|
@@ -92,8 +111,14 @@ and tie it to the skill content you quoted in 3a.
 ### 3c. What should the skill have told you instead?
 
 <!--
-Describe the guidance the skill should have included
-to prevent this failure.
+State the HA behaviour the skill should carry, not the fix that worked for
+your setup. Each claim must cite the core file or docs page that shows the
+behaviour; a claim you cannot cite is a hypothesis, so label it as one.
+Hardware models, threshold values, and layout preferences do not go in the
+skill unless the HA behaviour is specific to that integration
+(CONTRIBUTING.md, Guiding Principles: skills apply to any HA installation).
+If you cannot phrase it without them, it is not a skill gap: write
+"No skill gap: instance-specific" here and tell the user before filing.
 -->
 
 ## 4. Impact
