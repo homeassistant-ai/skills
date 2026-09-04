@@ -391,12 +391,13 @@ that was a restart re-stamp, not a real state change.
 
 ### `unavailable` arms a numeric state trigger
 
-The trigger tracks each entity as *armed* or not. An entity becomes armed when it evaluates as
-**not matching**, and a fire needs an armed entity to then match. On the plain-state path,
-`unavailable`, `unknown` and a missing previous state count as not matching rather than raising, so
-they arm the trigger instead of being ignored. Any *other* non-numeric case (an entity absent from
-the state machine, or a text state such as `idle`) raises instead, which logs a warning and leaves
-the entity unarmed.
+The trigger tracks each entity as *armed* or not, judged on the **new** state alone. An entity
+becomes armed when it evaluates as **not matching**, and a fire needs an armed entity to then
+match. On the plain-state path, `unavailable` and `unknown` count as not matching rather than
+raising, so they arm the trigger instead of being ignored. Any *other* non-numeric value (a text
+state such as `idle`, or an entity absent from the state machine) raises instead, which logs a
+warning and returns, leaving the armed flag as it was. A text state therefore neither arms nor
+disarms: `unavailable`, then `idle`, then a matching number still fires.
 
 Two consequences, neither involving a threshold being crossed:
 
@@ -421,13 +422,13 @@ triggers, so short-circuit on `trigger.platform` first:
 conditions:
   - "{{ trigger.from_state.state not in ['unavailable', 'unknown'] }}"
 
-# RIGHT — platform check first; from_state is null when the entity is newly created
+# RIGHT — platform check first; is_number also rejects text states such as `idle`
 conditions:
   - condition: template
     value_template: >
       {{ trigger.platform == 'numeric_state'
          and trigger.from_state is not none
-         and trigger.from_state.state not in ['unavailable', 'unknown'] }}
+         and is_number(trigger.from_state.state) }}
 ```
 
 ### Time Trigger
