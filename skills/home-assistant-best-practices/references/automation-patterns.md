@@ -389,6 +389,48 @@ that was a restart re-stamp, not a real state change.
 > history, so those don't restart from zero on creation/reload. The resets described here still
 > apply to trigger `for:` clauses and to `last_changed`-based template math.
 
+### `unavailable` arms a numeric state trigger
+
+The trigger tracks each entity as *armed* or not, judged on the **new** state alone. An entity
+becomes armed when it evaluates as **not matching**, and a fire needs an armed entity to then
+match. On the plain-state path, `unavailable` and `unknown` count as not matching rather than
+raising, so they arm the trigger instead of being ignored. Any *other* non-numeric value (a text
+state such as `idle`, or an entity absent from the state machine) raises instead, which logs a
+warning and returns, leaving the armed flag as it was. A text state therefore neither arms nor
+disarms: `unavailable`, then `idle`, then a matching number still fires.
+
+Two consequences, neither involving a threshold being crossed:
+
+- **After a restart.** The trigger builds its armed set when it attaches, and HA writes
+  `unavailable` for every registry entity that has no state yet, so the entity is armed. Its first
+  real reading past the threshold then fires.
+- **After a blip.** An entity that flicks to `unavailable` and back is re-armed, so the same
+  unchanged value fires again.
+
+`for:` does not prevent either case. The re-armed entity matches, the unchanged value keeps
+matching for the whole window, so the trigger fires late rather than not at all.
+
+**A guard costs real crossings.** Rejecting a non-numeric `from_state` also drops genuine
+crossings that passed through `unavailable` (1400 to `unavailable` to 1600), and with `for:` a blip
+inside the window cancels the timer and re-arms, so that crossing never fires at all. Guard only
+where a false fire costs more than a missed one, such as switching a high-power load. As with
+[`trigger.event`](#event-trigger), `trigger.from_state` is `LoggingUndefined` for non-state
+triggers, so short-circuit on `trigger.platform` first:
+
+```yaml
+# WRONG — raises UndefinedError when a non-state trigger fires the same automation
+conditions:
+  - "{{ trigger.from_state.state not in ['unavailable', 'unknown'] }}"
+
+# RIGHT — platform check first; is_number also rejects text states such as `idle`
+conditions:
+  - condition: template
+    value_template: >
+      {{ trigger.platform == 'numeric_state'
+         and trigger.from_state is not none
+         and is_number(trigger.from_state.state) }}
+```
+
 ### Time Trigger
 
 Fires at specific times.
