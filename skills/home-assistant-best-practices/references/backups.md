@@ -68,10 +68,11 @@ The test is reversibility, not how risky something feels: **back up before an op
 
 "It's just an action" is not a reversibility argument — the inverse depends on the action and the target, and a reversible state change is not always a reversible event.
 
-Two things this test depends on:
+Three things this test depends on:
 
 - **Timing is the whole point.** A backup taken *after* the destructive step captures the damage. It must precede the operation.
 - **An existing schedule does not substitute.** On an instance with nightly automatic backups, the newest one can be almost a day stale — fine for reversible edits, not for an irreversible operation about to run now.
+- **A config repo does not substitute.** A `/config` directory tracked in git conventionally excludes the recorder database, along with `.storage` and `secrets.yaml`, which carry credentials and long-lived tokens in cleartext. The repo therefore holds the YAML slice only, and the irreversible operations above destroy registry, config-entry, or install state, none of which is in it. A repo that does track `.storage` cannot be pushed to a shared remote, and writing `.storage` back over a running instance is a direct edit of HA's internal state rather than a restore.
 
 ## What a Full Backup Contains
 
