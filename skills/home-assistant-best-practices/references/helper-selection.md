@@ -60,7 +60,7 @@ have none, so a YAML change needs `homeassistant.restart` — confirm with the u
 `threshold`, `tod`, `integration`, `mold_indicator`, `random`, `switch_as_x`,
 `generic_hygrostat`, and `utility_meter` (whose services are `reset`/`calibrate` only).
 
-**`YAML-only:` lines are verified against core 2026.8.3.** Those keys exist on the YAML
+**`YAML-only:` lines are verified against core 2026.8.3** (2026.9 notes against core 2026.9.0). Those keys exist on the YAML
 platform schema and have no config-flow field, so needing one is a reason to write YAML.
 A helper with no `YAML-only:` line has no such keys. Where the two shapes differ or the flow
 cannot express a case (`trend`, `tod`, `bayesian`, `filter`, `template`), both are shown.
@@ -628,6 +628,10 @@ name: "Doorbell"         # required
 icon: mdi:bell
 ```
 
+**Trigger on a press:** since 2026.9, `trigger: button.pressed` accepts an `input_button`
+helper as its target. On 2026.8 and earlier it only accepts `button` entities, so a helper
+press needs a state trigger on the helper entity.
+
 **Common uses:**
 - Manual triggers for automations
 - Dashboard buttons
@@ -1191,8 +1195,8 @@ sets the entry up, which is why the YAML platform shape shows the key at the top
 **template → device_tracker** (the native replacement for the legacy `device_tracker.see` action)
 - Required: `name`, and **either** `in_zones` (a list of zone entity_ids the device is considered in) **or** both `latitude` and `longitude` (templates)
 - Optional: `device_id`; `availability` and `location_accuracy` inside `additional_options`
-- **YAML-only:** `icon`, `picture` (and `unique_id`, as everywhere)
-- Not valid here in **either** shape: `attributes`. Nor: `location_name`, `battery_level`, `source_type`, `host_name`, `mac_address`, `gps_accuracy`
+- **YAML-only:** `icon`, `picture`, and `attributes` for extra attributes of your own (added in 2026.9, YAML-only), plus `unique_id`, as everywhere. `attributes` cannot set the entity's own: `source_type`, `in_zones`, `tracking_type`, `latitude`, `longitude` and `gps_accuracy` are rejected there
+- Not valid as config keys in **either** shape: `location_name`, `battery_level`, `source_type`, `host_name`, `mac_address`, `gps_accuracy`
 
 Other sub-types follow the same shape — a `state` template plus domain-appropriate metadata.
 
@@ -1233,12 +1237,12 @@ template:
         device_class: presence
 ```
 
-**YAML-only for template entities** (verified against the Template Helper flow at 2026.8.3):
+**YAML-only for template entities** (flow fields verified at 2026.8.3; the 2026.9 notes against core 2026.9.0):
 
 | YAML-only | Why the flow cannot do it |
 |---|---|
-| **Trigger-based templates** (`triggers:` / `action:` / `variables:` on the block) | The flow has no trigger step. Its per-sub-type action fields (`press`, `turn_on`, `set_value`, …) are entity *commands*, not a trigger block's `actions:` |
-| `attributes:` (extra state attributes) | No field in the flow |
+| **Trigger-based templates** (`triggers:` / `action:` / `variables:` on the block, and per-entity `conditions:` since 2026.9) | The flow has no trigger step. Its per-sub-type action fields (`press`, `turn_on`, `set_value`, …) are entity *commands*, not a trigger block's `actions:` |
+| `attributes:` (extra state attributes; on every platform since 2026.9) | No field in the flow |
 | Several entities in one block | One entity per config entry |
 
 (`unique_id` is not in this table: the flow assigns one. See the note at the top of this file.)
