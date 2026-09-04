@@ -6,6 +6,7 @@ This does NOT apply to:
 
 - Automations/scripts/scenes (use config APIs)
 - `.storage/` files (use REST/WebSocket APIs)
+- `http` (2026.8+): moved to a storage-backed store with a WebSocket API (`http/config/configure`), managed from Settings → System → Network. A `configuration.yaml` `http:` block is imported once and then ignored, and HA raises a repair issue asking the user to remove it
 - UI-configured integrations and helpers (config flow): `input_*` helpers, the UI Group Helper (Settings → Devices & Services → Helpers → Group), and most modern notify integrations — **unless the helper's flow has no field for the config you need**, which is a real and common case: see the `YAML-only:` lines in [helper-selection](helper-selection.md)
 
 Old-style YAML `group:` blocks are still YAML-only and appear in the table below — only the UI Group Helper is excluded.
