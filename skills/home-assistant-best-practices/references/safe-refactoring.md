@@ -83,6 +83,19 @@ Example — renaming a smart plug's entities from manufacturer defaults to room-
 | sensor | `sensor.shellyplug_s_a1b2c3d4e5f6_energy` | `sensor.office_heater_energy` |
 | update | `update.shellyplug_s_a1b2c3d4e5f6` | `update.office_heater` |
 
+**Display names are a separate field (Step 3):**
+
+`entity_id` and display name are stored independently, and renaming in the UI writes a *user override* rather than changing the value the integration supplied. The registry keeps both:
+
+| Registry | Integration-supplied | User override |
+|---|---|---|
+| entity | `original_name` | `name` |
+| device | `name` | `name_by_user` |
+
+The override takes precedence for as long as it is set. If the integration later reports a corrected name — the device is renamed in its vendor app, a firmware update fixes a typo — the new value lands in the integration-supplied field and never reaches the UI, so the stale override looks like an integration bug to whoever finds it later.
+
+Rename at the source when the source is what is wrong, and reserve the override for names HA itself owns. To annotate without shadowing — marking an entity unused, grouping for a dashboard — use labels, areas, or categories, which live in their own fields and survive a source-side rename. Clearing the override restores the inherited name.
+
 **Dashboard reference locations (Step 2):**
 Dashboard cards reference entities in multiple places. Search all of these:
 

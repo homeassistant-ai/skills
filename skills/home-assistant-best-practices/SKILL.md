@@ -36,7 +36,7 @@ Follow this sequence when creating any automation:
 
 ### 0. Gate: modifying existing config?
 
-If your change affects entity IDs or cross-component references — renaming entities, replacing template sensors with helpers, converting device triggers, or restructuring automations — read [safe-refactoring](references/safe-refactoring.md) first. That reference covers impact analysis, device-sibling discovery, and post-change verification. Complete its workflow before proceeding.
+If your change affects entity IDs, display names, or cross-component references — renaming entities or devices, replacing template sensors with helpers, converting device triggers, or restructuring automations — read [safe-refactoring](references/safe-refactoring.md) first. That reference covers impact analysis, device-sibling discovery, display-name overrides, and post-change verification. Complete its workflow before proceeding.
 
 Steps 1-5 below apply to new config or pattern evaluation.
 
@@ -134,7 +134,7 @@ Read these when you need detailed information:
 
 | File | When to read |
 |------|--------------|
-| [safe-refactoring](references/safe-refactoring.md) | Renaming entities, replacing helpers, restructuring automations, or any modification to existing config |
+| [safe-refactoring](references/safe-refactoring.md) | Renaming entities or their display names, replacing helpers, restructuring automations, or any modification to existing config |
 | [automation-patterns](references/automation-patterns.md) | Writing triggers, conditions, waits, variables, or choosing automation modes; capturing action responses; documenting/annotating steps; disabling automations; `continue_on_error`, stopping a sequence, repeat, if/then vs choose, parallel, trigger IDs |
 | [helper-selection](references/helper-selection.md) | Deciding whether to use a built-in helper vs template sensor — aggregation, rate of change, thresholds, time-in-state, counting/timing, scheduling, grouping, probabilistic inference, smoothing, climate, domain conversion, decision matrix |
 | [template-guidelines](references/template-guidelines.md) | Confirming templates ARE appropriate for a use case; sharing Jinja logic between templates with `custom_templates` macros |
