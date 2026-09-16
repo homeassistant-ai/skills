@@ -386,7 +386,7 @@ Use the HA dashboard resource API to convert inline code to a hosted URL, then r
 ### Custom Card Workflow
 
 1. Write the card JavaScript class (see Minimal Custom Card above)
-2. Register it as a dashboard resource via the HA REST API (`/api/config/lovelace/resources`) with `resource_type: "module"`
+2. Register it as a dashboard resource: `lovelace/resources/create` over WebSocket with `res_type: "module"` and `url`, or the Resources tab under Settings > Dashboards
 3. Use the card in your dashboard config with the `custom:` prefix
 
 ```json

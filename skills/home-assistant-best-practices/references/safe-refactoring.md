@@ -23,7 +23,7 @@ Answer three questions before touching anything:
 
 1. **What changes?** Entity ID, automation structure, sensor type, or trigger semantics.
 2. **What sibling entities share the same device?** Query the device to list every entity it owns (battery sensor, update entity, diagnostic button). Plan changes for all siblings together.
-   - Query the device via the HA REST API (`GET /api/states/<entity_id>`) or inspect Settings > Devices.
+   - List the device's entities with a template, `{{ device_entities(device_id('sensor.x')) }}` via `POST /api/template`, or from `config/entity_registry/list` over WebSocket filtered by `device_id`, or inspect Settings > Devices. `GET /api/states/<entity_id>` returns one entity's state with no device field.
 3. **Rename one entity or all device entities?** Devices bundle 2-6 entities. Renaming the primary but leaving siblings with the old naming scheme creates inconsistency.
 
 ### Step 2: Search ALL consumers
