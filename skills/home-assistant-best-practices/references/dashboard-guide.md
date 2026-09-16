@@ -397,10 +397,10 @@ Use the HA dashboard resource API to convert inline code to a hosted URL, then r
 }
 ```
 
-**Resource caching:** `/local/` is served with `public, max-age=2678400`, a 31-day cache, in desktop browsers as well as the Companion app. Editing a registered `.js` file in place leaves clients on the old copy until that expires.
+**Resource caching:** `/local/` is served with `public, max-age=2678400`, a 31-day cache, in desktop browsers as well as the Companion app. Editing a registered `.js` file in place leaves clients on the old copy until it expires or the client clears its cache.
 
-- HACS versions its own plugin URLs (`?hacstag=<installed version>`), so a card installed through HACS is re-fetched on update.
-- A resource registered by hand needs the same: bump a version query string on the resource `url`, `/local/quick-status-card.js?v=2.0.0`. Only a changed URL forces a re-fetch, so renaming the element tag does not help; the cached module still registers the old tag name.
+- HACS versions the plugin resource URLs it manages in storage (`?hacstag=<installed version>`), so a card installed through HACS is re-fetched on update. With YAML-mode resources HACS cannot update the URL, so that version string is yours to bump.
+- A resource registered by hand needs the same: bump a version query string on the resource `url`, `/local/quick-status-card.js?v=2.0.0`. Only a changed URL forces every client to re-fetch, so renaming the element tag does not help; the cached module still registers the old tag name.
 - A client already holding a stale copy needs a client-side fix: hard refresh, clear site data for the HA origin, or **Settings** > **Reset frontend cache** in the Companion app.
 
 ---
