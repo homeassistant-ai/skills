@@ -294,6 +294,21 @@ actions:
       tilt_position: 75
 ```
 
+**Speed (2026.9+):** `cover.open_cover`, `cover.close_cover` and `cover.set_cover_position`
+take an optional `speed`. The values are per entity: read its `supported_speeds` attribute and
+pass one of those strings. A value outside that list raises a validation error. A cover with no
+`supported_speeds` ignores the option and moves at its normal speed.
+
+```yaml
+actions:
+  - action: cover.set_cover_position
+    target:
+      entity_id: cover.living_room_blinds
+    data:
+      position: 50
+      speed: fast          # one of the entity's supported_speeds
+```
+
 ### Media Players
 
 ```yaml

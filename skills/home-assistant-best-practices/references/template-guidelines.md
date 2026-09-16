@@ -290,6 +290,36 @@ template:
 **Trigger-based blocks are YAML-only** — the Template Helper flow has no trigger step, and
 no `attributes:` field. This example uses both.
 
+**Two 2026.9 additions to the YAML shape:**
+- `attributes:` works on every template platform, trigger-based or not. Before 2026.9 only
+  `sensor`, `binary_sensor`, `image`, `event` and `vacuum` took it. It accepts a map of
+  templates, as above, or one template that renders a whole map. You cannot set an attribute
+  the entity already owns, such as `brightness` on a template light or `latitude` on a template
+  device_tracker: most platforms reject the config, the rest drop it at runtime with a logged
+  error.
+- `conditions:` can sit on a single entity, gating that entity's update after the block's
+  triggers fire. The older block-level `conditions:` gates every entity in the block. Put both
+  on a trigger block only: HA refuses a per-entity `conditions:` when the block has no trigger.
+
+```yaml
+# Per-entity conditions: this sensor updates only while someone is home
+template:
+  - triggers:
+      - trigger: state
+        entity_id: sensor.power_meter
+    sensor:
+      - name: "Power While Home"
+        unique_id: power_while_home
+        conditions:
+          - condition: state
+            entity_id: binary_sensor.occupancy
+            state: "on"
+        state: "{{ trigger.to_state.state }}"
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+```
+
 **Use trigger-based when you need:**
 - The `trigger` variable — which entity fired, `from_state` / `to_state`, event data
 - A value captured at an instant rather than recomputed (timestamps, "last X")

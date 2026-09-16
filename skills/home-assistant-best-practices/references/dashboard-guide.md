@@ -31,6 +31,7 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
   "title": "My Home",
   "icon": "mdi:home",
   "config": {
+    "background": {"image": "/local/background.jpg", "opacity": 30, "size": "cover"},
     "views": [
       {
         "title": "Overview",
@@ -88,7 +89,7 @@ Section `title` is soft-deprecated (frontend source marks it `@deprecated Use he
 }
 ```
 
-`background.image` is a plain path or media-source reference (the `url(...)` wrapper belongs only to the legacy string form of `background`); `opacity` is an integer 0–100. Badges also accept full objects: `{"type": "entity", "entity": "person.jane", "show_name": true, "color": "accent", "visibility": [...]}`.
+`background.image` is a plain path or media-source reference (the `url(...)` wrapper belongs only to the legacy string form of `background`); `opacity` is an integer 0–100. The same shape works at dashboard level, next to `views`, and each view that sets its own `background` overrides it. Badges also accept full objects: `{"type": "entity", "entity": "person.jane", "show_name": true, "color": "accent", "visibility": [...]}`.
 
 A `sections` view also supports a `header` (a markdown card plus badge positioning) and a `footer`:
 
@@ -243,8 +244,8 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 
 | Domain | Feature types |
 |--------|--------------|
-| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `climate-swing-modes`, `climate-swing-horizontal-modes`, `target-temperature`, `target-humidity` |
-| Light | `light-brightness`, `light-color-temp`, `light-color-favorites` |
+| Climate | `climate-hvac-modes`, `climate-fan-modes`, `climate-preset-modes`, `climate-swing-modes`, `climate-swing-horizontal-modes`, `target-temperature`, `target-humidity` (humidifier entities, and climate entities that support it since 2026.9) |
+| Light | `light-brightness`, `light-color-temp`, `light-color-favorites`, `light-effect` (`effects:` filter list) |
 | Cover/Valve | `cover-open-close`, `cover-position`, `cover-position-favorite`, `cover-tilt`, `cover-tilt-position`, `cover-tilt-favorite`, `valve-open-close`, `valve-position`, `valve-position-favorite` |
 | Fan | `fan-speed`, `fan-preset-modes`, `fan-direction`, `fan-oscillate` |
 | Media | `media-player-playback` (configurable `controls`), `media-player-volume-slider`, `media-player-volume-buttons`, `media-player-source`, `media-player-sound-mode` |
@@ -252,7 +253,7 @@ Quick controls available on tile, area, humidifier, and thermostat cards.
 | Generic display | `trend-graph` (history sparkline; `hours_to_show`), `bar-gauge` (`min`/`max`) |
 | Generic control | `toggle`, `button` (run an action), `numeric-input` (`style`: `"buttons"`/`"slider"`), `select-options`, `counter-actions`, `date-set` |
 | Area card | `area-controls` |
-| Domain-specific | `alarm-modes`, `lock-commands`, `lock-open-door`, `vacuum-commands`, `lawn-mower-commands`, `humidifier-modes`, `humidifier-toggle`, `update-actions`, `water-heater-operation-modes` |
+| Domain-specific | `alarm-modes`, `lock-commands`, `lock-open-door`, `vacuum-commands`, `vacuum-fan-speed` (`fan_speeds:` filter list), `lawn-mower-commands`, `humidifier-modes`, `humidifier-toggle`, `update-actions`, `water-heater-operation-modes` |
 
 Mode-list features accept `style`: `"dropdown"` or `"icons"`. Tile cards also support `features_position`: `"bottom"` (default) or `"inline"`.
 
@@ -552,7 +553,7 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 - Use **area** cards with navigation for hierarchical organization
 - Start sections with **heading** cards (`title`/`subtitle` styles); subtitle headings work well for inline caveats
 
-### Recent Dashboard Features (2026.2–2026.6)
+### Recent Dashboard Features (2026.2–2026.9)
 
 | Feature | Version | Details |
 |---------|---------|---------|
@@ -565,6 +566,10 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 | **Media player tile features** | 2026.5 | `media-player-source`, `media-player-sound-mode`, configurable playback `controls` |
 | **Weather forecast features** | 2026.6 | `temperature-forecast`, `precipitation-forecast` tile features |
 | **Per-entity graph color** | 2026.6 | `color` on each entity of `history-graph` / `statistics-graph` |
+| **Light effect feature** | 2026.9 | `light-effect` tile feature, for lights that report effects |
+| **Vacuum fan speed feature** | 2026.9 | `vacuum-fan-speed` tile feature |
+| **Climate target humidity** | 2026.9 | `target-humidity` now works on climate entities that support it |
+| **Dashboard background editor** | 2026.9 | A Background tab in the dashboard detail dialog edits the dashboard-level `background` key, which applies to every view that sets none of its own. The key itself predates 2026.9 |
 
 **Legacy patterns to avoid:**
 - Single-view dashboards with all cards in one long scroll

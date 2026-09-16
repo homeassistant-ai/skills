@@ -23,7 +23,7 @@ description: >
   - Existing state changed with no recovery path
   - Jinja copy-pasted between templates
 metadata:
-  version: "26"
+  version: "31"
 ---
 
 # Home Assistant Best Practices
@@ -100,6 +100,7 @@ See [device-control #buttonremote-patterns](references/device-control.md#buttonr
 | `condition: template` with `float > 25` | `condition: numeric_state` | Validated at load, not runtime | [automation-patterns #native-conditions](references/automation-patterns.md#native-conditions) |
 | `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger | Event-driven, not polling; waits for *change* (see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring) for semantic differences) | [automation-patterns #wait-actions](references/automation-patterns.md#wait-actions) |
 | `device_id` in triggers | `entity_id` (or `device_ieee` for ZHA) | device_id breaks on re-add | [device-control #entity-id-vs-device-id](references/device-control.md#entity-id-vs-device-id) |
+| `numeric_state` trigger driving a costly action, unguarded | Condition rejecting `unavailable`/`unknown` in `trigger.from_state` | A restart or blip re-arms the trigger, so an unchanged value fires with no crossing (the guard also drops real crossings) | [automation-patterns #unavailable-arms-a-numeric-state-trigger](references/automation-patterns.md#unavailable-arms-a-numeric-state-trigger) |
 | `mode: single` for motion lights | `mode: restart` | Re-triggers must reset the timer | [automation-patterns #automation-modes](references/automation-patterns.md#automation-modes) |
 | `enabled: false` as a top-level key in `automations.yaml` | `automation.turn_off` (temporary) or entity registry disable (permanent) | Not a valid top-level key — rejected during schema validation; automation loads as `unavailable` | [automation-patterns #disabling-automations](references/automation-patterns.md#disabling-automations) |
 | Template sensor for sum/mean | `min_max` helper | Declarative, handles unavailable states | [helper-selection #numeric-aggregation](references/helper-selection.md#numeric-aggregation) |
@@ -146,4 +147,4 @@ Read these when you need detailed information:
 | [examples.yaml](references/examples.yaml) | Need compound examples combining multiple best practices |
 | [appdaemon](references/appdaemon.md) | AppDaemon apps: when to use vs. native HA, app structure, actions, scheduling, error handling, safe refactoring impact |
 | [blueprint-guide](references/blueprint-guide.md) | Authoring reusable blueprints: metadata & `source_url`, inputs & selectors, `target` vs `entity`, defaults, input sections, `!input` templating, versioning |
-| [backups](references/backups.md) | Deciding whether an operation needs a backup first; choosing between a full restore, a partial restore, and rolling one object back; what an archive actually contains; encryption keys and the emergency kit; restore verification; what HA does and does not protect when deleting a backup |
+| [backups](references/backups.md) | Deciding whether an operation needs a backup first; choosing between a full restore, a partial restore, and rolling one object back; what an archive actually contains; encryption keys and the emergency kit; restore verification; what HA does and does not protect when deleting a backup; whether a git config repo replaces a full backup |

@@ -276,7 +276,13 @@ conditions:
 | `climate.target_temperature` (condition) | `climate.is_target_temperature` |
 | `climate.target_humidity` (condition) | `climate.is_target_humidity` |
 
-**Discovering what exists:** every purpose-specific trigger and condition (and every action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see [domain-docs #fetching-trigger-condition-and-action-docs](domain-docs.md#fetching-trigger-condition-and-action-docs). The trees span 50+ domains (~190 trigger and ~150 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, event, vibration, moon, and more. The catalog grows every release — 2026.7 added the sun family (`sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers); 2026.8 added the moon family (`moon.phase_changed` trigger; `moon.is_phase` / `moon.is_waning` / `moon.is_waxing` conditions) and the vibration family (`vibration.detected` / `vibration.cleared` triggers; `vibration.is_detected` / `vibration.is_not_detected` conditions) — both are new in 2026.8, so don't emit them for an instance on 2026.7. Check the doc tree rather than this list when a domain you need isn't named here.
+**Discovering what exists:** every purpose-specific trigger and condition (and every action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see [domain-docs #fetching-trigger-condition-and-action-docs](domain-docs.md#fetching-trigger-condition-and-action-docs). The trees span 50+ domains (~190 trigger and ~150 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, event, vibration, moon, and more. The catalog grows every release, so check the doc tree rather than this list when a domain you need isn't named here.
+
+| Version | Added to the catalog |
+|---|---|
+| 2026.7 | Sun family: `sun.sunrise`, `sun.sunset`, `sun.dawn`, `sun.dusk`, `sun.solar_noon`, `sun.solar_midnight`, elevation triggers |
+| 2026.8 | Moon family (`moon.phase_changed` trigger; `moon.is_phase` / `moon.is_waning` / `moon.is_waxing` conditions) and vibration family (`vibration.detected` / `vibration.cleared` triggers; `vibration.is_detected` / `vibration.is_not_detected` conditions). Do not emit either on 2026.7 |
+| 2026.9 | Sun family again: `sun.golden_hour_started` / `_ended` and `sun.blue_hour_started` / `_ended`, each taking `options.period`: `any` (default) / `morning` / `evening`, plus `sun.midnight_sun_started` / `_ended` and `sun.polar_night_started` / `_ended` for polar latitudes; conditions `sun.is_golden_hour` / `sun.is_blue_hour` with the same `options.period`, and `sun.is_midnight_sun` / `sun.is_polar_night` |
 
 Since 2026.7, `options.for` durations on **conditions** are primed from recorded history, so a freshly created or reloaded condition does not restart its duration clock from zero. Trigger `for:` clocks still reset as described in [`for:` duration resets](#for-duration-resets-on-restart-and-on-unavailable).
 
@@ -388,6 +394,48 @@ that was a restart re-stamp, not a real state change.
 > 2026.7+ primes `options.for` duration tracking for purpose-specific **conditions** from recorded
 > history, so those don't restart from zero on creation/reload. The resets described here still
 > apply to trigger `for:` clauses and to `last_changed`-based template math.
+
+### `unavailable` arms a numeric state trigger
+
+The trigger tracks each entity as *armed* or not, judged on the **new** state alone. An entity
+becomes armed when it evaluates as **not matching**, and a fire needs an armed entity to then
+match. On the plain-state path, `unavailable` and `unknown` count as not matching rather than
+raising, so they arm the trigger instead of being ignored. Any *other* non-numeric value (a text
+state such as `idle`, or an entity absent from the state machine) raises instead, which logs a
+warning and returns, leaving the armed flag as it was. A text state therefore neither arms nor
+disarms: `unavailable`, then `idle`, then a matching number still fires.
+
+Two consequences, neither involving a threshold being crossed:
+
+- **After a restart.** The trigger builds its armed set when it attaches, and HA writes
+  `unavailable` for every registry entity that has no state yet, so the entity is armed. Its first
+  real reading past the threshold then fires.
+- **After a blip.** An entity that flicks to `unavailable` and back is re-armed, so the same
+  unchanged value fires again.
+
+`for:` does not prevent either case. The re-armed entity matches, the unchanged value keeps
+matching for the whole window, so the trigger fires late rather than not at all.
+
+**A guard costs real crossings.** Rejecting a non-numeric `from_state` also drops genuine
+crossings that passed through `unavailable` (1400 to `unavailable` to 1600), and with `for:` a blip
+inside the window cancels the timer and re-arms, so that crossing never fires at all. Guard only
+where a false fire costs more than a missed one, such as switching a high-power load. As with
+[`trigger.event`](#event-trigger), `trigger.from_state` is `LoggingUndefined` for non-state
+triggers, so short-circuit on `trigger.platform` first:
+
+```yaml
+# WRONG — raises UndefinedError when a non-state trigger fires the same automation
+conditions:
+  - "{{ trigger.from_state.state not in ['unavailable', 'unknown'] }}"
+
+# RIGHT — platform check first; is_number also rejects text states such as `idle`
+conditions:
+  - condition: template
+    value_template: >
+      {{ trigger.platform == 'numeric_state'
+         and trigger.from_state is not none
+         and is_number(trigger.from_state.state) }}
+```
 
 ### Time Trigger
 
