@@ -83,6 +83,16 @@ Example — renaming a smart plug's entities from manufacturer defaults to room-
 | sensor | `sensor.shellyplug_s_a1b2c3d4e5f6_energy` | `sensor.office_heater_energy` |
 | update | `update.shellyplug_s_a1b2c3d4e5f6` | `update.office_heater` |
 
+**Dashboard reference locations (Step 2):**
+Dashboard cards reference entities in multiple places. Search all of these:
+
+- `entity:` field
+- `tap_action` and `hold_action` targets
+- Conditional card conditions
+- Template card Jinja2 blocks
+- `views[n].badges` — badge rows per view; badges are siblings of the cards array, not children, so any card-focused search will miss them — always search the full dashboard config
+- `views[n].header.card` — sections view only (HA 2025.3+); the view header accepts a Markdown card that supports Jinja2 templates and may contain entity references; it is a sibling of the cards array and is not reachable via card-focused search
+
 **Display names are a separate field (Step 3):**
 
 `entity_id` and display name are stored independently, and renaming in the UI writes a *user override* rather than changing the value the integration supplied. The registry keeps both:
@@ -94,17 +104,7 @@ Example — renaming a smart plug's entities from manufacturer defaults to room-
 
 The override takes precedence for as long as it is set. If the integration later reports a corrected name — the device is renamed in its vendor app, a firmware update fixes a typo — the new value lands in the integration-supplied field and never reaches the UI, so the stale override looks like an integration bug to whoever finds it later.
 
-Rename at the source when the source is what is wrong, and reserve the override for names HA itself owns. To annotate without shadowing — marking an entity unused, grouping for a dashboard — use labels, areas, or categories, which live in their own fields and survive a source-side rename. Clearing the override restores the inherited name.
-
-**Dashboard reference locations (Step 2):**
-Dashboard cards reference entities in multiple places. Search all of these:
-
-- `entity:` field
-- `tap_action` and `hold_action` targets
-- Conditional card conditions
-- Template card Jinja2 blocks
-- `views[n].badges` — badge rows per view; badges are siblings of the cards array, not children, so any card-focused search will miss them — always search the full dashboard config
-- `views[n].header.card` — sections view only (HA 2025.3+); the view header accepts a Markdown card that supports Jinja2 templates and may contain entity references; it is a sibling of the cards array and is not reachable via card-focused search
+Rename at the source when the source is what is wrong, and reserve the override for names HA itself owns. To annotate without shadowing — marking an entity unused, grouping for a dashboard — use labels or areas, which live in their own fields and survive a source-side rename. Clearing the override restores the inherited name.
 
 ---
 
