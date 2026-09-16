@@ -91,7 +91,7 @@ The `home-assistant-best-practices` skill includes:
 | File | Purpose |
 |------|---------|
 | [`SKILL.md`](skills/home-assistant-best-practices/SKILL.md) | Decision workflow, anti-pattern table, and pointers to the reference files below |
-| [`references/safe-refactoring.md`](skills/home-assistant-best-practices/references/safe-refactoring.md) | Safe workflow for renaming entities, replacing helpers, restructuring automations; config-entry and storage-dashboard blind spots |
+| [`references/safe-refactoring.md`](skills/home-assistant-best-practices/references/safe-refactoring.md) | Safe workflow for renaming entities and their display names, replacing helpers, restructuring automations; display-name override, config-entry, and storage-dashboard blind spots |
 | [`references/automation-patterns.md`](skills/home-assistant-best-practices/references/automation-patterns.md) | Purpose-specific and native triggers/conditions, waits, variables, automation modes, control flow (choose, repeat, parallel), disabling automations |
 | [`references/helper-selection.md`](skills/home-assistant-best-practices/references/helper-selection.md) | Built-in helpers vs template sensors (with decision matrix) |
 | [`references/template-guidelines.md`](skills/home-assistant-best-practices/references/template-guidelines.md) | When to use templates, when to avoid them, template sensor best practices, reusable `custom_templates` macros |
