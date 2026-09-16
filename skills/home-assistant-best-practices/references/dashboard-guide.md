@@ -397,6 +397,12 @@ Use the HA dashboard resource API to convert inline code to a hosted URL, then r
 }
 ```
 
+**Resource caching:** `/local/` is served with `public, max-age=2678400`, a 31-day cache, in desktop browsers as well as the Companion app. Editing a registered `.js` file in place leaves clients on the old copy until it expires or the client clears its cache.
+
+- HACS versions the plugin resource URLs it manages in storage (`?hacstag=<installed version>`), so a card installed through HACS is re-fetched on update. With YAML-mode resources HACS cannot update the URL, so that version string is yours to bump.
+- A resource registered by hand needs the same: bump a version query string on the resource `url`, `/local/quick-status-card.js?v=2.0.0`. Only a changed URL forces every client to re-fetch, so renaming the element tag does not help; the cached module still registers the old tag name.
+- A client already holding a stale copy needs a client-side fix: hard refresh, clear site data for the HA origin, or **Settings** > **Reset frontend cache** in the Companion app.
+
 ---
 
 ## CSS Styling
@@ -541,6 +547,7 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 | Map card markers show entity-name initials instead of values | `label_mode` is a **per-entity** option, not card-level: `"entities": [{"entity": "sensor.x", "label_mode": "state"}]` |
 | Cards lay out differently in spanned sections | A spanned section's grid widens with it (24 columns in a `column_span: 2` section) but is 12 when collapsed — see [Card Sizing and Responsive Layout](#card-sizing-and-responsive-layout) |
 | Map entities missing from map card | Only entities with `latitude`/`longitude` attributes are plotted — use template sensors carrying coordinates as attributes for fixed locations |
+| Custom card still stale after its file was updated | `/local/` is cached for 31 days: bump a version query string on the resource URL (`/local/my-card.js?v=2.0.0`), see [Custom Card Workflow](#custom-card-workflow). On a client already holding the old copy: hard refresh or **Settings** > **Reset frontend cache** in the Companion app |
 
 ---
 
