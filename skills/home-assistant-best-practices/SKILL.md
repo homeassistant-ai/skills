@@ -135,7 +135,7 @@ Read these when you need detailed information:
 | File | When to read |
 |------|--------------|
 | [safe-refactoring](references/safe-refactoring.md) | Renaming entities or their display names, replacing helpers, restructuring automations, or any modification to existing config |
-| [automation-patterns](references/automation-patterns.md) | Writing triggers, conditions, waits, variables, or choosing automation modes; capturing action responses; documenting/annotating steps; disabling automations; `continue_on_error`, stopping a sequence, repeat, if/then vs choose, parallel, trigger IDs |
+| [automation-patterns](references/automation-patterns.md) | Writing triggers, conditions, waits, variables, or choosing automation modes; capturing action responses; documenting/annotating steps; disabling automations; `continue_on_error`, admin-only actions (`Unauthorized`) in scripts, stopping a sequence, repeat, if/then vs choose, parallel, trigger IDs |
 | [helper-selection](references/helper-selection.md) | Deciding whether to use a built-in helper vs template sensor — aggregation, rate of change, thresholds, time-in-state, counting/timing, scheduling, grouping, probabilistic inference, smoothing, climate, domain conversion, decision matrix |
 | [template-guidelines](references/template-guidelines.md) | Confirming templates ARE appropriate for a use case; sharing Jinja logic between templates with `custom_templates` macros |
 | [yaml-only-integrations](references/yaml-only-integrations.md) | Creating or editing YAML-only integrations that have no config flow (e.g. `command_line`, platform-based `mqtt`, `rest`) |

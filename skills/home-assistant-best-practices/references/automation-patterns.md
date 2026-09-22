@@ -679,9 +679,11 @@ Fires on persistent-notification lifecycle changes (e.g. react to an integration
 ```yaml
 triggers:
   - trigger: persistent_notification
-    update_type: [added, removed]     # any of: added, removed, updated, current; omit for all
+    update_type: [added, updated]     # any of: added, removed, updated (current never reaches triggers); omit for all
     notification_id: invalid_config   # optional: filter to one notification
 ```
+
+**Since 2026.9, re-posting an existing `notification_id` fires `updated`, not `added`.** Integrations re-post their notices under a fixed ID, so a trigger on `added` alone catches only the first post while that notice is still showing — list `updated` alongside it. Before 2026.9 every create fired `added` and `updated` never fired.
 
 ### Presence and Person Triggers and Conditions (Removed in 2026.5)
 
@@ -935,6 +937,18 @@ actions:
 ```
 
 **Use sparingly** — silently swallowing errors makes debugging harder. Best for non-critical actions (e.g., logging, optional notifications) where a failure shouldn't block the rest of the automation.
+
+### Admin-only actions in user-started scripts
+
+Some actions refuse a non-admin caller — since 2026.9 these include `update.install`, `update.skip` and `update.clear_skipped`. The check reads the user on the run's context:
+
+| Started by | Admin-only action |
+|---|---|
+| An automation, however triggered (a manual run too), or a script it calls | Runs — every automation run gets a fresh context with no user |
+| An admin (UI, dashboard button, their long-lived token) | Runs |
+| A non-admin user (dashboard button, their long-lived token) | Fails with `Unauthorized` |
+
+`continue_on_error: true` does not fix the non-admin row: it swallows `Unauthorized` like any other runtime error, so the script carries on without the update installed. To let non-admins start it on purpose, have the button call `automation.trigger` on an automation that runs the action (a helper change that triggers the automation also works) — this deliberately grants every user who can press the button that admin-only action.
 
 ---
 
