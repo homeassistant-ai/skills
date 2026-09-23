@@ -509,7 +509,13 @@ Read left to right and stop at the first column that applies.
 | Door/Window | `door.opened` / `door.closed`, `window.opened` / `window.closed` | `state` | — |
 | Temperature | `temperature.crossed_threshold` / `temperature.changed` | `numeric_state` or `state` | — |
 | Switch | `switch.turned_on` / `switch.turned_off` | `state` | — |
-| Battery | `battery.became_low` / `battery.no_longer_low` | `numeric_state` | — |
+| Battery (low flag, `binary_sensor`) | `battery.became_low` / `battery.no_longer_low` | `state` | — |
+| Battery (percentage, `sensor`) | `battery.level_crossed_threshold` / `battery.level_changed` | `numeric_state` | — |
+
+`battery.level_changed` fires on every level change while the reading is inside its
+threshold. For a one-time "dropped below N%" alert use `battery.level_crossed_threshold`: it
+fires only on the crossing, and ignores changes coming from `unavailable`/`unknown`, so a
+restart does not fire it again.
 
 Two rules survive whichever column you land in: **don't key a trigger off a `device_id`**
 outside the cases in [When Device ID is Acceptable](#when-device-id-is-acceptable), and
