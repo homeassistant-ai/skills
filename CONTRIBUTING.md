@@ -18,7 +18,7 @@ skills/
 ### SKILL.md requirements
 
 - **YAML frontmatter** with `name` (letters, numbers, hyphens only; 64 chars max) and `description` (1024 chars max).
-- **`metadata.version`** a monotonically incrementing integer written as a string (e.g. `"1"`) — the spec requires metadata values to be strings. Set to `0` when creating a new skill — CI assigns the real version automatically on merge. Do not edit this field manually.
+- **`metadata.version`** a monotonically incrementing integer written as a string (e.g. `"1"`) — the spec requires metadata values to be strings. Set to `"0"` when creating a new skill — CI assigns the real version automatically on merge. Do not edit this field manually.
 - **`description`** in third person. Describe what the skill does and when to use it. Include keywords that help agents match tasks. Don't summarize the skill's workflow. Err toward over-triggering rather than under-triggering — a skill that loads when marginally relevant costs tokens; one that fails to load costs a wrong answer. Explicit `TRIGGER THIS SKILL WHEN` and `SYMPTOMS` sections listing observable agent behaviours match better than prose.
 - **Body** under 500 lines. Split into reference files if approaching this limit.
 - **Reference files** one level deep from SKILL.md—no nested references.
