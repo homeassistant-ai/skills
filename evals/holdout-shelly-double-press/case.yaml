@@ -1,0 +1,50 @@
+schema_version: "1.1"
+name: holdout-shelly-double-press
+description: >
+  Held out: never used to tune the skill. A Shelly Gen2+ input's event entity
+  lists `double_push` in its `event_types` (shelly/const.py), so the right
+  answer uses it. Fails a skill that over-learned "there is no double press".
+tags: [automations, devices, holdout]
+
+execution:
+  prompt: >-
+    in Home Assistant, my Shelly Plus i4 is wired to a wall push button. its
+    event entity is event.hallway_i4_input_1. when I double-press that button,
+    toggle light.hallway
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: an `event.received` or `state` trigger followed, within the same
+  # trigger, by an `event.*` entity ID.
+  - type: regex
+    name: uses-event-entity
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(?:event\.received|state)\b[\s\S]{0,200}?\bentity_id"?\s*:\s*"?event\.[a-z0-9_]+'
+    flags: m
+    match: contains
+
+  # Free: the value Shelly Gen2+ inputs report for a double press.
+  - type: regex
+    name: uses-double-push
+    pattern: '\bdouble_push\b'
+    match: contains
+
+  - type: llm
+    name: does-not-deny-double-press
+    criteria: >-
+      The response uses the device's own double-press event. FAIL if it says the
+      device reports no double press, or builds a workaround that counts two
+      single presses instead of using the double-press event.
+
+expected_outcome: >-
+  An `event.received` trigger on event.hallway_i4_input_1 with
+  `event_type: double_push`, toggling light.hallway.

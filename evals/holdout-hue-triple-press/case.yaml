@@ -1,0 +1,47 @@
+schema_version: "1.1"
+name: holdout-hue-triple-press
+description: >
+  Held out: never used to tune the skill. HA's Hue integration reports
+  initial_press, repeat, short_release, long_press and long_release for a
+  button (hue/const.py), so there is no triple press. Checks the skill's
+  "don't invent an event type" rule transfers to a gesture it never names.
+tags: [automations, devices, holdout]
+
+execution:
+  prompt: >-
+    I've got a Hue dimmer switch, paired through the Hue Bridge in Home
+    Assistant. its off button is event.bedroom_dimmer_off_button. when I
+    triple-press it, turn off every light on the upstairs floor
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: an `event.received` or `state` trigger followed, within the same
+  # trigger, by an `event.*` entity ID.
+  - type: regex
+    name: uses-event-entity
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(?:event\.received|state)\b[\s\S]{0,200}?\bentity_id"?\s*:\s*"?event\.[a-z0-9_]+'
+    flags: m
+    match: contains
+
+  - type: llm
+    name: does-not-invent-triple-press
+    criteria: >-
+      The response does NOT hand the user a made-up triple-press event type for
+      Hue. PASS if it says no triple-press event exists and either stops there
+      or proposes an explicit workaround, such as counting three presses within
+      a short window. FAIL if an automation's trigger uses a `triple` event type
+      presented as real.
+
+expected_outcome: >-
+  Says the Hue button reports no triple press and offers to count three
+  short presses within a window, triggered from event.bedroom_dimmer_off_button.

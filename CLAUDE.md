@@ -126,6 +126,14 @@ Writing a case:
 - Read both arms. A case that scores lower with the skill than without means the skill teaches
   something wrong; the `vacuum.clean_area` example once did.
 
+Cases tagged `holdout` check that a skill fix generalizes: each tests a fixed behavior in a
+scenario no fix was written from, and also fails the fix applied where it does not belong.
+Read their answers only to check the graders and to score, never to design a fix; if one
+exposes a gap, confirm the fix on a new case, not the same one. Change a holdout grader only
+with source evidence that it is wrong, never because of which arm it helps. The five cases
+held out in the first hillclimb (timer, button-event, media-player, template-attributes,
+avg-temperature) were used for tuning since and are no longer a test set.
+
 After each Home Assistant release, run the cases tagged `version-pinned` (`--tag
 version-pinned`, keeping `--judge-model sonnet` for `arrive-home-automation`'s llm graders) and
 read the release post's breaking changes. Together they cover what `check_ha_examples.py`

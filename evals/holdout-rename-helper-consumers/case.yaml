@@ -1,0 +1,49 @@
+schema_version: "1.1"
+name: holdout-rename-helper-consumers
+description: >
+  Held out: never used to tune the skill. A Threshold helper follows its
+  source entity's rename (since 2025.6, helper_integration); a Min/Max helper
+  does not. Fails both the old doctrine (patch Threshold by hand) and an
+  over-applied new one (Min/Max follows too).
+tags: [refactoring, holdout]
+
+execution:
+  prompt: >-
+    in Home Assistant, rename sensor.living_room_temperature to
+    sensor.lounge_temperature. it feeds a Min/Max helper
+    (sensor.house_average_temperature) and a Threshold helper
+    (binary_sensor.lounge_too_hot)
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: llm
+    name: min-max-needs-update
+    criteria: >-
+      The response tells the user that the Min/Max helper keeps the old entity
+      ID after the rename, and that the entity must be selected again in its
+      options (or its config entry updated). FAIL if it says the Min/Max helper
+      follows the rename by itself.
+
+  - type: llm
+    name: threshold-not-hand-patched
+    criteria: >-
+      The response does NOT tell the user that the Threshold helper will break or
+      must be edited by hand: a Threshold helper follows its source entity's
+      rename. PASS if it says the Threshold helper updates itself, or does not
+      list it as needing a change; a suggestion to check it afterwards is fine.
+      FAIL if it says the Threshold helper must be reconfigured or its entity
+      selected again.
+
+expected_outcome: >-
+  Min/Max: select the renamed entity again in its options. Threshold: updates
+  itself. The rename follows a search for other consumers.

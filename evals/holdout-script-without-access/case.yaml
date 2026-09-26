@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: holdout-script-without-access
+description: >
+  Held out: never used to tune the skill. The agent has no HA connection, and
+  scripts are a config type no other case covers. Checks it gives the
+  complete script instead of stopping to ask for access.
+tags: [scripts, holdout]
+
+execution:
+  prompt: >-
+    make a Home Assistant script that turns off every light on the upstairs
+    floor and then locks lock.front_door
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: a script's config has a `sequence:` key.
+  - type: regex
+    name: gives-script-config
+    pattern: '^\s*"?sequence"?\s*:'
+    flags: m
+    match: contains
+
+  - type: llm
+    name: does-not-stop-for-access
+    criteria: >-
+      The response gives a usable script rather than stopping to ask for access
+      to the Home Assistant instance, an API or MCP connection, or a config
+      directory. PASS if it says it has no access while still giving the script.
+      FAIL if its final message offers no usable script and asks for access or
+      connection details.
+
+expected_outcome: >-
+  A script that turns off the lights on the upstairs floor, then locks
+  lock.front_door, given as config to create in the UI.
