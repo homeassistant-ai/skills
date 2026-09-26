@@ -17,7 +17,7 @@ Follow this workflow whenever you modify existing Home Assistant configuration: 
 
 ## Universal Workflow
 
-The order holds when you hand the steps to the user instead of running them: their instructions open with the consumer search (Step 2), and the rename comes after it.
+The order holds when you hand the steps to the user instead of running them: their instructions open with the consumer search (Step 2), and the rename comes after it. Two checks need UI steps the user can follow: open each dashboard edited in the UI and look for the old entity ID, since a rename does not update them; and open the options of each Min/Max helper and UI group that uses the entity, and select it again.
 
 ### Step 1: Identify the full scope of change
 
@@ -39,7 +39,7 @@ Search every component type that references entity IDs. Do not limit searches to
 | Scripts | grep `scripts.yaml` |
 | Scenes | grep `scenes.yaml` |
 | Config-Entry-based groups | `GET /api/config/config_entries/entry?type=config&domain=group` — members in `options.entities`; entity registry renames do NOT update these automatically (→ see Config-Entry-Groups section) |
-| Config-Entry integrations (Better Thermostat, Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper) | `GET /api/config/config_entries/entry` — scan `data` and `options` fields for the old entity ID; entity registry renames do NOT update these fields automatically (→ see Config-Entry-Data section) |
+| Config-Entry integrations (Min/Max Helper, Better Thermostat and other custom integrations) | `GET /api/config/config_entries/entry` — scan `data` and `options` fields for the old entity ID; entity registry renames do NOT update these fields. Single-source helpers (Threshold, Generic Thermostat, Derivative, ...) update themselves (→ see Config-Entry-Data section) |
 | Other | Check AppDaemon apps, Node-RED flows, Pyscript scripts, or any custom integration that references entity IDs |
 
 Record every location found. This list becomes your update checklist for Step 4.
@@ -210,17 +210,18 @@ Flow is the only way to read current group members.
 
 ## Config-Entry Data — Blind Spots for entity registry renames
 
-**Entity registry renames only update the Entity Registry.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A registry rename leaves these references pointing to the old (now non-existent) entity ID.
+**Only some integrations follow a rename.** Integrations that collect entity_ids during their setup flow store them in the Config Entry — not in YAML and not in the Entity Registry. A helper built on one source entity listens for registry renames, rewrites its own `options` and reloads (Threshold has done so since 2025.6). A helper with a list of entities, a UI group, or a custom integration does not, so its references keep pointing to the old (now non-existent) entity ID.
 
-**Affected integrations and storage fields:**
+| Integration | Storage field | Fields containing entity_ids | Follows a rename (2026.9) |
+|---|---|---|---|
+| Threshold Helper | `options` | `entity_id` | ✅ |
+| Generic Thermostat | `options` | `heater`, `target_sensor` | ✅ |
+| Generic Hygrostat | `options` | `humidifier`, `target_sensor` | ✅ |
+| Derivative, Integration, Statistics, Trend, Utility Meter, Switch-as-X | `options` | the source entity | ✅ |
+| Min/Max Helper | `options` | `entity_ids` | ❌ |
+| **Better Thermostat** (custom) | `data` (not accessible via REST — see note below) | `temperature_sensor`, `humidity_sensor`, `outdoor_sensor`, `window_sensors` | ❌ |
 
-| Integration | Storage field | Fields containing entity_ids |
-|---|---|---|
-| **Better Thermostat** | `data` (not accessible via REST — see note below) | `temperature_sensor`, `humidity_sensor`, `outdoor_sensor`, `window_sensors` |
-| Generic Thermostat | `options` | `heater`, `target_sensor` |
-| Generic Hygrostat | `options` | `humidifier`, `target_sensor` |
-| Threshold Helper | `options` | `entity_id` |
-| Min/Max Helper | `options` | `entity_ids` |
+UI groups keep their members in `options.entities` and do not follow a rename either (→ see [Config-Entry-Groups](#config-entry-groups)).
 
 **Symptom:** Integration reports "associated entity missing" or behaves incorrectly after restart.
 
@@ -236,7 +237,7 @@ Iterate the returned entries and check `data` and `options` fields for the old e
 
 **Fix:**
 
-For integrations that store entity_ids in `options` (Generic Thermostat, Generic Hygrostat, Threshold Helper, Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern.
+For an integration marked ❌ that stores entity_ids in `options` (Min/Max Helper): use the Options Flow. See the Config-Entry-Groups section above for the full Options Flow pattern. Integrations marked ✅ need no patch; after the rename, check that their options show the new ID.
 
 For integrations that store entity_ids in `data` (Better Thermostat): `data` fields written during the initial Config Flow setup have no standard API for post-setup mutation — the Options Flow updates `options` only. No API-based fix path exists. Document this limitation to the user before proceeding with a rename. This is the one operation in this guide that a fetch-before-write rollback cannot undo, so treat the rename as irreversible and take a full backup first — see [backups #when-a-full-backup-earns-its-cost](backups.md#when-a-full-backup-earns-its-cost).
 
