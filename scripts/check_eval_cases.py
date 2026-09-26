@@ -162,8 +162,10 @@ def check_case(path, skills, err, probes):
     # so this must test the value itself rather than its str().
     if not isinstance(prompt, str) or not prompt.strip():
         w(f"execution.prompt must be a non-empty string, got {prompt!r}")
-    tools = execution.get("allowed_tools") or []
-    if set(tools) != READ_TOOLS:
+    tools = execution.get("allowed_tools")
+    if (not isinstance(tools, list)
+            or any(not isinstance(t, str) for t in tools)
+            or set(tools) != READ_TOOLS):
         w(f"allowed_tools must be exactly {sorted(READ_TOOLS)}, got {tools!r}: without "
           "them references/ never load, and any other tool needs an --allow-tools grant")
     if "runs" in d:

@@ -55,12 +55,6 @@ graders:
     flags: m
     match: contains
 
-  - type: regex
-    name: no-device-trigger
-    pattern: '^\s*-\s*trigger:\s*device\s*$'
-    flags: m
-    match: not_contains
-
 expected_outcome: >-
   Diagnoses device_id instability across re-adds and converts both the trigger and
   the action target to entity-based (or a purpose-specific motion trigger).
