@@ -8,9 +8,10 @@ tags: [automations, triggers]
 
 execution:
   prompt: >-
-    send me a phone notification if any motion sensor downstairs picks something up
-    while we're away. I keep adding sensors down there so I don't want to keep
-    editing this
+    in Home Assistant, send a notification to notify.mobile_app_phone if any
+    motion sensor on the downstairs floor picks something up while we're away
+    (zone.home shows 0 people). I keep adding sensors down there so I don't want
+    to keep editing this
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10

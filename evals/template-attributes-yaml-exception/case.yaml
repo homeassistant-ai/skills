@@ -8,8 +8,10 @@ tags: [templates, yaml]
 
 execution:
   prompt: >-
-    I want a sensor that shows which motion sensor triggered last, with the
-    entity_id and timestamp as extra attributes
+    in Home Assistant, I want a sensor that shows which motion sensor triggered
+    last (binary_sensor.hallway_motion, binary_sensor.kitchen_motion,
+    binary_sensor.porch_motion), with the entity_id and timestamp as extra
+    attributes
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10

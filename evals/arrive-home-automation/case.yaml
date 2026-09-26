@@ -6,7 +6,9 @@ description: >
 tags: [automations, triggers, version-pinned]
 
 execution:
-  prompt: create an automation that turns on the lights when I get home
+  prompt: >-
+    create a Home Assistant automation that turns on light.living_room when I
+    get home. I'm person.alex
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10

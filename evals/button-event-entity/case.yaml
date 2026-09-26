@@ -9,8 +9,9 @@ tags: [automations, devices]
 
 execution:
   prompt: >-
-    I've got a Hue dimmer switch. when I double-press the on button I want the
-    living room lamp to go to 30%. how do I wire that up?
+    I've got a Hue dimmer switch, paired through the Hue Bridge in Home
+    Assistant. when I double-press the on button I want light.living_room_lamp
+    to go to 30%. how do I wire that up?
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10

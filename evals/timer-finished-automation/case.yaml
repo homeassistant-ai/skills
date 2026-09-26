@@ -6,7 +6,9 @@ description: >
 tags: [automations, triggers]
 
 execution:
-  prompt: make an automation that announces on my speaker when my kitchen timer finishes
+  prompt: >-
+    make a Home Assistant automation that announces on
+    media_player.kitchen_speaker when timer.kitchen finishes
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10

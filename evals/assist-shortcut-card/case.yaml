@@ -6,7 +6,8 @@ description: >
 tags: [dashboards]
 
 execution:
-  prompt: add a card to my dashboard to quickly launch Assist
+  prompt: >-
+    add a card to my Home Assistant dashboard to quickly launch Assist
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10
