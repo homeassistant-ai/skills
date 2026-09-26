@@ -40,9 +40,12 @@ graders:
   - type: llm
     name: covers-config-entry-data
     criteria: >-
-      The response accounts for Config Entry data/options — helpers such as
-      min_max, threshold, or generic_thermostat that store the entity ID in their
-      config entry — which a registry rename does not update.
+      The response accounts for helpers that keep the entity ID in their config
+      entry and do not follow a registry rename, such as Min/Max helpers and UI
+      groups: it tells the user to check or update them after the rename.
+
+      Single-source helpers such as Threshold (since 2025.6), Utility Meter and
+      Derivative update themselves; the response need not mention them.
 
   - type: llm
     name: checks-device-siblings
