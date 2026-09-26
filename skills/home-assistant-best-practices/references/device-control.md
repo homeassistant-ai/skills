@@ -353,7 +353,8 @@ actions:
     data:
       title: "Reminder"
       message: "Check the laundry"
-      notification_id: "laundry_reminder"
+      data:
+        notification_id: "laundry_reminder"   # nested: a top-level key is rejected
 ```
 
 ---

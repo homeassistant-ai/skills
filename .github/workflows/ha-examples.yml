@@ -1,0 +1,71 @@
+name: HA Examples
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - 'scripts/check_ha_examples.py'
+      - 'scripts/ha_examples_allowlist.yaml'
+      - '.github/workflows/ha-examples.yml'
+  schedule:
+    # A Home Assistant release can remove an action, field or trigger key under
+    # an example nobody touched, so check against the latest release weekly.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Pull requests check against this tag, so a new Home Assistant release does
+  # not fail an unrelated PR. Scheduled and manual runs check the latest
+  # release; when one fails, fix the examples and bump this tag in that PR.
+  HA_PINNED_TAG: "2026.9.3"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Choose the Home Assistant tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            tag="$HA_PINNED_TAG"
+          else
+            tag=$(gh api repos/home-assistant/core/releases/latest --jq .tag_name)
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Checking against Home Assistant $tag"
+
+      - name: Check out the Home Assistant definitions
+        # Only the files the checker reads: a few MB instead of the full tree.
+        uses: actions/checkout@v7
+        with:
+          repository: home-assistant/core
+          ref: ${{ steps.tag.outputs.tag }}
+          path: ha-core
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /homeassistant/components/*/services.yaml
+            /homeassistant/components/*/triggers.yaml
+            /homeassistant/components/*/conditions.yaml
+            /homeassistant/helpers/selector.py
+            /homeassistant/const.py
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Check example calls
+        run: python scripts/check_ha_examples.py --ha-core ha-core
