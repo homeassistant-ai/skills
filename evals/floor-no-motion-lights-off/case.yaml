@@ -1,0 +1,39 @@
+schema_version: "1.1"
+name: floor-no-motion-lights-off
+description: >
+  "No motion anywhere on the floor" needs every targeted sensor clear, which is
+  `behavior: all` since 2026.6 (`last` before it). The default `each` fires as
+  soon as one sensor has been clear for the duration.
+tags: [automations, triggers, version-pinned]
+
+execution:
+  prompt: >-
+    turn off all the upstairs lights once there's been no motion anywhere
+    upstairs for 10 minutes. the floor is called upstairs in Home Assistant
+  allowed_tools: [Read, Glob, Grep]
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: regex
+    name: uses-cleared-trigger
+    pattern: '\b(motion|occupancy)\.cleared\b'
+    match: contains
+
+  # `behavior: all` on the trigger, or on a `motion.is_not_detected` condition
+  # that checks every sensor, both pass. `last` (pre-2026.6) and `each` do not.
+  - type: regex
+    name: waits-for-all-sensors
+    pattern: '\bbehavior"?\s*:\s*"?all\b'
+    match: contains
+
+expected_outcome: >-
+  A `motion.cleared` trigger targeting `floor_id: upstairs` with
+  `behavior: all` and `for: 00:10:00`, turning off the upstairs lights.

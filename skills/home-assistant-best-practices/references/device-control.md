@@ -381,7 +381,7 @@ actions:
     target:
       entity_id: vacuum.roborock
     data:
-      area_id:
+      cleaning_area_id:           # NOT area_id: under data: that is read as a target
         - kitchen
         - living_room
 ```

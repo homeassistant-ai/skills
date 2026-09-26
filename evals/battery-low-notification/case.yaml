@@ -1,0 +1,35 @@
+schema_version: "1.1"
+name: battery-low-notification
+description: >
+  2026.7 renamed purpose-specific trigger keys, and the old ones no longer load:
+  `battery.low` is now `battery.became_low`. Checks a low-battery automation
+  uses a current battery trigger key.
+tags: [automations, triggers, version-pinned]
+
+execution:
+  prompt: >-
+    send a notification to notify.mobile_app_phone when any device with the
+    label battery_powered gets a low battery
+  allowed_tools: [Read, Glob, Grep]
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Either current key passes: `became_low` for a low-battery binary_sensor,
+  # `level_crossed_threshold` for a percentage sensor. The pre-2026.7
+  # `battery.low` does not match.
+  - type: regex
+    name: uses-current-battery-trigger
+    pattern: '\bbattery\.(became_low|level_crossed_threshold)\b'
+    match: contains
+
+expected_outcome: >-
+  A `battery.became_low` (or `battery.level_crossed_threshold`) trigger with a
+  `label_id: battery_powered` target, notifying notify.mobile_app_phone.

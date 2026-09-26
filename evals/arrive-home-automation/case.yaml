@@ -3,7 +3,7 @@ name: arrive-home-automation
 description: >
   The obvious presence automation. Guards against the `entered_home` device
   trigger type, removed in 2026.5, which pre-2026.5 training data still suggests.
-tags: [automations, triggers]
+tags: [automations, triggers, version-pinned]
 
 execution:
   prompt: create an automation that turns on the lights when I get home

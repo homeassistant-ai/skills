@@ -258,7 +258,7 @@ conditions:
 
 **Multi-target `behavior` enums differ between triggers and conditions:**
 
-- Triggers: `each` (default) / `first` / `all`. The pre-2026.7 values `any` and `last` were renamed to `each` and `all` — they still work but raise a repair issue and face removal. Never emit them (some official doc pages still show the old values mid-migration).
+- Triggers: `each` (default) / `first` / `all`. The pre-2026.6 values `any` and `last` were renamed to `each` and `all` — they still work but raise a repair issue and face removal. Never emit them (some official doc pages still show the old values mid-migration).
 - Conditions: `any` (default) / `all` — unchanged.
 
 **Keys renamed in 2026.7 (trigger keys unless marked *(condition)*) — old keys no longer work:**
@@ -275,6 +275,8 @@ conditions:
 | `vacuum.docked` | `vacuum.returned_to_dock` |
 | `climate.target_temperature` (condition) | `climate.is_target_temperature` |
 | `climate.target_humidity` (condition) | `climate.is_target_humidity` |
+
+The low-battery keys `battery.became_low`/`no_longer_low` (and conditions `battery.is_low`/`is_not_low`) read only a battery `binary_sensor`, a low flag. A device that reports only a percentage `sensor` never fires them: use `battery.level_crossed_threshold` for it, and add both triggers when a label or area target holds both kinds.
 
 **Discovering what exists:** every purpose-specific trigger and condition (and every action) has a dedicated documentation page covering its config shape, options, and examples — fetch it on demand instead of guessing keys; see [domain-docs #fetching-trigger-condition-and-action-docs](domain-docs.md#fetching-trigger-condition-and-action-docs). The trees span 50+ domains (~190 trigger and ~150 condition pages, generic types included): battery, motion, occupancy, door/window/gate/garage_door, climate, media_player, sun, timer, schedule, vacuum, lawn_mower, zone, event, vibration, moon, and more. The catalog grows every release, so check the doc tree rather than this list when a domain you need isn't named here.
 
