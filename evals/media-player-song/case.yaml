@@ -6,7 +6,9 @@ description: >
 tags: [templates, helpers]
 
 execution:
-  prompt: I want a sensor showing my media player's current song title
+  prompt: >-
+    in Home Assistant, I want a sensor showing the current song title on
+    media_player.living_room
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10

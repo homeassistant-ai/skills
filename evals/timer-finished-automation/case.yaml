@@ -22,12 +22,14 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  - type: llm
+  # Free: the purpose-specific `timer.finished` trigger, or an event trigger on
+  # `event_type: timer.finished`. The Sonnet judge failed an answer whose config
+  # had `trigger: timer.finished`.
+  - type: regex
     name: uses-timer-finished-event
-    criteria: >-
-      The automation triggers on the `timer.finished` event — an event trigger with
-      `event_type: timer.finished` — or on a purpose-specific timer trigger that
-      fires on completion.
+    pattern: '^\s*-\s*(?:trigger|platform):\s*timer\.finished\b|\bevent_type"?\s*:\s*"?timer\.finished\b'
+    flags: m
+    match: contains
 
   - type: llm
     name: no-polling-workaround

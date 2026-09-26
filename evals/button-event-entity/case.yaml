@@ -25,11 +25,15 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  - type: llm
+  # Free: an `event.received` or `state` trigger followed, within the same
+  # trigger, by an `event.*` entity ID (under `target:` or the legacy
+  # `entity_id:` key). The Sonnet judge failed answers whose config had exactly
+  # this.
+  - type: regex
     name: uses-event-entity
-    criteria: >-
-      The automation targets the button's `event.*` entity rather than a device
-      trigger or a raw event-bus listener.
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(?:event\.received|state)\b[\s\S]{0,200}?\bentity_id"?\s*:\s*"?event\.[a-z0-9_]+'
+    flags: m
+    match: contains
 
   - type: llm
     name: reads-event-types
