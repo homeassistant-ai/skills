@@ -1,0 +1,13 @@
+# Keys check_ha_examples.py flags that Home Assistant accepts anyway.
+# services.yaml, triggers.yaml and conditions.yaml describe HA's UI, and a
+# Python schema can accept keys they do not list. Each entry is
+# <kind>: <domain.name>: <field, or * for the whole call>: <why it is valid>.
+# An entry that no longer matches any example fails the check as stale.
+actions:
+  media_player.play_media:
+    media_content_id: >-
+      Required by MEDIA_PLAYER_PLAY_MEDIA_SCHEMA. services.yaml lists only the
+      `media` UI field, which HA converts into media_content_id and
+      media_content_type.
+    media_content_type: >-
+      Required by MEDIA_PLAYER_PLAY_MEDIA_SCHEMA; see media_content_id.

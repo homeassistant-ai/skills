@@ -63,10 +63,31 @@ graders are compiled with `node`, not Python `re`: the two disagree (`re` reject
 `(?<name>x)` and accepts Python-only `(?P<name>x)`), and without `node` that check is skipped
 with a warning rather than failed.
 
-Four things nothing checks, so all four stay review items: that every reference file is
-still routed from SKILL.md, that `references/examples.yaml` still parses, that an eval
-grader still means what it was written to mean, and that the descriptions in SKILL.md's
-reference table and README's **Skill Contents** table still match what the files cover.
+`check_ha_examples.py` (`ha-examples.yml`) checks every action, purpose-specific trigger and
+condition in the skills' examples against Home Assistant's `services.yaml`, `triggers.yaml`
+and `conditions.yaml`: the key exists, every `data:`/`options:` key is a field, and
+`behavior` has a valid value. An example with a wrong field is worse than none, because the
+agent copies it over what it would otherwise get right. It needs a `home-assistant/core`
+checkout; this sparse one is a few MB:
+
+```bash
+git clone -q --depth 1 --filter=blob:none --sparse --branch <tag> https://github.com/home-assistant/core <dir>
+git -C <dir> sparse-checkout set --no-cone '/homeassistant/components/*/services.yaml' \
+  '/homeassistant/components/*/triggers.yaml' '/homeassistant/components/*/conditions.yaml' \
+  /homeassistant/helpers/selector.py /homeassistant/const.py
+uv run --no-project --with pyyaml python scripts/check_ha_examples.py --ha-core <dir>
+```
+
+PRs check against the tag pinned in `ha-examples.yml`; a weekly run checks the latest release.
+When the weekly run fails, a release changed something an example uses: fix the example and
+bump the pin in the same PR. Those YAML files describe HA's UI, and a Python schema can accept
+keys they do not list. After confirming in the schema that HA accepts a flagged key, add it to
+`scripts/ha_examples_allowlist.yaml` with the reason.
+
+Three things nothing checks, so all three stay review items: that every reference file is
+still routed from SKILL.md, that an eval grader still means what it was written to mean, and
+that the descriptions in SKILL.md's reference table and README's **Skill Contents** table
+still match what the files cover.
 The last one drifts silently — link checking keeps the *file list* honest while the prose
 beside it goes stale, so a row can point at the right file and still describe an older
 version of it.
@@ -75,10 +96,16 @@ To run the eval suite, use `claude plugin eval . --trust-plugin -j 4 --judge-mod
 Sessions run one at a time by default; `-j 4` runs four at once on the same rate limit. The
 default Haiku judge fails correct answers often enough to swamp run-to-run noise. A full run is
 every case x 3 runs x 2 arms (with and without the skill), so start with `--tag smoke --runs 1
---ablation none`. Add `--keep-temp` to keep the transcripts; without it only scores and final
-answers survive. Read, Glob and Grep are denied unless a case grants them in `allowed_tools`,
-and without them only SKILL.md loads, so no change to `references/` can move a score. Every
-case grants exactly those three, and `check_eval_cases.py` enforces it.
+--ablation none`. Add `--keep-temp` to keep the transcripts; without it only scores survive,
+plus the final answers that llm graders quote. A regex-only case keeps no answer at all. Read,
+Glob and Grep are denied unless a case grants them in `allowed_tools`, and without them only
+SKILL.md loads, so no change to `references/` can move a score. Every case grants exactly
+those three, and `check_eval_cases.py` enforces it.
+
+After each Home Assistant release, run the cases tagged `version-pinned` (`--tag
+version-pinned`, keeping `--judge-model sonnet` for `arrive-home-automation`'s llm graders)
+and read the release post's breaking changes. Together they cover what `check_ha_examples.py` cannot see: renamed UI terms,
+changed behavior, claims in prose, and whether the skill still steers the model right.
 
 To check that a single prompt triggers the skill without an eval run, run it in a fresh
 session from an empty directory and look for the `Skill` call in the stream:
