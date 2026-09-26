@@ -119,6 +119,9 @@ Writing a case:
 - Prefer a positive regex (the new key is present) over `not_contains` on the old one: the skill
   tells agents to cite an old name beside the new one ("named add-ons before 2026.2"), and a
   negative check fails that.
+- Check structure with a regex and keep the llm judge for meaning. The Sonnet judge failed
+  correct YAML in four graders (a `motion.detected` trigger line, a `floor_id` target); a
+  regex on the key line cannot misread it.
 - To run several cases together, give them a tag: a repeated `--case` keeps only the last one.
 - Read both arms. A case that scores lower with the skill than without means the skill teaches
   something wrong; the `vacuum.clean_area` example once did.
