@@ -7,7 +7,7 @@ tags: [automations, triggers]
 
 execution:
   prompt: create an automation that turns on the lights when I get home
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3
@@ -22,9 +22,14 @@ graders:
   - type: llm
     name: uses-state-trigger
     criteria: >-
-      The automation triggers on a state change of a `person.*` or
-      `device_tracker.*` entity with `to: home` (a `trigger: state` block, or a
-      purpose-specific presence trigger that targets a person entity).
+      The automation triggers when a `person.*` or `device_tracker.*` entity
+      arrives home: a `trigger: state` with `to: home`, or a `zone.entered`
+      trigger that targets that entity with `zone.home`. A trigger the response
+      describes in prose ("your person entity changes to `home`") counts the same
+      as one written out in YAML.
+
+      FAIL if the trigger is keyed on a device, or on anything other than a
+      person or device_tracker entity arriving home.
 
   - type: llm
     name: no-entered-home-trigger

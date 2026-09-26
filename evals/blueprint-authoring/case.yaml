@@ -30,7 +30,7 @@ execution:
       - action: light.turn_off
         target:
           entity_id: light.hallway
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3
@@ -69,14 +69,12 @@ graders:
 
       Judge the blueprint produced, not the quoted original automation.
 
-  - type: llm
+  # Free and exact: `!input` is a YAML tag, so `!input` inside `{{ }}` or
+  # `{% %}` is the defect. A blueprint with no templates passes.
+  - type: regex
     name: input-not-in-template
-    criteria: >-
-      Where an `!input` value is used inside a Jinja template, it is first bound to
-      a `variables:` entry and the template references that variable.
-
-      FAIL if `!input` is referenced directly inside a Jinja expression. PASS if the
-      blueprint uses no templates over inputs at all.
+    pattern: '\{[{%][^}]*!input'
+    match: not_contains
 
 expected_outcome: >-
   Typed `!input` selectors, `source_url` set, inputs bound to `variables:` before

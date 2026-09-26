@@ -13,9 +13,10 @@ execution:
   prompt: >-
     Set up a binary sensor that turns on when the outdoor temperature goes above
     25 degrees, with a bit of buffer so it doesn't flap
-  # Skill + Read/Glob/Grep are read-only and available by default, so this case
-  # needs no --allow-tools grant. Keep it that way: an ungranted case runs in CI.
-  allowed_tools: []
+  # Read/Glob/Grep are denied unless granted; without them the skill's
+  # references/ files never load. Grant no other tool: a case that needs
+  # an --allow-tools operator grant does not run in CI.
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 

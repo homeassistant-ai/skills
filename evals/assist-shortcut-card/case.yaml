@@ -7,7 +7,7 @@ tags: [dashboards]
 
 execution:
   prompt: add a card to my dashboard to quickly launch Assist
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3

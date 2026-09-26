@@ -68,7 +68,7 @@ jobs:
 
       - name: Validate eval cases
         # `claude plugin eval` is the real consumer of evals/<case>/case.yaml, but
-        # it is gated behind early access, so its parser never runs in CI. Without
+        # it needs credentials and spends tokens, so it does not run in CI. Without
         # this, a malformed case merges unnoticed and only surfaces whenever
         # someone next runs the suite — an unknown key the strict grader schema
         # rejects, a regex that will not compile, a case named off its directory.

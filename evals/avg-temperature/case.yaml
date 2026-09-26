@@ -7,7 +7,7 @@ tags: [helpers]
 
 execution:
   prompt: create a sensor that averages my 3 room temperature sensors
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3

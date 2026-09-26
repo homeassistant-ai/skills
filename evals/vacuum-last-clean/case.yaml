@@ -7,8 +7,10 @@ description: >
 tags: [templates, helpers, smoke]
 
 execution:
-  prompt: create a sensor that shows my vacuum's last clean time in a human-readable format
-  allowed_tools: []
+  prompt: >-
+    create a sensor that shows my vacuum's last clean time in a human-readable
+    format. vacuum.robot has a last_clean_end attribute with the time
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3
@@ -23,31 +25,43 @@ graders:
   - type: llm
     name: recommends-template-helper
     criteria: >-
-      The response recommends creating a Template Helper — through the UI
-      (Settings → Devices & Services → Helpers → Create Helper → Template) or a
-      config-entry flow / API call — as the way to create this sensor.
+      For a vacuum that does not already expose this value, the response's way to
+      create the sensor is a Template Helper — through the UI (Settings → Devices &
+      Services → Helpers → Create Helper → Template) or a config-entry flow / API
+      call.
 
-      FAIL if the recommendation is to add a `template:` entry to
-      configuration.yaml instead.
+      PASS even if the response first suggests checking for a sensor the vacuum
+      integration already provides, and even if it adds a trigger-based
+      `template:` YAML sensor as a separate fallback for a vacuum that reports no
+      timestamp at all.
+
+      FAIL if no Template Helper path is given, or if a plain (non-trigger)
+      template sensor is to be written as a `template:` entry in
+      configuration.yaml.
 
   - type: llm
     name: no-yaml-template-first
     criteria: >-
-      The response does NOT lead with, or exclusively offer, writing `template:`
-      YAML in configuration.yaml.
+      The first way the response offers to create the sensor is not writing
+      `template:` YAML in configuration.yaml. Checking for a sensor the
+      integration already provides, or a dashboard card snippet, is not a way to
+      create the sensor and does not count.
 
-      FAIL if the first actionable instruction is to edit a YAML file, or if
-      editing YAML is the only path offered.
+      FAIL if the first way offered to create the sensor is editing a
+      configuration file, or if editing YAML is the only way offered.
 
   - type: llm
     name: no-yaml-platform-block
     criteria: >-
-      The response does not present a YAML platform/template block as the thing to
-      write — the helper is created through the UI or a config-entry flow.
+      The plain template sensor is not presented as a YAML platform/template block
+      to write: it is created through the UI or a config-entry flow.
 
       PASS if a YAML-shaped snippet appears but is labelled as the helper's config
-      shape rather than a file to hand-edit. FAIL if the actionable instruction is
-      to paste the block into a configuration file.
+      shape rather than a file to hand-edit. PASS if the only YAML to paste is a
+      trigger-based `template:` sensor offered as a fallback for a vacuum that
+      reports no timestamp, since the helper form has no field for triggers. FAIL
+      if the plain (non-trigger) sensor is to be pasted into a configuration
+      file.
 
 expected_outcome: >-
   Recommends creating a Template Helper (UI or config flow), not a `template:`

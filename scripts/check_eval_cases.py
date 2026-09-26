@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Validate evals/<case>/case.yaml against the 1.1 case schema.
 
-`claude plugin eval` is the real consumer of these files, but it is gated behind
-early access, so its parser never runs here and a malformed case would otherwise
-merge unnoticed. The schema below is transcribed by hand from the Zod definition
-in the Claude Code 2.1.241 binary — re-derive it if schema_version moves off "1.1".
+`claude plugin eval` is the real consumer of these files, but CI does not run it
+(it needs credentials and spends tokens), so its parser never sees a case before
+merge and a malformed case would otherwise merge unnoticed. The schema below is
+transcribed by hand from the Zod definition in the Claude Code 2.1.241 binary —
+re-derive it if schema_version moves off "1.1".
 
 Cases live in evals/ at the plugin root, not under skills/. The harness rejects
 any eval directory whose first segment names a loaded component directory
@@ -15,8 +16,10 @@ the cases are never found.
 Checks: schema conformance, the grader objects' .strict() key sets and value
 types, unique grader names within a case, regex patterns that compile *in the
 JavaScript engine that runs them*, valid JS RegExp flags, directory/name
-agreement, an empty allowed_tools (so no case needs an --allow-tools operator
-grant), and a skill-fired grader that can actually prove a real skill loaded.
+agreement, allowed_tools set to exactly the read-only Read/Glob/Grep (without
+them the skill's references/ never load; anything else needs an --allow-tools
+operator grant), and a skill-fired grader that can actually prove a real skill
+loaded.
 
 Does NOT check that a grader still means what it was written to mean. Judging
 that is a review item.
@@ -36,6 +39,7 @@ import yaml
 
 TOP_REQ = {"schema_version", "name", "graders", "execution"}
 TOP_OK = TOP_REQ | {"description", "tags", "plugins", "context", "runs", "expected_outcome"}
+READ_TOOLS = {"Read", "Glob", "Grep"}
 EXEC_OK = {"prompt", "max_turns", "timeout_seconds", "model", "allowed_tools",
            "artifact_publish", "growthbook_overrides", "append_system_prompt", "env"}
 # type -> (required keys, optional keys); each grader object is .strict()
@@ -158,8 +162,10 @@ def check_case(path, skills, err, probes):
     # so this must test the value itself rather than its str().
     if not isinstance(prompt, str) or not prompt.strip():
         w(f"execution.prompt must be a non-empty string, got {prompt!r}")
-    if execution.get("allowed_tools"):
-        w("allowed_tools is non-empty — the case then needs an --allow-tools grant to run")
+    tools = execution.get("allowed_tools") or []
+    if set(tools) != READ_TOOLS:
+        w(f"allowed_tools must be exactly {sorted(READ_TOOLS)}, got {tools!r}: without "
+          "them references/ never load, and any other tool needs an --allow-tools grant")
     if "runs" in d:
         num(d["runs"], 1, 50, "runs", w)
     if "max_turns" in execution:

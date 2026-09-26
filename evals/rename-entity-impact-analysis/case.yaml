@@ -9,7 +9,7 @@ execution:
   prompt: >-
     rename sensor.shellyplug_s_a1b2c3_power to sensor.office_heater_power, it's
     driving me nuts seeing the manufacturer name on my energy dashboard
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3
