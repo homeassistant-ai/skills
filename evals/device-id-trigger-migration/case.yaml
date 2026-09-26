@@ -19,7 +19,7 @@ execution:
       - action: light.turn_on
         target:
           device_id: 4f2a91c8e77b4d6fa1c3
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3
@@ -46,11 +46,14 @@ graders:
       FAIL if only the trigger is converted and the `light.turn_on` target still
       uses `device_id`.
 
-  - type: llm
+  # Free and exact: the trigger type is one YAML line, so a regex reads it
+  # without a judge. Anchored to a list item so prose naming a trigger type does
+  # not count.
+  - type: regex
     name: prefers-entity-or-purpose-specific
-    criteria: >-
-      The replacement trigger is an `entity_id` state trigger or a purpose-specific
-      motion trigger with a target — not another device-keyed trigger.
+    pattern: '^\s*-\s*trigger:\s*(state|motion\.detected|occupancy\.detected)\s*$'
+    flags: m
+    match: contains
 
 expected_outcome: >-
   Diagnoses device_id instability across re-adds and converts both the trigger and

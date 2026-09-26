@@ -9,7 +9,7 @@ execution:
   prompt: >-
     automation: when the hallway motion sensor trips, turn on the hallway light and
     switch it off 5 minutes after motion stops
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3

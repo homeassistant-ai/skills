@@ -1,7 +1,5 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Repo Layout
 
 Eval cases live in a top-level `evals/<case>/case.yaml`, **not** under `skills/`. `claude
@@ -17,7 +15,7 @@ a single routing row, not in the always-loaded table.
 
 ## Skill Format
 
-Every skill is a `SKILL.md` with `name`/`description` frontmatter. Full authoring constraints: `CONTRIBUTING.md`. The one CI cannot catch:
+Every skill is a `SKILL.md` with `name`/`description` frontmatter. Full authoring constraints: `CONTRIBUTING.md`. Two rules to check when editing a skill:
 - `metadata.version` must be `"0"` on new skills — do not edit manually; CI assigns the real version on merge and syncs it into `.claude-plugin/plugin.json` (`.version`) and `.claude-plugin/marketplace.json` (`.metadata.version`) — three files, one source of truth
 - `description` is capped at 1024 chars and runs close to it — measure the parsed length before adding trigger/symptom bullets: `uvx --from skills-ref agentskills read-properties skills/<skill-name> | jq '.description | length'`
 
@@ -44,22 +42,23 @@ uvx --from skills-ref agentskills validate skills/<skill-name>
 Four more checks gate a merge. `agnix` and `lychee` run as release binaries pinned in
 `.github/workflows/` — install those versions (lychee's release tag is `lychee-vX.Y.Z`, not
 `vX.Y.Z`); `claude plugin validate` ships with the Claude Code CLI; the eval-case checker is
-in-repo and needs only PyYAML:
+in-repo and needs only PyYAML (supplied by `uv run --with`):
 
 ```bash
-agnix skills/ --target claude-code                              # spec conformance
-lychee --offline --include-fragments --no-progress './**/*.md'  # local links + #anchors
-claude plugin validate .                                        # plugin manifests
-python scripts/check_eval_cases.py                              # evals/<case>/case.yaml
+agnix skills/ --target claude-code                                    # spec conformance
+lychee --offline --include-fragments --no-progress './**/*.md'        # local links + #anchors
+claude plugin validate .                                              # plugin manifests
+uv run --no-project --with pyyaml python scripts/check_eval_cases.py  # evals/<case>/case.yaml
 ```
 
 agnix catches what skills-ref's unenforced `metadata: dict[str, str]` annotation lets pass —
 e.g. an unquoted integer version, which strict clients refuse. In CI (`links.yml`) lychee runs
 that same local check on PRs touching `.md`/`.yaml`, plus external URLs weekly, dot-directories
 excluded; it cannot see references written as inline code. `check_eval_cases.py` validates the
-shape of eval cases against the `claude plugin eval` 1.1 schema — that command is gated behind
-early access, so its own parser never runs here; the schema is transcribed by hand and needs
-re-deriving if `schema_version` moves. It checks structure only and never runs a case. Regex
+shape of eval cases against the `claude plugin eval` 1.1 schema. CI does not run that command
+(it needs credentials and spends tokens), so its own parser never sees a case before merge;
+the schema is transcribed by hand and needs re-deriving if `schema_version` moves. It checks
+structure only and never runs a case. Regex
 graders are compiled with `node`, not Python `re`: the two disagree (`re` rejects JS-valid
 `(?<name>x)` and accepts Python-only `(?P<name>x)`), and without `node` that check is skipped
 with a warning rather than failed.
@@ -72,8 +71,17 @@ The last one drifts silently — link checking keeps the *file list* honest whil
 beside it goes stale, so a row can point at the right file and still describe an older
 version of it.
 
-To check that a prompt actually triggers the skill (the eval suite cannot run yet), run it in
-a fresh session from an empty directory and look for the `Skill` call in the stream:
+To run the eval suite, use `claude plugin eval . --trust-plugin -j 4 --judge-model sonnet`.
+Sessions run one at a time by default; `-j 4` runs four at once on the same rate limit. The
+default Haiku judge fails correct answers often enough to swamp run-to-run noise. A full run is
+every case x 3 runs x 2 arms (with and without the skill), so start with `--tag smoke --runs 1
+--ablation none`. Add `--keep-temp` to keep the transcripts; without it only scores and final
+answers survive. Read, Glob and Grep are denied unless a case grants them in `allowed_tools`,
+and without them only SKILL.md loads, so no change to `references/` can move a score. Every
+case grants exactly those three, and `check_eval_cases.py` enforces it.
+
+To check that a single prompt triggers the skill without an eval run, run it in a fresh
+session from an empty directory and look for the `Skill` call in the stream:
 
 ```bash
 claude -p "<prompt>" --plugin-dir <repo-root> --output-format stream-json --verbose --max-turns 1 --allowedTools Skill

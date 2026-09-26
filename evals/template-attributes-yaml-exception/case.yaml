@@ -10,7 +10,7 @@ execution:
   prompt: >-
     I want a sensor that shows which motion sensor triggered last, with the
     entity_id and timestamp as extra attributes
-  allowed_tools: []
+  allowed_tools: [Read, Glob, Grep]
   max_turns: 10
   timeout_seconds: 300
 runs: 3
