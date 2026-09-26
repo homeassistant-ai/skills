@@ -1,0 +1,33 @@
+schema_version: "1.1"
+name: os-upgrade-backup-apps
+description: >
+  HA renamed add-ons to Apps in 2026.2, and the UI now says Apps everywhere.
+  Checks the answer uses the current term even when the user says "add-ons".
+tags: [backups, version-pinned]
+
+execution:
+  prompt: >-
+    I'm about to upgrade Home Assistant OS. How do I make sure my Node-RED and
+    Zigbee2MQTT add-ons are backed up too?
+  allowed_tools: [Read, Glob, Grep]
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Plural only: the singular "app" also names the companion app, which backup
+  # answers mention. Citing the old name next to the new one passes.
+  - type: regex
+    name: uses-apps-term
+    pattern: '\b[Aa]pps\b'
+    match: contains
+
+expected_outcome: >-
+  Explains that a full backup includes the Node-RED and Zigbee2MQTT Apps
+  (named add-ons before 2026.2), taken before the upgrade.

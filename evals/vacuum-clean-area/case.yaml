@@ -1,0 +1,41 @@
+schema_version: "1.1"
+name: vacuum-clean-area
+description: >
+  Since 2026.3 a vacuum whose segments are mapped to HA areas cleans rooms with
+  `vacuum.clean_area`, not `vacuum.send_command` with vendor room IDs. Checks
+  the action and its `cleaning_area_id` field.
+tags: [devices, version-pinned]
+
+execution:
+  prompt: >-
+    create a script that makes vacuum.robot clean just the kitchen and the
+    hallway. I've already mapped its rooms to my Home Assistant areas in the
+    vacuum's settings
+  allowed_tools: [Read, Glob, Grep]
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  - type: regex
+    name: uses-clean-area
+    pattern: '\bvacuum\.clean_area\b'
+    match: contains
+
+  # The action's data field, as a YAML or JSON key: naming it only in prose
+  # does not pass. `area_id` under `data:` is read as a target, so the call
+  # fails with `cleaning_area_id` missing.
+  - type: regex
+    name: cleaning-area-id-field
+    pattern: '\bcleaning_area_id"?\s*:'
+    match: contains
+
+expected_outcome: >-
+  A script calling `vacuum.clean_area` on vacuum.robot with
+  `cleaning_area_id` listing the kitchen and hallway areas.

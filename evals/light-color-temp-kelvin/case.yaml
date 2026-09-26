@@ -1,0 +1,43 @@
+schema_version: "1.1"
+name: light-color-temp-kelvin
+description: >
+  The mireds-based `color_temp` light parameter was removed in 2026.3, so an
+  automation that still passes it fails after an upgrade. Checks the fix moves
+  it to `color_temp_kelvin` with a Kelvin value.
+tags: [automations, devices, version-pinned]
+
+execution:
+  prompt: |-
+    this automation stopped working after I updated Home Assistant, can you fix it?
+
+    triggers:
+      - trigger: time
+        at: "21:00:00"
+    actions:
+      - action: light.turn_on
+        target:
+          area_id: living_room
+        data:
+          brightness_pct: 40
+          color_temp: 370
+  allowed_tools: [Read, Glob, Grep]
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free and exact: YAML or JSON key. Four digits, because a Kelvin value for a
+  # light is 2000-6500; the mireds value 370 copied across does not pass.
+  - type: regex
+    name: uses-color-temp-kelvin
+    pattern: '\bcolor_temp_kelvin"?\s*:\s*\d{4}\b'
+    match: contains
+
+expected_outcome: >-
+  Replaces `color_temp: 370` with `color_temp_kelvin` at about 2700 K.
