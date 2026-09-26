@@ -43,7 +43,10 @@ Steps 1-5 below apply to new config or pattern evaluation.
 ### 1. Check for a purpose-specific, then generic native, trigger/condition
 Since 2026.7 the default building blocks are purpose-specific triggers/conditions — `<domain>.<name>` keys (motion detected, battery low, door opened) with area/floor/label targets. Check for one that matches the intent first, then a generic native trigger/condition, and only then a template. See [automation-patterns #purpose-specific-triggers--conditions-default-since-20267](references/automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267).
 
+A purpose-specific trigger takes `entity_id` in its `target:` as well, so one known sensor is not a reason to fall back to `trigger: state`. Write the automation with the purpose-specific trigger; do not offer it only as an optional upgrade.
+
 **Common substitutions:**
+- `trigger: state` on a motion, occupancy or door `binary_sensor` → `motion.detected`/`motion.cleared`, `occupancy.detected`/`occupancy.cleared` or `door.opened`/`door.closed` with `target: {entity_id: ...}`, or `area_id` when the area is known
 - List of individual sensor entities in a trigger → one purpose-specific trigger with an area/floor/label `target:`
 - `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
 - `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions

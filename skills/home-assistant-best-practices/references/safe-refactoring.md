@@ -17,6 +17,8 @@ Follow this workflow whenever you modify existing Home Assistant configuration: 
 
 ## Universal Workflow
 
+The order holds when you hand the steps to the user instead of running them: their instructions open with the consumer search (Step 2), and the rename comes after it.
+
 ### Step 1: Identify the full scope of change
 
 Answer three questions before touching anything:
@@ -33,7 +35,7 @@ Search every component type that references entity IDs. Do not limit searches to
 | Component | How to search |
 |-----------|---------------|
 | Automations | Search automations for the entity ID via the HA API or grep `automations.yaml` |
-| Dashboards | Search dashboard configs for the entity ID via the HA API or grep `.storage/lovelace*`, `ui-lovelace.yaml` |
+| Dashboards | Search dashboard configs for the entity ID via the HA API or grep `.storage/lovelace*`, `ui-lovelace.yaml`. A rename does not update storage-mode (UI-edited) dashboards (→ see [Storage-Mode-Dashboards](#storage-mode-dashboards-storagelovelace)) |
 | Scripts | grep `scripts.yaml` |
 | Scenes | grep `scenes.yaml` |
 | Config-Entry-based groups | `GET /api/config/config_entries/entry?type=config&domain=group` — members in `options.entities`; entity registry renames do NOT update these automatically (→ see Config-Entry-Groups section) |
