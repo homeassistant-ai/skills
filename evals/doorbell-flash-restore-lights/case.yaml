@@ -27,24 +27,28 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  # Free: only `scene.create` takes this key, as YAML or JSON. It captures each
-  # light's current state, including off.
+  # Free: only `scene.create` takes this key, as YAML or JSON. Both lights must
+  # be in its list, before the next key (a list item holds no colon); a light
+  # left out stays red.
   - type: regex
-    name: snapshots-current-state
-    pattern: '\bsnapshot_entities"?\s*:'
+    name: snapshots-both-lights
+    pattern: '\bsnapshot_entities"?\s*:[^:]*\blight\.living_room_ceiling\b[^:]*\blight\.living_room_lamp\b|\bsnapshot_entities"?\s*:[^:]*\blight\.living_room_lamp\b[^:]*\blight\.living_room_ceiling\b'
     match: contains
 
+  # The `scene_id` given to `scene.create`, then `scene.turn_on` on that same
+  # `scene.<id>`: restoring any other scene loses the snapshot.
   - type: regex
-    name: restores-the-snapshot
-    pattern: '\bscene\.turn_on\b'
+    name: restores-the-created-scene
+    pattern: '\bscene_id"?\s*:\s*"?([a-z0-9_]+)[\s\S]*?\bscene\.turn_on\b[\s\S]*?\bscene\.\1\b'
     match: contains
 
   # `service:` was renamed `action:` in 2024.8. HA still converts the old key
   # on load, so this checks the answer is written in current syntax, not that
-  # it loads. Without the skill, answers often use the old form.
+  # it loads: some `- action:` step and no `service:` step anywhere. The
+  # lookbehind pins the lookahead to the start of the answer.
   - type: regex
     name: uses-current-action-key
-    pattern: '^\s*-\s*action:\s*[a-z_]+\.[a-z_]+'
+    pattern: '(?<![\s\S])(?![\s\S]*^\s*-?\s*"?service"?\s*:\s*"?[a-z_]+\.[a-z_]+)[\s\S]*^\s*-\s*action:\s*[a-z_]+\.[a-z_]+'
     flags: m
     match: contains
 
