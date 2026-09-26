@@ -20,6 +20,7 @@ execution:
         target:
           device_id: 4f2a91c8e77b4d6fa1c3
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

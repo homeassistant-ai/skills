@@ -12,6 +12,7 @@ execution:
     I've got a Hue dimmer switch. when I double-press the on button I want the
     living room lamp to go to 30%. how do I wire that up?
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

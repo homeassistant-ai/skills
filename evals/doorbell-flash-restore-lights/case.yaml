@@ -1,0 +1,54 @@
+schema_version: "1.1"
+name: doorbell-flash-restore-lights
+description: >
+  "Put the lights back the way they were" is the scene snapshot pattern:
+  `scene.create` with `snapshot_entities` before the change, `scene.turn_on` on
+  that scene after. Guards against restoring to fixed values, which loses each
+  light's own state, including whether it was off, and checks the automation
+  uses the current `action:` key rather than the pre-2024.8 `service:`.
+tags: [automations, scenes]
+
+execution:
+  prompt: >-
+    when someone rings the doorbell, flash the living room lights red three
+    times, then put them back exactly the way they were. the doorbell is
+    binary_sensor.doorbell and the lights are light.living_room_ceiling and
+    light.living_room_lamp
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: only `scene.create` takes this key, as YAML or JSON. It captures each
+  # light's current state, including off.
+  - type: regex
+    name: snapshots-current-state
+    pattern: '\bsnapshot_entities"?\s*:'
+    match: contains
+
+  - type: regex
+    name: restores-the-snapshot
+    pattern: '\bscene\.turn_on\b'
+    match: contains
+
+  # `service:` was renamed `action:` in 2024.8. HA still converts the old key
+  # on load, so this checks the answer is written in current syntax, not that
+  # it loads. Without the skill, answers often use the old form.
+  - type: regex
+    name: uses-current-action-key
+    pattern: '^\s*-\s*action:\s*[a-z_]+\.[a-z_]+'
+    flags: m
+    match: contains
+
+expected_outcome: >-
+  An automation that runs `scene.create` with `snapshot_entities` for both
+  lights, flashes them red, then restores them with `scene.turn_on` on the
+  created scene.

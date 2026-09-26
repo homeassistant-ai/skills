@@ -10,6 +10,7 @@ execution:
     I'm about to upgrade Home Assistant OS. How do I make sure my Node-RED and
     Zigbee2MQTT add-ons are backed up too?
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

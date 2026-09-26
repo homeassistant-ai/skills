@@ -8,6 +8,7 @@ tags: [automations, triggers]
 execution:
   prompt: make an automation that announces on my speaker when my kitchen timer finishes
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

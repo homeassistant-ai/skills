@@ -11,6 +11,7 @@ execution:
     turn off all the upstairs lights once there's been no motion anywhere
     upstairs for 10 minutes. the floor is called upstairs in Home Assistant
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

@@ -12,6 +12,7 @@ execution:
     while we're away. I keep adding sensors down there so I don't want to keep
     editing this
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

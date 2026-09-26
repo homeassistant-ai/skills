@@ -8,6 +8,7 @@ tags: [automations, triggers, version-pinned]
 execution:
   prompt: create an automation that turns on the lights when I get home
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3
