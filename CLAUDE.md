@@ -97,15 +97,28 @@ Sessions run one at a time by default; `-j 4` runs four at once on the same rate
 default Haiku judge fails correct answers often enough to swamp run-to-run noise. A full run is
 every case x 3 runs x 2 arms (with and without the skill), so start with `--tag smoke --runs 1
 --ablation none`. Add `--keep-temp` to keep the transcripts; without it only scores survive,
-plus the final answers that llm graders quote. A regex-only case keeps no answer at all. Read,
-Glob and Grep are denied unless a case grants them in `allowed_tools`, and without them only
-SKILL.md loads, so no change to `references/` can move a score. Every case grants exactly
-those three, and `check_eval_cases.py` enforces it.
+plus the final answers that llm graders quote. A regex-only case keeps no answer at all. With
+it, each run's `tracePath` in the results JSON points at its transcript. Read, Glob and Grep
+are denied unless a case grants them in `allowed_tools`, and without them only SKILL.md loads,
+so no change to `references/` can move a score. Every case grants exactly those three, and
+`check_eval_cases.py` enforces it.
+
+Writing a case:
+- Regex graders read only the final message (`last_message`), so text the skill loads cannot
+  satisfy them, but a closing question scores zero. Put in the prompt whatever the agent would
+  otherwise ask for: an entity ID, a floor name, that the vacuum's rooms are already mapped.
+- Prefer a positive regex (the new key is present) over `not_contains` on the old one: the skill
+  tells agents to cite an old name beside the new one ("named add-ons before 2026.2"), and a
+  negative check fails that.
+- To run several cases together, give them a tag: a repeated `--case` keeps only the last one.
+- Read both arms. A case that scores lower with the skill than without means the skill teaches
+  something wrong; the `vacuum.clean_area` example once did.
 
 After each Home Assistant release, run the cases tagged `version-pinned` (`--tag
-version-pinned`, keeping `--judge-model sonnet` for `arrive-home-automation`'s llm graders)
-and read the release post's breaking changes. Together they cover what `check_ha_examples.py` cannot see: renamed UI terms,
-changed behavior, claims in prose, and whether the skill still steers the model right.
+version-pinned`, keeping `--judge-model sonnet` for `arrive-home-automation`'s llm graders) and
+read the release post's breaking changes. Together they cover what `check_ha_examples.py`
+cannot see: renamed UI terms, changed behavior, claims in prose, and whether the skill still
+steers the model right.
 
 To check that a single prompt triggers the skill without an eval run, run it in a fresh
 session from an empty directory and look for the `Skill` call in the stream:
