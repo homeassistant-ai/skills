@@ -411,7 +411,9 @@ write the YAML platform.
 **Value type differs:** the flow's `offset` is a **number of days** (0–28); the YAML
 platform's `offset` is a duration (`cv.time_period`).
 
-Then use automation to switch tariffs:
+With `tariffs` set (e.g. `["peak", "offpeak"]`), the helper creates a `select` entity whose
+options are the tariffs, plus one sensor per tariff; `tariffs: []` creates no select. Switch
+the tariff from an automation:
 ```yaml
 automation:
   - alias: "Switch to peak tariff"
