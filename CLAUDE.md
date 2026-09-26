@@ -58,12 +58,12 @@ repo-wide it adds prose heuristics about CLAUDE.md and AGENTS.md that CI leaves 
 In CI (`links.yml`) lychee runs that same local check on PRs touching `.md`/`.yaml`, plus
 external URLs weekly, dot-directories excluded; it cannot see references written as inline
 code. `check_eval_cases.py` validates the shape of eval cases against the `claude plugin eval`
-1.1 schema. CI does not run that command (it needs credentials and spends tokens), so its own
-parser never sees a case before merge; the schema is transcribed by hand and needs re-deriving
-if `schema_version` moves. It checks structure only and never runs a case. Regex graders are
-compiled with `node`, not Python `re`: the two disagree (`re` rejects JS-valid `(?<name>x)` and
-accepts Python-only `(?P<name>x)`), and without `node` that check is skipped with a warning
-rather than failed.
+1.1 schema. CI does not run `claude plugin eval` (it needs credentials and spends tokens), so
+the harness's own parser never sees a case before merge; the schema is transcribed by hand and
+needs re-deriving if `schema_version` moves. The checker checks structure only and never runs a
+case. Regex graders are compiled with `node`, not Python `re`: the two disagree (`re` rejects
+JS-valid `(?<name>x)` and accepts Python-only `(?P<name>x)`), and without `node` that check is
+skipped with a warning rather than failed.
 
 `check_ha_examples.py` (`ha-examples.yml`) checks every action, purpose-specific trigger and
 condition in the skills' examples against Home Assistant's `services.yaml`, `triggers.yaml`
