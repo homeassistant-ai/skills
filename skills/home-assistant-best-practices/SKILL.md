@@ -30,6 +30,8 @@ metadata:
 
 **Core principle:** Use native Home Assistant constructs wherever possible. Templates bypass validation, fail silently at runtime, and make debugging opaque.
 
+**No tool reaches the HA API?** Do not stop to ask for access. Give the complete config for the user to create in the UI (for an automation, the YAML to paste in the editor's **Edit in YAML** mode; for a helper, its form fields), and name the entity IDs you assumed.
+
 ## Decision Workflow
 
 Follow this sequence when creating any automation:
@@ -114,7 +116,7 @@ See [device-control #buttonremote-patterns](references/device-control.md#buttonr
 | `template:` sensor/binary sensor in YAML | Template Helper via the config flow | A flow helper reloads in place and stays UI-editable; a `template:` entry needs a config reload and does not. Exceptions are real — trigger-based templates and `attributes:` have no flow field | [helper-selection #template-helpers](references/helper-selection.md#template-helpers) |
 | Editing `.storage/` files or other HA internal state directly | Use the HA REST/WebSocket API to manage state and config entries | `.storage/` files are HA's internal state database; direct edits bypass validation, risk corruption, and can be silently overwritten by HA | — |
 | Writing raw YAML to `configuration.yaml` by hand for YAML-only integrations | Use managed YAML config editing with backup and validation | Unmanaged writes risk syntax errors, have no backup, and skip `check_config` — managed editing provides all three | [yaml-only-integrations](references/yaml-only-integrations.md) |
-| Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | [automation-patterns](references/automation-patterns.md), [examples.yaml](references/examples.yaml) |
+| Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically; with no API access, give the config for the UI editor instead | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | [automation-patterns](references/automation-patterns.md), [examples.yaml](references/examples.yaml) |
 | Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
 | Referring to HA "add-ons" | Use the term "Apps" | HA renamed add-ons to Apps in 2026.2 — "Apps are standalone applications that run alongside Home Assistant" | — |
 | `vacuum.send_command` with vendor room IDs | `vacuum.clean_area` with HA area IDs in `cleaning_area_id` (if segments are mapped) | Uses native HA areas, works across integrations — but requires segment-to-area mapping in entity settings first | [device-control #vacuum-control](references/device-control.md#vacuum-control) |
