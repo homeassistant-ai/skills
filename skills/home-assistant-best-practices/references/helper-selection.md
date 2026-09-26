@@ -419,11 +419,11 @@ automation:
       - trigger: time
         at: "07:00:00"
     actions:
-      - action: utility_meter.select_tariff
+      - action: select.select_option   # utility_meter.select_tariff was removed in 2022.9
         target:
-          entity_id: utility_meter.daily_energy
+          entity_id: select.daily_energy
         data:
-          tariff: peak
+          option: peak
 ```
 
 **Common uses:**

@@ -43,7 +43,7 @@ actions:
       entity_id: light.bedroom
     data:
       brightness_pct: "{{ states('input_number.default_brightness') | int }}"
-      kelvin: "{{ 6500 if is_state('binary_sensor.daytime', 'on') else 2700 }}"
+      color_temp_kelvin: "{{ 6500 if is_state('binary_sensor.daytime', 'on') else 2700 }}"
 ```
 
 ### 2. Dynamic Notification Messages
