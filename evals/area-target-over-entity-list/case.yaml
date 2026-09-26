@@ -25,19 +25,25 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  - type: llm
+  # Free: the automation's scope is a floor, area or label (a target key, or a
+  # floor_areas()/area_entities()-style template), and no list item names a
+  # binary_sensor anywhere in the answer: an enumerated sensor list is the
+  # defect. Template versus purpose-specific trigger is the next grader's job.
+  # The lookbehind pins the lookahead to the start of the answer. The Sonnet
+  # judge failed answers with `floor_id: downstairs` under `target:`.
+  - type: regex
     name: uses-area-or-floor-target
-    criteria: >-
-      The trigger targets an area, floor, or label rather than a hardcoded list of
-      sensor entity IDs.
+    pattern: '(?<![\s\S])(?![\s\S]*^\s*-\s*binary_sensor\.)[\s\S]*(\b(floor_id|area_id|label_id)"?\s*:\s*\S|\b(floor_areas|floor_entities|area_entities|label_entities)\s*\()'
+    flags: m
+    match: contains
 
-      FAIL if the automation enumerates `binary_sensor.*` entity IDs.
-
-  - type: llm
+  # Free: the trigger type is one YAML line. The Sonnet judge failed answers
+  # whose config had exactly this line.
+  - type: regex
     name: uses-purpose-specific-trigger
-    criteria: >-
-      The response uses a purpose-specific motion trigger rather than a generic
-      `trigger: state` block over a list of entities.
+    pattern: '^\s*-\s*trigger:\s*(motion|occupancy)\.(detected|cleared)\b'
+    flags: m
+    match: contains
 
   - type: llm
     name: addresses-the-maintenance-ask
