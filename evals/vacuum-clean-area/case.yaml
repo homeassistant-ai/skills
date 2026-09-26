@@ -28,11 +28,12 @@ graders:
     pattern: '\bvacuum\.clean_area\b'
     match: contains
 
-  # The action's data field. `area_id` under `data:` is read as a target, so
-  # the call fails with `cleaning_area_id` missing.
+  # The action's data field, as a YAML or JSON key: naming it only in prose
+  # does not pass. `area_id` under `data:` is read as a target, so the call
+  # fails with `cleaning_area_id` missing.
   - type: regex
     name: cleaning-area-id-field
-    pattern: '\bcleaning_area_id\b'
+    pattern: '\bcleaning_area_id"?\s*:'
     match: contains
 
 expected_outcome: >-

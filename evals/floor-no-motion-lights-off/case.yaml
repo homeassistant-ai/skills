@@ -34,6 +34,13 @@ graders:
     pattern: '\bbehavior"?\s*:\s*"?all\b'
     match: contains
 
+  # Without `for:` the trigger fires as soon as the last sensor clears.
+  # `for: "00:10:00"` and `for:` with `minutes: 10` both pass.
+  - type: regex
+    name: waits-ten-minutes
+    pattern: '\bfor"?\s*:\s*(?:"?0?0:10:00"?|\{?\s*"?minutes"?\s*:\s*10\b)'
+    match: contains
+
 expected_outcome: >-
   A `motion.cleared` trigger targeting `floor_id: upstairs` with
   `behavior: all` and `for: 00:10:00`, turning off the upstairs lights.

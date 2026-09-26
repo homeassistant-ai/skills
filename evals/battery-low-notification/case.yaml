@@ -23,11 +23,12 @@ graders:
     min: 1
 
   # Either current key passes: `became_low` for a low-battery binary_sensor,
-  # `level_crossed_threshold` for a percentage sensor. The pre-2026.7
-  # `battery.low` does not match.
+  # `level_crossed_threshold` for a percentage sensor, which only loads with
+  # its required `threshold:` option. The pre-2026.7 `battery.low` does not
+  # match.
   - type: regex
     name: uses-current-battery-trigger
-    pattern: '\bbattery\.(became_low|level_crossed_threshold)\b'
+    pattern: '\bbattery\.became_low\b|\bbattery\.level_crossed_threshold\b(?=[\s\S]{0,300}?\bthreshold"?\s*:)'
     match: contains
 
 expected_outcome: >-
