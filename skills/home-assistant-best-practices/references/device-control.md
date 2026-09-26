@@ -146,12 +146,16 @@ triggers:
       entity_id: event.living_room_remote_button
     options:
       event_type:
-        - double_short_release   # values are integration-defined; read them off the entity
+        - short_release   # values are integration-defined; read them off the entity
 ```
 
 The available `event_type` values come from the entity's own `event_types` attribute —
 read them rather than guessing. A plain `state` trigger on the entity fires on *any* event
 type, which is the right choice only when you genuinely want all of them.
+
+No double-press value in that list means the device does not report one. For example, HA's
+Hue integration leaves `double_short_release` out of every Hue button's `event_types`. Say
+so, and offer to count two presses within a short window instead of inventing a value.
 
 Two Zigbee stacks are exceptions:
 
