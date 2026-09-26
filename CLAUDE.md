@@ -39,28 +39,32 @@ To validate locally:
 uvx --from skills-ref agentskills validate skills/<skill-name>
 ```
 
-Four more checks gate a merge. `agnix` and `lychee` run as release binaries pinned in
-`.github/workflows/` — install those versions (lychee's release tag is `lychee-vX.Y.Z`, not
-`vX.Y.Z`); `claude plugin validate` ships with the Claude Code CLI; the eval-case checker is
-in-repo and needs only PyYAML (supplied by `uv run --with`):
+Four more checks gate a merge. CI runs `agnix` as a release binary pinned by `AGNIX_VERSION` in
+`validate-skills.yml`; locally, `uvx agnix@<version>` runs that same version from PyPI (keep the
+pin on a version PyPI has). `lychee` runs as a release binary pinned in `links.yml`; install
+that version (its release tag is `lychee-vX.Y.Z`, not `vX.Y.Z`). `claude plugin validate`
+ships with the Claude Code CLI; the eval-case checker is in-repo and needs only PyYAML
+(supplied by `uv run --with`):
 
 ```bash
-agnix skills/ --target claude-code                                    # spec conformance
+uvx agnix@<version> skills/ --target claude-code                      # spec conformance
 lychee --offline --include-fragments --no-progress './**/*.md'        # local links + #anchors
 claude plugin validate .                                              # plugin manifests
 uv run --no-project --with pyyaml python scripts/check_eval_cases.py  # evals/<case>/case.yaml
 ```
 
 agnix catches what skills-ref's unenforced `metadata: dict[str, str]` annotation lets pass —
-e.g. an unquoted integer version, which strict clients refuse. In CI (`links.yml`) lychee runs
-that same local check on PRs touching `.md`/`.yaml`, plus external URLs weekly, dot-directories
-excluded; it cannot see references written as inline code. `check_eval_cases.py` validates the
-shape of eval cases against the `claude plugin eval` 1.1 schema. CI does not run that command
-(it needs credentials and spends tokens), so its own parser never sees a case before merge; the
-schema is transcribed by hand and needs re-deriving if `schema_version` moves. It checks
-structure only and never runs a case. Regex graders are compiled with `node`, not Python `re`:
-the two disagree (`re` rejects JS-valid `(?<name>x)` and accepts Python-only `(?P<name>x)`),
-and without `node` that check is skipped with a warning rather than failed.
+e.g. an unquoted integer version, which strict clients refuse. Run it on `skills/`, not `.`:
+repo-wide it adds prose heuristics about CLAUDE.md and AGENTS.md that CI leaves out on purpose.
+In CI (`links.yml`) lychee runs that same local check on PRs touching `.md`/`.yaml`, plus
+external URLs weekly, dot-directories excluded; it cannot see references written as inline
+code. `check_eval_cases.py` validates the shape of eval cases against the `claude plugin eval`
+1.1 schema. CI does not run that command (it needs credentials and spends tokens), so its own
+parser never sees a case before merge; the schema is transcribed by hand and needs re-deriving
+if `schema_version` moves. It checks structure only and never runs a case. Regex graders are
+compiled with `node`, not Python `re`: the two disagree (`re` rejects JS-valid `(?<name>x)` and
+accepts Python-only `(?P<name>x)`), and without `node` that check is skipped with a warning
+rather than failed.
 
 `check_ha_examples.py` (`ha-examples.yml`) checks every action, purpose-specific trigger and
 condition in the skills' examples against Home Assistant's `services.yaml`, `triggers.yaml`

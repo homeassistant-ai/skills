@@ -88,14 +88,15 @@ jobs:
         # heuristics about CLAUDE.md that should not gate a merge.
         #
         # Installed as a checksum-verified release binary because this repo
-        # restricts Actions to GitHub-owned and verified creators.
+        # restricts Actions to GitHub-owned and verified creators. Pin a version
+        # PyPI also has, so `uvx agnix@<version>` runs the same rules locally.
         if: steps.changes.outputs.skills_changed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
-          AGNIX_VERSION: v0.49.0
+          AGNIX_VERSION: v0.54.0
           # Pinned digest — see the note in links.yml on why the release's own
           # .sha256 is not a sufficient integrity check.
-          AGNIX_SHA256: e3bb9e3661025d54cc5d5835c429548d2a6e0626135363c41c044822f861bcbd
+          AGNIX_SHA256: 12d1f7d01baa1ccdff92501758832a80d7373ef97415d50cb05e7c3a3fa92b4f
         run: |
           set -euo pipefail
           asset="agnix-x86_64-unknown-linux-gnu.tar.gz"
