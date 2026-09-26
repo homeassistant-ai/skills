@@ -39,15 +39,14 @@ To validate locally:
 uvx --from skills-ref agentskills validate skills/<skill-name>
 ```
 
-Four more checks gate a merge. CI runs `agnix` as a release binary pinned by `AGNIX_VERSION` in
-`validate-skills.yml`; locally, `uvx agnix@<version>` runs that same version from PyPI (keep the
-pin on a version PyPI has). `lychee` runs as a release binary pinned in `links.yml`; install
-that version (its release tag is `lychee-vX.Y.Z`, not `vX.Y.Z`). `claude plugin validate`
-ships with the Claude Code CLI; the eval-case checker is in-repo and needs only PyYAML
-(supplied by `uv run --with`):
+Four more checks gate a merge. CI installs `agnix` from PyPI unpinned, so it and `uvx
+agnix@latest` both run the latest release; a new agnix rule can fail a PR that did not cause
+it. `lychee` runs as a release binary pinned in `links.yml`; install that version (its release
+tag is `lychee-vX.Y.Z`, not `vX.Y.Z`). `claude plugin validate` ships with the Claude Code CLI;
+the eval-case checker is in-repo and needs only PyYAML (supplied by `uv run --with`):
 
 ```bash
-uvx agnix@<version> skills/ --target claude-code                      # spec conformance
+uvx agnix@latest skills/ --target claude-code                         # spec conformance
 lychee --offline --include-fragments --no-progress './**/*.md'        # local links + #anchors
 claude plugin validate .                                              # plugin manifests
 uv run --no-project --with pyyaml python scripts/check_eval_cases.py  # evals/<case>/case.yaml
