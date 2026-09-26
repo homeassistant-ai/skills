@@ -11,6 +11,7 @@ execution:
     create a sensor that shows my vacuum's last clean time in a human-readable
     format. vacuum.robot has a last_clean_end attribute with the time
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

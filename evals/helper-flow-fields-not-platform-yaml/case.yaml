@@ -17,6 +17,7 @@ execution:
   # references/ files never load. Grant no other tool: a case that needs
   # an --allow-tools operator grant does not run in CI.
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 

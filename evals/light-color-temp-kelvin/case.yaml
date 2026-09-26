@@ -21,6 +21,7 @@ execution:
           brightness_pct: 40
           color_temp: 370
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

@@ -8,6 +8,7 @@ tags: [templates, helpers]
 execution:
   prompt: I want a sensor showing my media player's current song title
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

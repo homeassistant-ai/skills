@@ -12,6 +12,7 @@ execution:
     hallway. I've already mapped its rooms to my Home Assistant areas in the
     vacuum's settings
   allowed_tools: [Read, Glob, Grep]
+  model: sonnet
   max_turns: 10
   timeout_seconds: 300
 runs: 3

@@ -18,8 +18,8 @@ types, unique grader names within a case, regex patterns that compile *in the
 JavaScript engine that runs them*, valid JS RegExp flags, directory/name
 agreement, allowed_tools set to exactly the read-only Read/Glob/Grep (without
 them the skill's references/ never load; anything else needs an --allow-tools
-operator grant), and a skill-fired grader that can actually prove a real skill
-loaded.
+operator grant), execution.model set to sonnet or haiku, and a skill-fired
+grader that can actually prove a real skill loaded.
 
 Does NOT check that a grader still means what it was written to mean. Judging
 that is a review item.
@@ -40,6 +40,8 @@ import yaml
 TOP_REQ = {"schema_version", "name", "graders", "execution"}
 TOP_OK = TOP_REQ | {"description", "tags", "plugins", "context", "runs", "expected_outcome"}
 READ_TOOLS = {"Read", "Glob", "Grep"}
+# Alias or full id; nothing above Sonnet.
+EVAL_MODEL = re.compile(r"(sonnet|haiku)|claude-(sonnet|haiku)-[\w.-]+")
 EXEC_OK = {"prompt", "max_turns", "timeout_seconds", "model", "allowed_tools",
            "artifact_publish", "growthbook_overrides", "append_system_prompt", "env"}
 # type -> (required keys, optional keys); each grader object is .strict()
@@ -168,6 +170,10 @@ def check_case(path, skills, err, probes):
             or set(tools) != READ_TOOLS):
         w(f"allowed_tools must be exactly {sorted(READ_TOOLS)}, got {tools!r}: without "
           "them references/ never load, and any other tool needs an --allow-tools grant")
+    model = execution.get("model")
+    if not (isinstance(model, str) and EVAL_MODEL.fullmatch(model)):
+        w(f"execution.model must be sonnet or haiku, got {model!r}. Unpinned, a case runs on "
+          "the session's model, often Opus, which costs more and can hide what the skill adds")
     if "runs" in d:
         num(d["runs"], 1, 50, "runs", w)
     if "max_turns" in execution:
