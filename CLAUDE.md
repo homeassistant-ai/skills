@@ -81,9 +81,11 @@ uv run --no-project --with pyyaml python scripts/check_ha_examples.py --ha-core 
 ```
 
 PRs check against the tag pinned in `ha-examples.yml`; a weekly run checks the latest release.
-When the weekly run fails, a release changed something an example uses: fix the example and
-bump the pin in the same PR. Those YAML files describe HA's UI, and a Python schema can accept
-keys they do not list. After confirming in the schema that HA accepts a flagged key, add it to
+Bump the pin in two cases. When the weekly run fails, a release changed something an example
+uses: fix the example and bump the pin in the same PR. When a new example uses an action,
+trigger or field from a release newer than the pin, the PR check reports it as unknown: bump
+the pin in that PR. Those YAML files describe HA's UI, and a Python schema can accept keys they
+do not list. After confirming in the schema that HA accepts a flagged key, add it to
 `scripts/ha_examples_allowlist.yaml` with the reason.
 
 Three things nothing checks, so all three stay review items: that every reference file is still
