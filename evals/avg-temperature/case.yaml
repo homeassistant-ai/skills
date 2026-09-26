@@ -45,7 +45,9 @@ graders:
       the UI or a config-entry flow.
 
       PASS if a YAML-shaped snippet appears but is labelled as the helper's config
-      shape rather than a file to hand-edit.
+      shape rather than a file to hand-edit. A `template:` sensor is judged by
+      no-template-needed, not here: PASS unless a `- platform: min_max` block is
+      given as the thing to write.
 
 expected_outcome: >-
   Recommends the min_max helper with type mean — not a Template Helper, not YAML.

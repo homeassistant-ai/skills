@@ -30,12 +30,13 @@ graders:
     flags: mi
     match: contains
 
-  - type: llm
+  # Free and exact: the trigger type is one YAML line. The Sonnet judge failed
+  # answers whose config had exactly this line.
+  - type: regex
     name: prefers-purpose-specific-trigger
-    criteria: >-
-      The trigger is a purpose-specific motion trigger (optionally with an area
-      target) rather than a generic `trigger: state` block on a single
-      `binary_sensor` entity.
+    pattern: '^\s*-\s*trigger:\s*(motion|occupancy)\.(detected|cleared)\b'
+    flags: m
+    match: contains
 
   - type: llm
     name: delay-starts-after-motion-clears

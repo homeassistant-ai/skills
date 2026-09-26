@@ -32,8 +32,9 @@ graders:
     criteria: >-
       The response does not exclusively recommend a button card with a `tap_action`.
 
-      PASS if a button card is offered as an alternative alongside the shortcut
-      card. FAIL if the button card is the only option given.
+      PASS if only the shortcut card is given, or if a button card is offered as
+      an alternative alongside it. FAIL if the button card is the only option
+      given.
 
 expected_outcome: >-
   Recommends the shortcut card type, not only a hand-wired button card.

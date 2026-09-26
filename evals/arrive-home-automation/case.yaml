@@ -22,17 +22,16 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  - type: llm
+  # Free: a `state` trigger with `to: home`, a `zone.entered` trigger, or the
+  # classic `zone` trigger, each followed by its home value within the same
+  # trigger (300 characters). The pre-2024.10 `platform:` key counts too: this
+  # checks the trigger type, not the syntax. The Sonnet judge ignored a "prose
+  # counts" clause.
+  - type: regex
     name: uses-state-trigger
-    criteria: >-
-      The automation triggers when a `person.*` or `device_tracker.*` entity
-      arrives home: a `trigger: state` with `to: home`, or a `zone.entered`
-      trigger that targets that entity with `zone.home`. A trigger the response
-      describes in prose ("your person entity changes to `home`") counts the same
-      as one written out in YAML.
-
-      FAIL if the trigger is keyed on a device, or on anything other than a
-      person or device_tracker entity arriving home.
+    pattern: '^\s*-\s*(?:trigger|platform):\s*state\b[\s\S]{0,300}?\bto:\s*["'']?home\b|^\s*-\s*(?:trigger|platform):\s*(zone\.entered|zone)\b[\s\S]{0,300}?\bzone\.home\b'
+    flags: m
+    match: contains
 
   - type: llm
     name: no-entered-home-trigger
