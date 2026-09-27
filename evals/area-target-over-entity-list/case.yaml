@@ -38,10 +38,11 @@ graders:
     match: contains
 
   # Free: the trigger type is one YAML line. The Sonnet judge failed answers
-  # whose config had exactly this line.
+  # whose config had exactly this line. HA still loads the pre-2024.10
+  # `platform:` key as `trigger:`.
   - type: regex
     name: uses-purpose-specific-trigger
-    pattern: '^\s*-\s*trigger:\s*(motion|occupancy)\.(detected|cleared)\b'
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(motion|occupancy)\.(detected|cleared)\b'
     flags: m
     match: contains
 
