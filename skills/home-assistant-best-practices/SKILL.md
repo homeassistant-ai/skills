@@ -32,8 +32,6 @@ metadata:
 
 **No tool reaches the HA API?** Do not stop to ask for access. Give the complete config for the user to create in the UI (for an automation, the YAML to paste in the editor's **Edit in YAML** mode; for a helper, its form fields), and name the entity IDs you assumed.
 
-**Read the matching reference before you answer.** This page only summarizes the files in [Reference Files](#reference-files); the exact keys, fields and working examples are in them. Read every file whose row matches the task.
-
 ## Decision Workflow
 
 Follow this sequence when creating any automation:
@@ -137,7 +135,7 @@ See [device-control #buttonremote-patterns](references/device-control.md#buttonr
 
 ## Reference Files
 
-Read each file whose row matches the task before you answer:
+Read these when you need detailed information:
 
 | File | When to read |
 |------|--------------|
