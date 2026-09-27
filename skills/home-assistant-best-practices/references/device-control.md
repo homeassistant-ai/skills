@@ -229,7 +229,7 @@ triggers:
 
 ### Lights
 
-**Color temperature:** Always use `color_temp_kelvin` (e.g., `3000`). The legacy `color_temp` parameter (in mireds) was removed in 2026.3.
+**Color temperature:** Always use `color_temp_kelvin` (e.g., `3000`). The legacy `color_temp` parameter (in mireds) was removed in 2026.3. When migrating, convert the value: Kelvin = 1,000,000 ÷ mireds (500 mireds = 2000 K).
 
 ```yaml
 # Turn on with brightness and transition
