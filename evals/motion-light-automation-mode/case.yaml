@@ -25,12 +25,13 @@ graders:
     min: 1
 
   # Free: new motion must reset the timeout. Passes `mode: restart`, or an answer
-  # with no `delay` or `wait_` step whose `motion.cleared` (or `state` to off)
-  # trigger has a `for:` within its next 8 lines: each run ends at once and the
-  # mode does not matter. A `for:` on the `motion.detected` trigger does not pass.
+  # with no `delay` or `wait_` step whose `motion.cleared` trigger (or `state`
+  # trigger on binary_sensor.hallway_motion to off) has a `for:` within its next
+  # 8 lines: each run ends at once and the mode does not matter. A `for:` on the
+  # `motion.detected` trigger, or on another entity's trigger, does not pass.
   - type: regex
     name: new-motion-resets-timeout
-    pattern: '^\s*"?mode"?\s*:\s*["'']?restart|(?<![\s\S])(?![\s\S]*^\s*-?\s*"?(?:delay|wait_for_trigger|wait_template)"?\s*:)[\s\S]*^\s*(?:-\s*)?(?:trigger|platform):\s*(?:(?:motion|occupancy)\.cleared\b|state\b(?=[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform):)[^\n]*){0,8}?\bto"?\s*:\s*["'']?off\b))[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform):)[^\n]*){0,8}?\bfor"?\s*:'
+    pattern: '^\s*"?mode"?\s*:\s*["'']?restart|(?<![\s\S])(?![\s\S]*^\s*-?\s*"?(?:delay|wait_for_trigger|wait_template)"?\s*:)[\s\S]*^\s*(?:-\s*)?(?:trigger|platform):\s*(?:(?:motion|occupancy)\.cleared\b|state\b(?=[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform):)[^\n]*){0,8}?binary_sensor\.hallway_motion\b)(?=[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform):)[^\n]*){0,8}?\bto"?\s*:\s*["'']?off\b))[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform):)[^\n]*){0,8}?\bfor"?\s*:'
     flags: mi
     match: contains
 
