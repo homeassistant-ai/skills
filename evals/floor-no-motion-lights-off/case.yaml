@@ -23,9 +23,19 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
+  # A cleared trigger as a trigger item, not only a mention.
   - type: regex
     name: uses-cleared-trigger
-    pattern: '\b(motion|occupancy)\.cleared\b'
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(motion|occupancy)\.cleared\b'
+    flags: m
+    match: contains
+
+  # The trigger item targets the floor the prompt names, not an area with its
+  # ID: `floor_id: upstairs` within the next 8 lines, before the next item.
+  - type: regex
+    name: trigger-targets-the-floor
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(?:occupancy|motion)\.cleared\b[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform|action|service):)[^\n]*){0,8}?\bfloor_id"?\s*:\s*(?:\[\s*|\n\s*-\s*)?["'']?upstairs\b'
+    flags: m
     match: contains
 
   # `behavior: all` on the trigger, or on a `motion.is_not_detected` condition
@@ -40,6 +50,12 @@ graders:
   - type: regex
     name: waits-ten-minutes
     pattern: '\bfor"?\s*:\s*(?:"?0?0:10:00"?|\{?\s*"?minutes"?\s*:\s*10\b)'
+    match: contains
+
+  - type: regex
+    name: action-targets-the-floor
+    pattern: '^\s*-\s*(?:action|service):\s*light\.turn_off\b[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform|action|service):)[^\n]*){0,8}?\bfloor_id"?\s*:\s*(?:\[\s*|\n\s*-\s*)?["'']?upstairs\b'
+    flags: m
     match: contains
 
 expected_outcome: >-

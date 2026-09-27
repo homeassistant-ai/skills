@@ -33,6 +33,14 @@ graders:
     flags: m
     match: contains
 
+  # The trigger item targets the floor the prompt names, not an area with its
+  # ID: `floor_id: ground_floor` within the next 8 lines, before the next item.
+  - type: regex
+    name: trigger-targets-the-floor
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(?:occupancy|motion)\.cleared\b[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform|action|service):)[^\n]*){0,8}?\bfloor_id"?\s*:\s*(?:\[\s*|\n\s*-\s*)?["'']?ground_floor\b'
+    flags: m
+    match: contains
+
   # `behavior: all` on the trigger, or on a condition that checks every sensor,
   # both pass. `each` (the default) and the pre-2026.6 `last` do not.
   - type: regex
@@ -49,6 +57,12 @@ graders:
   - type: regex
     name: turns-off-the-fans
     pattern: '^\s*-\s*(?:action|service):\s*fan\.turn_off\b'
+    flags: m
+    match: contains
+
+  - type: regex
+    name: action-targets-the-floor
+    pattern: '^\s*-\s*(?:action|service):\s*fan\.turn_off\b[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform|action|service):)[^\n]*){0,8}?\bfloor_id"?\s*:\s*(?:\[\s*|\n\s*-\s*)?["'']?ground_floor\b'
     flags: m
     match: contains
 
