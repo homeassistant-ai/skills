@@ -41,8 +41,10 @@ graders:
       The response reads the valid event types from the entity's `event_types`
       attribute rather than asserting them from memory.
 
-      FAIL if it states which event types the device emits without indicating that
-      they should be read off the entity.
+      PASS if it tells the user to check the entity's `event_types` attribute, even
+      when it also names the values HA's Hue integration reports. FAIL if it states
+      which event types the device emits without indicating that they should be
+      read off the entity.
 
   - type: llm
     name: does-not-invent-double-press
@@ -60,7 +62,9 @@ graders:
       The automation the user is told to create is not keyed off a `device_id`.
 
       Judge the produced automation, not the prose — mentioning device_id to warn
-      against it is fine.
+      against it is fine, and so is opening the device page to find the entity.
+      FAIL only if the automation has a `device_id` key or a device trigger, or
+      the user is told to pick a Device trigger in the UI.
 
 expected_outcome: >-
   Targets the button's event.* entity, reads event_types off the entity, and
