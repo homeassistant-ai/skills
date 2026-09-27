@@ -42,16 +42,21 @@ graders:
     match: contains
 
   # `behavior: all` on the trigger, or on a condition that checks every sensor,
-  # both pass. `each` (the default) and the pre-2026.6 `last` do not.
+  # both pass, on a line indented under that item. `each` (the default) and the
+  # pre-2026.6 `last` do not.
   - type: regex
     name: waits-for-all-sensors
-    pattern: '\bbehavior"?\s*:\s*"?all\b'
+    pattern: '^([ \t]*)-[ \t]*(?:trigger|platform|condition):[ \t]*(?:occupancy|motion)\.(?:cleared|is_not_detected)\b[^\n]*(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n]*?\bbehavior"?\s*:\s*"?all\b'
+    flags: m
     match: contains
 
-  # `for: "00:20:00"` and `for:` with `minutes: 20` both pass.
+  # `for: "00:20:00"` and `for:` with `minutes: 20` both pass, under the cleared
+  # trigger or condition item when the answer has one, else under any trigger or
+  # condition item (the trigger type is `uses-cleared-trigger`'s job).
   - type: regex
     name: waits-twenty-minutes
-    pattern: '\bfor"?\s*:\s*(?:"?0?0:20:00"?|\{?\s*"?minutes"?\s*:\s*20\b)'
+    pattern: '^([ \t]*)-[ \t]*(?:trigger|platform|condition):[ \t]*(?:occupancy|motion)\.(?:cleared|is_not_detected)\b[^\n]*(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n]*?\bfor"?\s*:\s*(?:"?0?0:20:00"?|\{?\s*"?minutes"?\s*:\s*20\b)|(?<![\s\S])(?![\s\S]*^[ \t]*-[ \t]*(?:trigger|platform|condition):[ \t]*(?:occupancy|motion)\.(?:cleared|is_not_detected)\b)[\s\S]*^([ \t]*)-[ \t]*(?:trigger|platform|condition):[^\n]*(?:\n\2[ \t]+[^\n]*)*?\n\2[ \t]+[^\n]*?\bfor"?\s*:\s*(?:"?0?0:20:00"?|\{?\s*"?minutes"?\s*:\s*20\b)'
+    flags: m
     match: contains
 
   - type: regex
