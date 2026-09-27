@@ -137,7 +137,11 @@ def tool_schema(desc: str) -> dict:
 
 
 def skill_files(skill_dir: Path) -> list:
-    return sorted(f.relative_to(skill_dir).as_posix() for f in skill_dir.rglob("*") if f.is_file())
+    """Regular files inside the skill, as ha-mcp lists them: symlinks and files
+    that resolve outside the skill are left out."""
+    root = skill_dir.resolve()
+    return sorted(f.relative_to(skill_dir).as_posix() for f in skill_dir.rglob("*")
+                  if f.is_file() and not f.is_symlink() and f.resolve().is_relative_to(root))
 
 
 def serve(skill_dir: Path, args: dict) -> dict:
@@ -179,7 +183,10 @@ def chat(base_url: str, model: str, messages: list, tools: list) -> tuple:
     try:
         with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as r:
             reply = json.loads(r.read())
-        return reply["choices"][0]["message"], (reply.get("usage") or {}).get("prompt_tokens")
+        message = reply["choices"][0]["message"]
+        if not isinstance(message, dict):
+            raise TypeError(f"message is {type(message).__name__}, not an object")
+        return message, (reply.get("usage") or {}).get("prompt_tokens")
     except urllib.error.HTTPError as e:
         raise EndpointError(f"HTTP {e.code}: {e.read().decode(errors='replace')[:300]}") from e
     except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError,
@@ -215,7 +222,7 @@ def run_case(a, case: dict, desc: str) -> dict:
         msg, prompt_tokens = chat(a.base_url, a.model, messages, tools)
         if prompt_tokens and prompt_tokens > MIN_CALIBRATION_TOKENS:
             chars_per_token = size / prompt_tokens
-        messages.append({k: v for k, v in msg.items() if k in ("role", "content", "tool_calls")})
+        messages.append({"role": "assistant", **{k: v for k, v in msg.items() if k in ("content", "tool_calls")}})
         if not msg.get("tool_calls"):
             final = msg.get("content") or ""
             break
