@@ -159,10 +159,10 @@ Claude Code session, prefix `env -u CLAUDECODE` or the nested `claude` refuses t
 skill: one `ha_get_skill_guide` tool on an OpenAI-compatible endpoint (LM Studio, llama.cpp,
 Ollama), without Claude Code's system prompt filling a small context. It scores only the regex
 graders, so its numbers do not compare with `claude plugin eval`; use it to compare two skill
-versions (`--skill-dir`) or two ha-mcp tool shapes (`--tool`) on the same model. Set
-`--ctx-limit` just under the loaded context: some servers crash on overflow instead of erroring.
-Its ha-mcp texts are copied from `server.py` at the version its docstring names for each
-shape; re-copy them when that file changes. It needs `node`, like the case checker:
+versions (`--skill-dir`) on the same model. Set `--ctx-limit` just under the loaded context:
+some servers crash on overflow instead of erroring. Its ha-mcp texts are copied from
+`server.py` at the commit its docstring names; re-copy them when that file changes. It needs
+`node`, like the case checker:
 
 ```bash
 uv run --no-project --with pyyaml python scripts/local_model_eval.py --model <model> \

@@ -2,40 +2,38 @@
 """Run eval cases against a local model the way ha-mcp serves the skill.
 
 `claude plugin eval` runs cases through Claude Code, whose system prompt and
-tool set dominate a small model's context. Local-model users more often reach
-the skill through an MCP client (Open WebUI, for example) talking to ha-mcp,
-which hands the skill out through one tool. This script imitates that path
-against any OpenAI-compatible chat endpoint (LM Studio, llama.cpp, Ollama).
+tool set fill most of a small model's context. Local-model users more often
+reach the skill through an MCP client (Open WebUI, for example) talking to
+ha-mcp. This script imitates that path against any OpenAI-compatible chat
+endpoint (LM Studio, llama.cpp, Ollama).
 
-The model gets:
-- as the system prompt, ha-mcp's server instructions (skip with
-  --no-instructions: not every client forwards them);
-- one tool, ha_get_skill_guide, in one of two shapes (--tool):
-  - legacy (default): ha-mcp at commit af9b054a. No args lists the skills,
-    `skill` lists the files, `skill` + `file` returns a file.
-  - single-file: ha-mcp branch feat/skill-guide-single-arg. No args returns
-    SKILL.md; `file` returns that file; any other path is refused.
-
-Tool description, instructions and response texts are copied from ha-mcp
-src/ha_mcp/server.py for each shape. Re-copy them when that file changes. An
-MCP tool error reaches the model as text; here it is a JSON object with
-`error` and `suggestions`.
+The model gets ha-mcp's server instructions as the system prompt (skip them
+with --no-instructions: not every client forwards them) and one tool,
+ha_get_skill_guide: no arguments returns SKILL.md, `file` returns that file,
+any other path is refused with the list of valid paths. The texts are copied
+from ha-mcp src/ha_mcp/server.py at commit db90fbeb (homeassistant-ai/ha-mcp
+PR #2556); re-copy them when that file changes. Two texts are this script's
+own: an MCP tool error reaches the model as text, sent here as a JSON object
+with `error` and `suggestions`, and ha-mcp rejects an unexpected argument
+through its schema validation, whose exact message is not copied.
 
 There are no Home Assistant tools, so the config must be in the final answer.
-Only the case's regex graders are scored, compiled with node as the harness
-does; llm and tool_used graders are skipped, so a case's score here is not
-comparable with `claude plugin eval`.
+The answer is scored with the case's regex graders only, compiled in node as
+the eval harness does; llm and tool_used graders are skipped, so a score here
+does not compare with `claude plugin eval`. A run that ends without an answer
+(out of turns, or over --ctx-limit) scores 0.
 
-Each run is written to <out>/<case>-<label>-r<n>.json with the tool calls,
-files read, final answer and grader results. An existing file is skipped, so a
-stopped batch resumes. A run that fails on the endpoint is not written.
+Each run is written to <out>/<case>-<label>-r<n>.json. An existing file is
+skipped, so a stopped batch resumes; it must have been written with the same
+settings. A run whose request fails at the endpoint (server down, model
+unloaded, a context overflow the server reports) is not written, and the
+script exits 1; lower --ctx-limit if the server reports overflows.
 
 Usage:
   python scripts/local_model_eval.py --model <model> --out <dir> \
-      --case <case> [--case <case> ...] [--runs 3] [--label <label>] \
-      [--skill-dir <dir>] [--base-url http://localhost:1234] \
-      [--tool legacy|single-file] [--no-instructions] [--max-turns 10] [--ctx-limit 96000]
-  --all-regex instead of --case runs every case that has a regex grader.
+      (--case <case> [--case <case> ...] | --all-regex) [--runs 3] \
+      [--label <label>] [--skill-dir <dir>] [--base-url http://localhost:1234] \
+      [--no-instructions] [--max-turns 10] [--ctx-limit 96000]
 """
 import argparse
 import json
@@ -53,8 +51,10 @@ import yaml
 REPO = Path(__file__).resolve().parent.parent
 TOOL = "ha_get_skill_guide"
 SKILL = "home-assistant-best-practices"
+REQUEST_TIMEOUT_S = 1500  # a slow local model can take minutes per reply
+MIN_CALIBRATION_TOKENS = 1000  # ignore token counts too small to give a stable ratio
 
-# Texts from ha-mcp server.py, shared by both tool shapes.
+# Texts copied from ha-mcp server.py at db90fbeb.
 USE_BEFORE = (
     "Use BEFORE: creating or editing automations, scripts, scenes, "
     "helpers, or dashboards; writing triggers, conditions, actions, "
@@ -75,75 +75,65 @@ BPS_HINT = (
     "_dashboard / _yaml) to avoid re-receiving the canonical reference "
     "files inline."
 )
+INSTRUCTIONS = (
+    "IMPORTANT: This server provides best-practice skills that MUST "
+    "be consulted before performing matching actions. "
+    "Read the SKILL.md for the matching skill "
+    "— it contains a Reference Files table that maps tasks to "
+    "specific reference files. You MUST read the referenced files "
+    "that match your current task before proceeding. "
+    "Do NOT load all reference files upfront "
+    "— only the ones the table directs you to.\n\n"
+    "How to access: Read the skill via MCP resources (resources/read with the "
+    "skill:// URI) — if you can read these instructions, you "
+    "should be able to access resources as well. "
+    f"If for any reason you cannot access MCP resources, call {TOOL}() with no "
+    "arguments as a fallback: it returns SKILL.md, then pass file='<path>' for a "
+    "reference file. "
+    "If you can access resources normally, do "
+    "not waste time or tokens on that tool.\n"
+)
+TOOL_DESCRIPTION = (
+    "Get the bundled Home Assistant best-practices skill. "
+    "CALL THIS FIRST before performing matching actions.\n\n"
+    "Call with no arguments to read SKILL.md: the workflow, the common mistakes, "
+    "and a table that says which reference file to read for each task. Then call "
+    "again with file='<path>' (e.g. 'references/automation-patterns.md') for only "
+    "the files that table points to.\n\n"
+)
+FILE_PARAM = (
+    "Path of the file to read, exactly as SKILL.md links it "
+    "(e.g. 'references/automation-patterns.md'). Omit to read SKILL.md."
+)
+HOW_TO_USE = (
+    f"Call {TOOL}(file='<path>') for the reference files the table above "
+    "points to for your task, using the path exactly as linked (e.g. "
+    "'references/automation-patterns.md'). Read only those; do not load every file."
+)
+
+# Runs each [pattern, flags, text] as a JavaScript RegExp, as the eval harness does.
+NODE_GRADER = ("const q=JSON.parse(require('fs').readFileSync(0,'utf8'));"
+               "process.stdout.write(JSON.stringify(q.map(([p,f,t])=>new RegExp(p,f).test(t))))")
 
 
-def frontmatter_description(skill_dir: Path) -> str:
+class EndpointError(Exception):
+    """The chat endpoint did not return a usable reply."""
+
+
+def skill_description(skill_dir: Path) -> str:
     text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
     return yaml.safe_load(text.split("---", 2)[1])["description"].strip()
 
 
-def server_instructions(desc: str, shape: str) -> str:
-    if shape == "legacy":
-        fallback = (
-            f"If for any reason you cannot access MCP resources, use the {TOOL} "
-            "tool as a fallback."
-        )
-    else:
-        fallback = (
-            f"If for any reason you cannot access MCP resources, call {TOOL}() with no "
-            "arguments as a fallback: it returns SKILL.md, then pass file='<path>' for a "
-            "reference file."
-        )
-    access = (
-        "Read the skill via MCP resources (resources/read with the "
-        "skill:// URI) — if you can read these instructions, you "
-        f"should be able to access resources as well. {fallback} "
-        "If you can access resources normally, do "
-        "not waste time or tokens on that tool."
-    )
-    header = (
-        "IMPORTANT: This server provides best-practice skills that MUST "
-        "be consulted before performing matching actions. "
-        "Read the SKILL.md for the matching skill "
-        "— it contains a Reference Files table that maps tasks to "
-        "specific reference files. You MUST read the referenced files "
-        "that match your current task before proceeding. "
-        "Do NOT load all reference files upfront "
-        "— only the ones the table directs you to.\n\n"
-        f"How to access: {access}\n"
-    )
-    return header + f"\n### Skill: {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}"
+def system_prompt(desc: str) -> str:
+    return INSTRUCTIONS + f"\n### Skill: {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}"
 
 
-def tool_schema(desc: str, shape: str) -> dict:
-    block = f"### {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}\n\n{USE_BEFORE}\n\n{ALIASES}"
-    if shape == "legacy":
-        description = (
-            "Get bundled Home Assistant best-practice skill guides. "
-            "CALL THIS FIRST before performing matching actions.\n\n"
-            "Three modes (progressive disclosure):\n"
-            "- No args: list bundled skills with their trigger conditions.\n"
-            "- skill arg: list reference files for that skill.\n"
-            "- skill + file args: read the file content.\n\n"
-            "Bundled skills:\n\n" + block
-        )
-        params = {"type": "object", "properties": {
-            "skill": {"type": "string", "description": "Skill name from the no-args listing (e.g., 'home-assistant-best-practices')."},
-            "file": {"type": "string", "description": "Reference file path within the skill, relative to the skill directory (e.g., 'SKILL.md' or 'references/automation-patterns.md'). Requires skill to be set."},
-        }}
-    else:
-        description = (
-            "Get the bundled Home Assistant best-practices skill. "
-            "CALL THIS FIRST before performing matching actions.\n\n"
-            "Call with no arguments to read SKILL.md: the workflow, the common mistakes, "
-            "and a table that says which reference file to read for each task. Then call "
-            "again with file='<path>' (e.g. 'references/automation-patterns.md') for only "
-            "the files that table points to.\n\n" + block
-        )
-        params = {"type": "object", "additionalProperties": False, "properties": {
-            "file": {"type": "string", "default": "SKILL.md",
-                     "description": "Path of the file to read, exactly as SKILL.md links it (e.g. 'references/automation-patterns.md'). Omit to read SKILL.md."},
-        }}
+def tool_schema(desc: str) -> dict:
+    description = (TOOL_DESCRIPTION + f"### {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}"
+                   f"\n\n{USE_BEFORE}\n\n{ALIASES}")
+    params = {"type": "object", "additionalProperties": False, "properties": {
+        "file": {"type": "string", "default": "SKILL.md", "description": FILE_PARAM}}}
     return {"type": "function", "function": {"name": TOOL, "description": description, "parameters": params}}
 
 
@@ -151,159 +141,171 @@ def skill_files(skill_dir: Path) -> list:
     return sorted(f.relative_to(skill_dir).as_posix() for f in skill_dir.rglob("*") if f.is_file())
 
 
-def run_tool(skill_dir: Path, desc: str, args: dict, shape: str) -> dict:
-    if shape == "single-file":
-        extra = set(args) - {"file"}
-        if extra:
-            return {"error": f"Unexpected argument(s): {', '.join(sorted(extra))}."}
-        file = args.get("file") or "SKILL.md"
-        files = skill_files(skill_dir)
-        if file not in files:
-            return {"error": f"Unknown file {file!r} in skill {SKILL!r}.",
-                    "suggestions": [f"Pass one of these paths exactly as written: {', '.join(files)}",
-                                    f"Call {TOOL}() with no arguments to read SKILL.md, whose table says which file to read."]}
-        content = (skill_dir / file).read_text(encoding="utf-8")
-        uri = f"skill://{SKILL}/{file}"
-        if file == "SKILL.md":
-            return {"success": True, "file": file, "uri": uri, "content": content,
-                    "how_to_use": (f"Call {TOOL}(file='<path>') for the reference files the table above "
-                                   "points to for your task, using the path exactly as linked (e.g. "
-                                   "'references/automation-patterns.md'). Read only those; do not load every file.")}
-        return {"skill_content_hint": BPS_HINT, "success": True, "file": file, "uri": uri, "content": content}
-
-    skill, file = args.get("skill"), args.get("file")
-    if not skill:
-        return {"success": True,
-                "skills": [{"skill": SKILL, "uri": f"skill://{SKILL}/SKILL.md", "description": desc}],
-                "how_to_use": (f"Call {TOOL}(skill='<name>') to list a skill's reference files, then "
-                               f"{TOOL}(skill='<name>', file='<path>') to read content. Resource-capable "
-                               "clients can also read skill:// URIs via resources/read.")}
-    if skill != SKILL:
-        return {"success": False, "error": f"Unknown skill {skill!r}."}
-    if not file:
-        return {"success": True, "skill": skill, "uri": f"skill://{skill}/SKILL.md",
-                "files": [{"name": n, "uri": f"skill://{skill}/{n}"} for n in skill_files(skill_dir)],
-                "how_to_use": (f"Call {TOOL}(skill={skill!r}, file='<name>') to read a specific file. "
-                               "Start with SKILL.md for the decision workflow.")}
-    target = (skill_dir / file).resolve()
-    if not target.is_relative_to(skill_dir.resolve()) or not target.is_file():
-        return {"success": False, "error": f"File {file!r} not found in skill {skill!r}."}
-    return {"skill_content_hint": BPS_HINT, "success": True, "skill": skill, "file": file,
-            "uri": f"skill://{skill}/{file}", "content": target.read_text(encoding="utf-8")}
+def serve(skill_dir: Path, args: dict) -> dict:
+    """ha_get_skill_guide's response, keys in ha-mcp's order."""
+    extra = set(args) - {"file"}
+    if extra:
+        return {"error": f"Unexpected argument(s): {', '.join(sorted(extra))}."}
+    file = args.get("file") or "SKILL.md"
+    files = skill_files(skill_dir)
+    if file not in files:  # an exact match also refuses traversal and absolute paths
+        return {"error": f"Unknown file {file!r} in skill {SKILL!r}.",
+                "suggestions": [f"Pass one of these paths exactly as written: {', '.join(files)}",
+                                f"Call {TOOL}() with no arguments to read SKILL.md, whose table says which file to read."]}
+    response = {} if file == "SKILL.md" else {"skill_content_hint": BPS_HINT}
+    response.update(success=True, file=file, uri=f"skill://{SKILL}/{file}",
+                    content=(skill_dir / file).read_text(encoding="utf-8"))
+    if file == "SKILL.md":
+        response["how_to_use"] = HOW_TO_USE
+    return response
 
 
-def chat(base_url: str, model: str, messages: list, tools: list) -> dict:
+def call_tool(skill_dir: Path, tool_call: dict) -> tuple:
+    name = tool_call["function"]["name"]
+    raw = tool_call["function"].get("arguments") or "{}"
+    try:
+        args = json.loads(raw)
+    except json.JSONDecodeError:
+        args = raw
+    if name != TOOL or not isinstance(args, dict):
+        return args, {"success": False, "error": f"Unknown tool {name!r} or bad arguments."}
+    return args, serve(skill_dir, args)
+
+
+def chat(base_url: str, model: str, messages: list, tools: list) -> tuple:
+    """Return the reply message and the prompt token count the server reports."""
     body = json.dumps({"model": model, "messages": messages, "tools": tools, "stream": False}).encode()
-    req = urllib.request.Request(base_url.rstrip("/") + "/v1/chat/completions", data=body,
-                                 headers={"content-type": "application/json"})
-    with urllib.request.urlopen(req, timeout=1500) as r:
-        return json.loads(r.read())
+    request = urllib.request.Request(base_url.rstrip("/") + "/v1/chat/completions", data=body,
+                                     headers={"content-type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT_S) as r:
+            reply = json.loads(r.read())
+        return reply["choices"][0]["message"], (reply.get("usage") or {}).get("prompt_tokens")
+    except urllib.error.HTTPError as e:
+        raise EndpointError(f"HTTP {e.code}: {e.read().decode(errors='replace')[:300]}") from e
+    except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError,
+            KeyError, IndexError, TypeError) as e:
+        raise EndpointError(f"{type(e).__name__}: {e}") from e
 
 
-def grade(case: dict, text: str) -> dict:
-    regex = [g for g in case["graders"] if g["type"] == "regex"]
-    q = [[g["pattern"], g.get("flags", ""), text] for g in regex]
-    node = ("const q=JSON.parse(require('fs').readFileSync(0,'utf8'));"
-            "process.stdout.write(JSON.stringify(q.map(([p,f,t])=>new RegExp(p,f).test(t))))")
-    res = json.loads(subprocess.run(["node", "-e", node], input=json.dumps(q),
-                                    capture_output=True, text=True, check=True).stdout)
-    return {g["name"]: (m if g.get("match", "contains") == "contains" else not m) for g, m in zip(regex, res)}
+def grade(graders: list, text: str) -> dict:
+    query = [[g["pattern"], g.get("flags", ""), text] for g in graders]
+    out = subprocess.run(["node", "-e", NODE_GRADER], input=json.dumps(query),
+                         capture_output=True, text=True, check=True).stdout
+    grades = {}
+    for g, matched in zip(graders, json.loads(out)):
+        grades[g["name"]] = matched if g.get("match", "contains") == "contains" else not matched
+    return grades
 
 
-def one_run(a, case: dict, desc: str) -> dict:
-    tools = [tool_schema(desc, a.tool)]
-    messages = [] if a.no_instructions else [{"role": "system", "content": server_instructions(desc, a.tool)}]
+def run_case(a, case: dict, desc: str) -> dict:
+    """One conversation: tool calls until the model answers, then grade the answer."""
+    tools = [tool_schema(desc)]
+    messages = [] if a.no_instructions else [{"role": "system", "content": system_prompt(desc)}]
     messages.append({"role": "user", "content": case["execution"]["prompt"]})
-    calls, reads, ratio, error, final = [], [], 4.0, None, ""
-    t0 = time.time()
-    for turn in range(1, a.max_turns + 1):
+    calls, reads, final, error = [], [], "", None
+    chars_per_token = 4.0  # a first guess; each reply's prompt_tokens corrects it
+    started = time.time()
+    for _ in range(a.max_turns):
         # Refuse a prompt that would overflow the loaded context: some servers
-        # crash instead of returning an error. Chars per token is learned from
-        # the prompt_tokens each response reports.
+        # crash on overflow instead of returning an error.
         size = len(json.dumps(messages)) + len(json.dumps(tools))
-        if size / ratio > a.ctx_limit:
-            error = f"context overflow: estimated {int(size / ratio)} tokens, limit {a.ctx_limit}"
+        if size / chars_per_token > a.ctx_limit:
+            error = f"context overflow: estimated {int(size / chars_per_token)} tokens, limit {a.ctx_limit}"
             break
-        try:
-            resp = chat(a.base_url, a.model, messages, tools)
-        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
-            detail = e.read().decode()[:300] if isinstance(e, urllib.error.HTTPError) else str(e)
-            error = f"api error: {detail}"
-            break
-        pt = (resp.get("usage") or {}).get("prompt_tokens")
-        if pt and pt > 1000:
-            ratio = size / pt
-        msg = resp["choices"][0]["message"]
-        tcs = msg.get("tool_calls") or []
+        msg, prompt_tokens = chat(a.base_url, a.model, messages, tools)
+        if prompt_tokens and prompt_tokens > MIN_CALIBRATION_TOKENS:
+            chars_per_token = size / prompt_tokens
         messages.append({k: v for k, v in msg.items() if k in ("role", "content", "tool_calls")})
-        if not tcs:
+        if not msg.get("tool_calls"):
             final = msg.get("content") or ""
             break
-        for tc in tcs:
-            fn = tc["function"]["name"]
-            try:
-                args = json.loads(tc["function"].get("arguments") or "{}")
-            except json.JSONDecodeError:
-                args = {"_raw": tc["function"].get("arguments")}
-            calls.append({"name": fn, "args": args})
-            if fn == TOOL and isinstance(args, dict) and "_raw" not in args:
-                out = run_tool(a.skill_dir, desc, args, a.tool)
-                read = args.get("file") or ("SKILL.md" if a.tool == "single-file" else None)
-                if read and "error" not in out:
-                    reads.append(read)
-            else:
-                out = {"success": False, "error": f"Unknown tool {fn!r} or bad arguments."}
-            messages.append({"role": "tool", "tool_call_id": tc.get("id", ""), "content": json.dumps(out)})
-    else:
+        for tool_call in msg["tool_calls"]:
+            args, out = call_tool(a.skill_dir, tool_call)
+            calls.append({"name": tool_call["function"]["name"], "args": args})
+            if "content" in out:
+                reads.append(out["file"])
+            # ha-mcp sends tool results as compact UTF-8 JSON, not \u escapes.
+            messages.append({"role": "tool", "tool_call_id": tool_call.get("id", ""),
+                             "content": json.dumps(out, ensure_ascii=False, separators=(",", ":"))})
+    if not final and not error:
         error = f"reached maximum number of turns ({a.max_turns})"
-    g = grade(case, final) if final else {x["name"]: False for x in case["graders"] if x["type"] == "regex"}
-    return {"final": final, "error": error, "turns": turn, "secs": round(time.time() - t0, 1),
-            "calls": calls, "reads": reads, "graders": g,
-            "score": sum(g.values()) / len(g) if g else None}
+    grades = grade(case["regex"], final) if final else {g["name"]: False for g in case["regex"]}
+    return {"final": final, "error": error, "score": sum(grades.values()) / len(grades), "graders": grades,
+            "turns": sum(m["role"] == "assistant" for m in messages), "secs": round(time.time() - started, 1),
+            "calls": calls, "reads": reads}
 
 
-def main() -> int:
+def load_case(name: str) -> dict:
+    path = REPO / "evals" / name / "case.yaml"
+    if not path.is_file():
+        sys.exit(f"no case {name!r}")
+    case = yaml.safe_load(path.read_text(encoding="utf-8"))
+    case["regex"] = [g for g in case["graders"] if g["type"] == "regex"]
+    for g in case["regex"]:
+        if g.get("match", "contains") not in ("contains", "not_contains") or set(g) & {"target", "weight"}:
+            sys.exit(f"{name}: grader {g['name']} uses a regex option this script does not score")
+    return case
+
+
+def parse_args():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     p.add_argument("--model", required=True)
     p.add_argument("--out", required=True, type=Path)
-    p.add_argument("--case", action="append", default=[])
-    p.add_argument("--all-regex", action="store_true", help="every case with a regex grader")
+    which = p.add_mutually_exclusive_group(required=True)
+    which.add_argument("--case", action="append", help="case name; repeat for more")
+    which.add_argument("--all-regex", action="store_true", help="every case with a regex grader")
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--label", default="run")
     p.add_argument("--skill-dir", type=Path, default=REPO / "skills" / SKILL)
     p.add_argument("--base-url", default=os.environ.get("LOCAL_MODEL_BASE_URL", "http://localhost:1234"))
-    p.add_argument("--tool", choices=["legacy", "single-file"], default="legacy",
-                   help="ha_get_skill_guide shape: legacy (af9b054a) or single-file")
     p.add_argument("--no-instructions", action="store_true")
     p.add_argument("--max-turns", type=int, default=10)
     p.add_argument("--ctx-limit", type=int, default=96000, help="tokens; set just under the loaded context")
     a = p.parse_args()
+    if a.max_turns < 1 or a.runs < 1:
+        p.error("--max-turns and --runs must be at least 1")
+    return a
+
+
+def main() -> int:
+    a = parse_args()
     if not shutil.which("node"):
         sys.exit("node is required: regex graders are JavaScript patterns")
-    cases = sorted(a.case)
     if a.all_regex:
-        cases = sorted(c.parent.name for c in (REPO / "evals").glob("*/case.yaml")
-                       if any(g["type"] == "regex" for g in yaml.safe_load(c.read_text())["graders"]))
-    if not cases:
-        sys.exit("give --case at least once, or --all-regex")
-    desc = frontmatter_description(a.skill_dir)
+        names = sorted(p.parent.name for p in (REPO / "evals").glob("*/case.yaml"))
+        cases = {n: c for n in names if (c := load_case(n))["regex"]}
+    else:
+        cases = {n: load_case(n) for n in sorted(set(a.case))}
+        for name, case in cases.items():
+            if not case["regex"]:
+                sys.exit(f"{name} has no regex grader; this script scores only those")
+    desc = skill_description(a.skill_dir)
+    settings = {"model": a.model, "instructions": not a.no_instructions, "skill_dir": str(a.skill_dir.resolve()),
+                "max_turns": a.max_turns, "ctx_limit": a.ctx_limit}
     a.out.mkdir(parents=True, exist_ok=True)
+    failed = 0
     for n in range(1, a.runs + 1):
-        for name in cases:
+        for name, case in cases.items():
             path = a.out / f"{name}-{a.label}-r{n}.json"
-            if path.exists() and path.stat().st_size:
+            if path.exists():
+                written = json.loads(path.read_text(encoding="utf-8"))
+                if {k: written.get(k) for k in settings} != settings:
+                    sys.exit(f"{path} was written with other settings; use another --label or --out")
                 continue
-            case = yaml.safe_load((REPO / "evals" / name / "case.yaml").read_text())
-            r = one_run(a, case, desc)
-            r.update({"case": name, "label": a.label, "run": n, "model": a.model,
-                      "instructions": not a.no_instructions, "tool": a.tool})
-            if r["error"] and r["error"].startswith("api error"):
-                print(f"{time.strftime('%T')} FAILED {path.name}: {r['error'][:160]}", flush=True)
+            try:
+                result = run_case(a, case, desc)
+            except EndpointError as e:
+                failed += 1
+                print(f"{time.strftime('%T')} FAILED {path.name}: {e}", flush=True)
                 continue
-            path.write_text(json.dumps(r, indent=1))
-            print(f"{time.strftime('%T')} {path.name} score={r['score']:.2f} turns={r['turns']} "
-                  f"secs={r['secs']} reads={r['reads']} {r['error'] or ''}", flush=True)
-    return 0
+            result.update(case=name, label=a.label, run=n, **settings)
+            path.write_text(json.dumps(result, indent=1), encoding="utf-8")
+            print(f"{time.strftime('%T')} {path.name} score={result['score']:.2f} turns={result['turns']} "
+                  f"secs={result['secs']} reads={result['reads']} {result['error'] or ''}", flush=True)
+    if failed:
+        print(f"{failed} run(s) failed at the endpoint and were not written", file=sys.stderr)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
