@@ -52,7 +52,7 @@ A purpose-specific trigger takes `entity_id` in its `target:` as well, so one kn
 **Common substitutions:**
 - `trigger: state` on a motion, occupancy or door `binary_sensor` → `motion.detected`/`motion.cleared`, `occupancy.detected`/`occupancy.cleared` or `door.opened`/`door.closed` with `target: {entity_id: ...}`, or `area_id` when the area is known
 - List of individual sensor entities in a trigger → one purpose-specific trigger with an area/floor/label `target:`
-- `delay` after `motion.detected` for "no motion anywhere for N minutes" → `motion.cleared` with `options: {behavior: all, for: ...}`, which fires once every targeted sensor has been clear that long
+- `delay` after `motion.detected` for "no motion anywhere for N minutes" → `motion.cleared` with `options: {behavior: all, for: ...}`, which fires once every targeted sensor has been clear that long (`unavailable` and `unknown` sensors are left out of the count)
 - `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
 - `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
 - `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`

@@ -31,10 +31,10 @@ graders:
     match: contains
 
   # The trigger item targets the floor the prompt names, not an area with its
-  # ID: `floor_id: upstairs` within the next 8 lines, before the next item.
+  # ID: `floor_id: upstairs` on a line indented under that item.
   - type: regex
     name: trigger-targets-the-floor
-    pattern: '^\s*-\s*(?:trigger|platform):\s*(?:occupancy|motion)\.cleared\b[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform|action|service):)[^\n]*){0,8}?\bfloor_id"?\s*:\s*(?:\[\s*|\n\s*-\s*)?["'']?upstairs\b'
+    pattern: '^([ \t]*)-[ \t]*(?:trigger|platform):[ \t]*(?:occupancy|motion)\.cleared\b[^\n]*(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n]*?\bfloor_id"?[ \t]*:[ \t]*(?:\[[ \t]*|\n\1[ \t]+-[ \t]*)?["'']?upstairs\b'
     flags: m
     match: contains
 
@@ -54,7 +54,7 @@ graders:
 
   - type: regex
     name: action-targets-the-floor
-    pattern: '^\s*-\s*(?:action|service):\s*light\.turn_off\b[^\n]*(?:\n(?![a-z_]+:|\s*-\s*(?:trigger|platform|action|service):)[^\n]*){0,8}?\bfloor_id"?\s*:\s*(?:\[\s*|\n\s*-\s*)?["'']?upstairs\b'
+    pattern: '^([ \t]*)-[ \t]*(?:action|service):[ \t]*light\.turn_off\b[^\n]*(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n]*?\bfloor_id"?[ \t]*:[ \t]*(?:\[[ \t]*|\n\1[ \t]+-[ \t]*)?["'']?upstairs\b'
     flags: m
     match: contains
 
