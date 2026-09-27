@@ -1,0 +1,44 @@
+schema_version: "1.1"
+name: holdout-script-mireds-to-kelvin
+description: >
+  Held out: never used to tune the skill. A script still passes the removed
+  mireds-based `color_temp`. Renaming the key is not enough: the value must be
+  converted (Kelvin = 1,000,000 / mireds), so 250 mireds becomes 4000 K. Same
+  migration as light-color-temp-kelvin, on a script, another light and another
+  value.
+tags: [scripts, devices, holdout]
+
+execution:
+  prompt: |-
+    my reading light script does nothing since the last Home Assistant update. what's wrong with it?
+
+    sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.desk_lamp
+        data:
+          brightness_pct: 90
+          color_temp: 250
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free and exact: 1,000,000 / 250 = 4000. Accepts 3950-4050 for rounding; the
+  # mireds value 250 copied under the new key does not pass.
+  - type: regex
+    name: converts-to-kelvin
+    pattern: '\bcolor_temp_kelvin"?\s*:\s*"?(?:39[5-9]\d|40[0-4]\d|4050)\b'
+    match: contains
+
+expected_outcome: >-
+  Replaces `color_temp: 250` with `color_temp_kelvin: 4000` and says the
+  mireds parameter was removed in 2026.3.
