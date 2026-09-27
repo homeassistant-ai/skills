@@ -155,6 +155,20 @@ which may be releases behind. Disable other plugins for the run (`--settings` wi
 directory for this skill:` line in the output confirms which copy loaded. From inside a
 Claude Code session, prefix `env -u CLAUDECODE` or the nested `claude` refuses to start.
 
+`scripts/local_model_eval.py` runs cases against a local model the way ha-mcp serves the
+skill: one `ha_get_skill_guide` tool on an OpenAI-compatible endpoint (LM Studio, llama.cpp,
+Ollama), without Claude Code's system prompt filling a small context. It scores only the regex
+graders, so its numbers do not compare with `claude plugin eval`; use it to compare two skill
+versions (`--skill-dir`) or two tool behaviours (`--tier2-skill-md`) on the same model. Set
+`--ctx-limit` just under the loaded context: some servers crash on overflow instead of erroring.
+Its ha-mcp texts are copied from `server.py` at the commit its docstring names; re-copy them
+when that file changes. It needs `node`, like the case checker:
+
+```bash
+uv run --no-project --with pyyaml python scripts/local_model_eval.py --model <model> \
+  --all-regex --runs 3 --out evals/results/<name>
+```
+
 ## Reviewing Skill PRs
 
 - Judge prose as agent-consumed context, not human docs — the Skill Authoring Principles above are the review bar (e.g. an operator→result lookup table beats narrative bullets, because agents land here holding one case to resolve)
