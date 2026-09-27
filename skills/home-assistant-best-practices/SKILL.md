@@ -30,7 +30,9 @@ metadata:
 
 **Core principle:** Use native Home Assistant constructs wherever possible. Templates bypass validation, fail silently at runtime, and make debugging opaque.
 
-**No tool reaches the HA API?** Do not stop to ask for access. Give the complete config for the user to create in the UI (for an automation, the YAML to paste in the editor's **Edit in YAML** mode; for a helper, its form fields), and name the entity IDs you assumed.
+**No tool reaches the HA API?** Do not stop to ask for access. If you can drive a browser on the HA web UI, make the change there. Otherwise give the user the complete config to create in the UI (for an automation, the YAML for the editor's **Edit in YAML** mode; for a helper, its form fields), and name the entity IDs you assumed. Config that can only be written in YAML is edited with the File editor app (or in the config folder on a Container install): keep a copy of the file first, then check the configuration and run the matching reload in the **YAML** tab of **Tools** (named **Developer Tools** before 2026.8; restart if it isn't listed).
+
+**Read the matching reference before you answer.** This page only summarizes the files in [Reference Files](#reference-files); the exact keys, fields and working examples are in them. Read every file whose row matches the task.
 
 ## Decision Workflow
 
@@ -43,20 +45,21 @@ If your change affects entity IDs, display names, or cross-component references 
 Steps 1-5 below apply to new config or pattern evaluation.
 
 ### 1. Check for a purpose-specific, then generic native, trigger/condition
-Since 2026.7 the default building blocks are purpose-specific triggers/conditions — `<domain>.<name>` keys (motion detected, battery low, door opened) with area/floor/label targets. Check for one that matches the intent first, then a generic native trigger/condition, and only then a template. See [automation-patterns #purpose-specific-triggers--conditions-default-since-20267](references/automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267).
+Since 2026.7 the default building blocks are purpose-specific triggers/conditions — `<domain>.<name>` keys (motion detected, battery low, door opened) with area/floor/label targets. Check for one that matches the intent first, then a generic native trigger/condition, and only then a template. Read [automation-patterns #purpose-specific-triggers--conditions-default-since-20267](references/automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267) before writing the trigger.
 
 A purpose-specific trigger takes `entity_id` in its `target:` as well, so one known sensor is not a reason to fall back to `trigger: state`. Write the automation with the purpose-specific trigger; do not offer it only as an optional upgrade.
 
 **Common substitutions:**
 - `trigger: state` on a motion, occupancy or door `binary_sensor` → `motion.detected`/`motion.cleared`, `occupancy.detected`/`occupancy.cleared` or `door.opened`/`door.closed` with `target: {entity_id: ...}`, or `area_id` when the area is known
 - List of individual sensor entities in a trigger → one purpose-specific trigger with an area/floor/label `target:`
+- `delay` after `motion.detected` for "no motion anywhere for N minutes" → `motion.cleared` with `options: {behavior: all, for: ...}`, which fires once every targeted sensor has been clear that long
 - `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
 - `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
 - `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
 - `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger (caveat: different behavior when state is already true — see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring))
 
 ### 2. Check for built-in helper or Template Helper
-Before creating a template sensor, check [helper-selection](references/helper-selection.md).
+Read [helper-selection](references/helper-selection.md) before creating a template sensor.
 
 **Common substitutions:**
 - Sum/average multiple sensors → `min_max` integration
@@ -90,11 +93,11 @@ Default `single` mode is often wrong. See [automation-patterns #automation-modes
 **Exception:** Zigbee2MQTT autodiscovered device triggers are acceptable.
 
 ### 5. For buttons and remotes
-- **Any integration exposing an `event.*` entity:** Use `event.received` targeting that entity — a normal entity, so it can be renamed and survives a re-add when the integration keeps a stable unique ID
+- **Any integration exposing an `event.*` entity:** Use `event.received` targeting that entity (see the anti-pattern row below)
 - **ZHA:** No event entities — use an `event` trigger with `device_ieee` (persistent)
 - **Z2M:** Event entities are experimental and off by default — use a `device` trigger (autodiscovered) or `mqtt` trigger
 
-See [device-control #buttonremote-patterns](references/device-control.md#buttonremote-patterns).
+Read [device-control #buttonremote-patterns](references/device-control.md#buttonremote-patterns) before writing the trigger.
 
 ---
 
@@ -105,6 +108,7 @@ See [device-control #buttonremote-patterns](references/device-control.md#buttonr
 | `condition: template` with `float > 25` | `condition: numeric_state` | Validated at load, not runtime | [automation-patterns #native-conditions](references/automation-patterns.md#native-conditions) |
 | `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger | Event-driven, not polling; waits for *change* (see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring) for semantic differences) | [automation-patterns #wait-actions](references/automation-patterns.md#wait-actions) |
 | `device_id` in triggers | `entity_id` (or `device_ieee` for ZHA) | device_id breaks on re-add | [device-control #entity-id-vs-device-id](references/device-control.md#entity-id-vs-device-id) |
+| `event` trigger on an integration's bus event (e.g. `hue_event`) for a button that has an `event.*` entity | `event.received` targeting that entity, with values read from its `event_types` attribute | The entity can be renamed and survives a re-add when the integration keeps a stable unique ID; bus event data differs per integration | [device-control #buttonremote-patterns](references/device-control.md#buttonremote-patterns) |
 | `numeric_state` trigger driving a costly action, unguarded | Condition rejecting `unavailable`/`unknown` in `trigger.from_state` | A restart or blip re-arms the trigger, so an unchanged value fires with no crossing (the guard also drops real crossings) | [automation-patterns #unavailable-arms-a-numeric-state-trigger](references/automation-patterns.md#unavailable-arms-a-numeric-state-trigger) |
 | `mode: single` for motion lights | `mode: restart` | Re-triggers must reset the timer | [automation-patterns #automation-modes](references/automation-patterns.md#automation-modes) |
 | `enabled: false` as a top-level key in `automations.yaml` | `automation.turn_off` (temporary) or entity registry disable (permanent) | Not a valid top-level key — rejected during schema validation; automation loads as `unavailable` | [automation-patterns #disabling-automations](references/automation-patterns.md#disabling-automations) |
@@ -135,7 +139,7 @@ See [device-control #buttonremote-patterns](references/device-control.md#buttonr
 
 ## Reference Files
 
-Read these when you need detailed information:
+Read each file whose row matches the task before you answer:
 
 | File | When to read |
 |------|--------------|

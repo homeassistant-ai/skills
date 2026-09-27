@@ -48,6 +48,10 @@ graders:
       `homeassistant.check_config`, and the appropriate reload — rather than
       instructing an unchecked hand-edit of configuration.yaml.
 
+      With no access to the HA instance, PASS if it gives the YAML for the user
+      to add, says to keep a copy of the file first, and has the user check the
+      configuration and reload (in the UI or with an action) before relying on it.
+
   - type: llm
     name: no-min-max-confusion
     criteria: >-

@@ -1,0 +1,58 @@
+schema_version: "1.1"
+name: holdout-floor-occupancy-fans-off
+description: >
+  Held out: never used to tune the skill. "Nobody detected anywhere on the
+  floor for N minutes" needs `occupancy.cleared` with `behavior: all` and
+  `for:`. The default `each` fires once one sensor has been clear that long,
+  and a delay after a detection counts from the wrong moment. Same pattern as
+  floor-no-motion-lights-off, on another domain, floor and duration.
+tags: [automations, triggers, holdout]
+
+execution:
+  prompt: >-
+    in Home Assistant, switch off every fan on the ground floor once none of the
+    occupancy sensors on that floor has detected anyone for 20 minutes. the
+    floor is called ground_floor
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free: a cleared trigger as a trigger item, not only a mention.
+  - type: regex
+    name: uses-cleared-trigger
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(occupancy|motion)\.cleared\b'
+    flags: m
+    match: contains
+
+  # `behavior: all` on the trigger, or on a condition that checks every sensor,
+  # both pass. `each` (the default) and the pre-2026.6 `last` do not.
+  - type: regex
+    name: waits-for-all-sensors
+    pattern: '\bbehavior"?\s*:\s*"?all\b'
+    match: contains
+
+  # `for: "00:20:00"` and `for:` with `minutes: 20` both pass.
+  - type: regex
+    name: waits-twenty-minutes
+    pattern: '\bfor"?\s*:\s*(?:"?0?0:20:00"?|\{?\s*"?minutes"?\s*:\s*20\b)'
+    match: contains
+
+  - type: regex
+    name: turns-off-the-fans
+    pattern: '^\s*-\s*(?:action|service):\s*fan\.turn_off\b'
+    flags: m
+    match: contains
+
+expected_outcome: >-
+  An `occupancy.cleared` trigger targeting floor_id ground_floor with
+  `behavior: all` and `for: "00:20:00"`, and a `fan.turn_off` action on the
+  ground floor.

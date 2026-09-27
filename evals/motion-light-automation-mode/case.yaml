@@ -3,6 +3,8 @@ name: motion-light-automation-mode
 description: >
   A motion light with a timeout is broken by the default `mode: single` — a
   re-trigger during the wait is dropped and the light goes dark with someone there.
+  With the wait as a `for:` on the off trigger and none in the actions, every run
+  ends at once and the mode does not matter.
 tags: [automations]
 
 execution:
@@ -22,11 +24,12 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  # Free: `mode: restart` is the correct answer here, so it cannot appear as an
-  # anti-pattern the response is warning against. Positive literal, no carve-out.
+  # Free: new motion must reset the timeout. Passes `mode: restart`, or a `for:`
+  # (the wait on the off trigger) in an answer with no `delay` or `wait_` step,
+  # where each run ends at once and the mode does not matter.
   - type: regex
-    name: uses-restart-mode
-    pattern: '^\s*"?mode"?\s*:\s*["'']?restart'
+    name: new-motion-resets-timeout
+    pattern: '^\s*"?mode"?\s*:\s*["'']?restart|(?<![\s\S])(?![\s\S]*^\s*-?\s*"?(?:delay|wait_for_trigger|wait_template)"?\s*:)[\s\S]*^\s*"?for"?\s*:'
     flags: mi
     match: contains
 
@@ -52,5 +55,6 @@ graders:
       which is what a bare `delay:` after `light.turn_on` does.
 
 expected_outcome: >-
-  `mode: restart` so a re-trigger resets the timeout, with a purpose-specific
+  New motion resets the timeout (`mode: restart` with a wait in the actions, or
+  the wait as a `for:` on a `motion.cleared` trigger), with a purpose-specific
   motion trigger, and the five minutes counted from when motion clears.
