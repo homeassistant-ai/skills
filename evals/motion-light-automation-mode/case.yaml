@@ -32,10 +32,11 @@ graders:
 
   # Free and exact: the trigger type is one YAML line. The Sonnet judge failed
   # answers whose config had exactly this line. HA still loads the pre-2024.10
-  # `platform:` key as `trigger:`.
+  # `platform:` key as `trigger:`. Only `detected` turns the light on; a
+  # `motion.cleared` line alone can be the wait, not the trigger.
   - type: regex
     name: prefers-purpose-specific-trigger
-    pattern: '^\s*-\s*(?:trigger|platform):\s*(motion|occupancy)\.(detected|cleared)\b'
+    pattern: '^\s*-\s*(?:trigger|platform):\s*(motion|occupancy)\.detected\b'
     flags: m
     match: contains
 
