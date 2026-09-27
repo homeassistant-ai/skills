@@ -54,62 +54,61 @@ SKILL = "home-assistant-best-practices"
 REQUEST_TIMEOUT_S = 1500  # a slow local model can take minutes per reply
 MIN_CALIBRATION_TOKENS = 1000  # ignore token counts too small to give a stable ratio
 
-# Texts copied from ha-mcp server.py at db90fbeb.
-USE_BEFORE = (
-    "Use BEFORE: creating or editing automations, scripts, scenes, "
-    "helpers, or dashboards; writing triggers, conditions, actions, "
-    "wait_template, or service calls; renaming entities or migrating "
-    "device_id to entity_id; calling ha_config_set_automation, "
-    "ha_config_set_script, ha_config_set_helper, ha_config_set_dashboard, "
-    "or ha_set_entity."
-)
-ALIASES = (
-    "Replaces (and supersedes) the prior tools: ha_list_resources, "
-    "ha_read_resource, and ha_get_skill_home_assistant_best_practices. "
-    "If you were going to call any of those, call this instead."
-)
-BPS_HINT = (
-    "You now have this best-practice reference in your context. "
-    "Pass `MandatoryBPS=false` on subsequent write-tool calls in this "
-    "session (ha_config_set_automation / _script / _scene / _helper / "
-    "_dashboard / _yaml) to avoid re-receiving the canonical reference "
-    "files inline."
-)
-INSTRUCTIONS = (
-    "IMPORTANT: This server provides best-practice skills that MUST "
-    "be consulted before performing matching actions. "
-    "Read the SKILL.md for the matching skill "
-    "— it contains a Reference Files table that maps tasks to "
-    "specific reference files. You MUST read the referenced files "
-    "that match your current task before proceeding. "
-    "Do NOT load all reference files upfront "
-    "— only the ones the table directs you to.\n\n"
-    "How to access: Read the skill via MCP resources (resources/read with the "
-    "skill:// URI) — if you can read these instructions, you "
-    "should be able to access resources as well. "
-    f"If for any reason you cannot access MCP resources, call {TOOL}() with no "
-    "arguments as a fallback: it returns SKILL.md, then pass file='<path>' for a "
-    "reference file. "
-    "If you can access resources normally, do "
-    "not waste time or tokens on that tool.\n"
-)
-TOOL_DESCRIPTION = (
-    "Get the bundled Home Assistant best-practices skill. "
-    "CALL THIS FIRST before performing matching actions.\n\n"
-    "Call with no arguments to read SKILL.md: the workflow, the common mistakes, "
-    "and a table that says which reference file to read for each task. Then call "
-    "again with file='<path>' (e.g. 'references/automation-patterns.md') for only "
-    "the files that table points to.\n\n"
-)
-FILE_PARAM = (
-    "Path of the file to read, exactly as SKILL.md links it "
-    "(e.g. 'references/automation-patterns.md'). Omit to read SKILL.md."
-)
-HOW_TO_USE = (
-    f"Call {TOOL}(file='<path>') for the reference files the table above "
-    "points to for your task, using the path exactly as linked (e.g. "
-    "'references/automation-patterns.md'). Read only those; do not load every file."
-)
+# Texts copied from ha-mcp server.py at db90fbeb. A backslash at a line end
+# joins the lines, so each paragraph is one line, as in ha-mcp.
+USE_BEFORE = """\
+Use BEFORE: creating or editing automations, scripts, scenes, helpers, or \
+dashboards; writing triggers, conditions, actions, wait_template, or service \
+calls; renaming entities or migrating device_id to entity_id; calling \
+ha_config_set_automation, ha_config_set_script, ha_config_set_helper, \
+ha_config_set_dashboard, or ha_set_entity."""
+
+ALIASES = """\
+Replaces (and supersedes) the prior tools: ha_list_resources, \
+ha_read_resource, and ha_get_skill_home_assistant_best_practices. If you were \
+going to call any of those, call this instead."""
+
+BPS_HINT = """\
+You now have this best-practice reference in your context. Pass \
+`MandatoryBPS=false` on subsequent write-tool calls in this session \
+(ha_config_set_automation / _script / _scene / _helper / _dashboard / _yaml) \
+to avoid re-receiving the canonical reference files inline."""
+
+INSTRUCTIONS = f"""\
+IMPORTANT: This server provides best-practice skills that MUST be consulted \
+before performing matching actions. Read the SKILL.md for the matching skill \
+— it contains a Reference Files table that maps tasks to specific \
+reference files. You MUST read the referenced files that match your current \
+task before proceeding. Do NOT load all reference files upfront — only \
+the ones the table directs you to.
+
+How to access: Read the skill via MCP resources (resources/read with the \
+skill:// URI) — if you can read these instructions, you should be able \
+to access resources as well. If for any reason you cannot access MCP \
+resources, call {TOOL}() with no arguments as a fallback: it returns \
+SKILL.md, then pass file='<path>' for a reference file. If you can access \
+resources normally, do not waste time or tokens on that tool.
+"""
+
+TOOL_DESCRIPTION = """\
+Get the bundled Home Assistant best-practices skill. CALL THIS FIRST before \
+performing matching actions.
+
+Call with no arguments to read SKILL.md: the workflow, the common mistakes, \
+and a table that says which reference file to read for each task. Then call \
+again with file='<path>' (e.g. 'references/automation-patterns.md') for only \
+the files that table points to.
+
+"""
+
+FILE_PARAM = """\
+Path of the file to read, exactly as SKILL.md links it \
+(e.g. 'references/automation-patterns.md'). Omit to read SKILL.md."""
+
+HOW_TO_USE = f"""\
+Call {TOOL}(file='<path>') for the reference files the table above points to \
+for your task, using the path exactly as linked (e.g. \
+'references/automation-patterns.md'). Read only those; do not load every file."""
 
 # Runs each [pattern, flags, text] as a JavaScript RegExp, as the eval harness does.
 NODE_GRADER = ("const q=JSON.parse(require('fs').readFileSync(0,'utf8'));"
