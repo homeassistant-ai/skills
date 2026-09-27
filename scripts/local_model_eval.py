@@ -11,7 +11,7 @@ The model gets ha-mcp's server instructions as the system prompt (skip them
 with --no-instructions: not every client forwards them) and one tool,
 ha_get_skill_guide: no arguments returns SKILL.md, `file` returns that file,
 any other path is refused with the list of valid paths. The texts are copied
-from ha-mcp src/ha_mcp/server.py at commit db90fbeb (homeassistant-ai/ha-mcp
+from ha-mcp src/ha_mcp/server.py at commit 0d56b896 (homeassistant-ai/ha-mcp
 PR #2556); re-copy them when that file changes. Two texts are this script's
 own: an MCP tool error reaches the model as text, sent here as a JSON object
 with `error` and `suggestions`, and ha-mcp rejects an unexpected argument
@@ -54,7 +54,7 @@ SKILL = "home-assistant-best-practices"
 REQUEST_TIMEOUT_S = 1500  # a slow local model can take minutes per reply
 MIN_CALIBRATION_TOKENS = 1000  # ignore token counts too small to give a stable ratio
 
-# Texts copied from ha-mcp server.py at db90fbeb. A backslash at a line end
+# Texts copied from ha-mcp server.py at 0d56b896. A backslash at a line end
 # joins the lines, so each paragraph is one line, as in ha-mcp.
 USE_BEFORE = """\
 Use BEFORE: creating or editing automations, scripts, scenes, helpers, or \
@@ -95,9 +95,8 @@ Get the bundled Home Assistant best-practices skill. CALL THIS FIRST before \
 performing matching actions.
 
 Call with no arguments to read SKILL.md: the workflow, the common mistakes, \
-and a table that says which reference file to read for each task. Then call \
-again with file='<path>' (e.g. 'references/automation-patterns.md') for only \
-the files that table points to.
+and a table that says which reference file to read for each task. Then read \
+only the files that table points to.
 
 """
 
