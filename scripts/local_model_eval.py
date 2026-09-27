@@ -164,15 +164,17 @@ def serve(skill_dir: Path, args: dict) -> dict:
 
 
 def call_tool(skill_dir: Path, tool_call: dict) -> tuple:
-    name = tool_call["function"]["name"]
-    raw = tool_call["function"].get("arguments") or "{}"
+    """Return the tool name, the parsed arguments and the tool's response."""
+    function = tool_call.get("function") if isinstance(tool_call.get("function"), dict) else {}
+    name = function.get("name")
+    raw = function.get("arguments") or "{}"
     try:
         args = json.loads(raw)
     except json.JSONDecodeError:
         args = raw
     if name != TOOL or not isinstance(args, dict):
-        return args, {"success": False, "error": f"Unknown tool {name!r} or bad arguments."}
-    return args, serve(skill_dir, args)
+        return name, args, {"success": False, "error": f"Unknown tool {name!r} or bad arguments."}
+    return name, args, serve(skill_dir, args)
 
 
 def chat(base_url: str, model: str, messages: list, tools: list) -> tuple:
@@ -186,7 +188,12 @@ def chat(base_url: str, model: str, messages: list, tools: list) -> tuple:
         message = reply["choices"][0]["message"]
         if not isinstance(message, dict):
             raise TypeError(f"message is {type(message).__name__}, not an object")
-        return message, (reply.get("usage") or {}).get("prompt_tokens")
+        tool_calls = message.get("tool_calls")
+        if tool_calls and not (isinstance(tool_calls, list) and all(isinstance(c, dict) for c in tool_calls)):
+            raise TypeError("tool_calls is not a list of objects")
+        usage = reply.get("usage")
+        prompt_tokens = usage.get("prompt_tokens") if isinstance(usage, dict) else None
+        return message, prompt_tokens if isinstance(prompt_tokens, int) else None
     except urllib.error.HTTPError as e:
         raise EndpointError(f"HTTP {e.code}: {e.read().decode(errors='replace')[:300]}") from e
     except (urllib.error.URLError, TimeoutError, ConnectionError, json.JSONDecodeError,
@@ -227,8 +234,8 @@ def run_case(a, case: dict, desc: str) -> dict:
             final = msg.get("content") or ""
             break
         for tool_call in msg["tool_calls"]:
-            args, out = call_tool(a.skill_dir, tool_call)
-            calls.append({"name": tool_call["function"]["name"], "args": args})
+            name, args, out = call_tool(a.skill_dir, tool_call)
+            calls.append({"name": name, "args": args})
             if "content" in out:
                 reads.append(out["file"])
             # ha-mcp sends tool results as compact UTF-8 JSON, not \u escapes.
