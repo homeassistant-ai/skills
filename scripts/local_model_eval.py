@@ -10,13 +10,16 @@ against any OpenAI-compatible chat endpoint (LM Studio, llama.cpp, Ollama).
 The model gets:
 - as the system prompt, ha-mcp's server instructions (skip with
   --no-instructions: not every client forwards them);
-- one tool, ha_get_skill_guide, with ha-mcp's three modes: no args lists the
-  skills, `skill` lists the files, `skill` + `file` returns a file.
+- one tool, ha_get_skill_guide, in one of two shapes (--tool):
+  - legacy (default): ha-mcp at commit af9b054a. No args lists the skills,
+    `skill` lists the files, `skill` + `file` returns a file.
+  - single-file: ha-mcp branch feat/skill-guide-single-arg. No args returns
+    SKILL.md; `file` returns that file; any other path is refused.
 
 Tool description, instructions and response texts are copied from ha-mcp
-src/ha_mcp/server.py at commit af9b054a. Re-copy them when that file changes.
---tier2-skill-md makes the `skill`-only call return SKILL.md and drop it from
-the file list, to measure that change before making it in ha-mcp.
+src/ha_mcp/server.py for each shape. Re-copy them when that file changes. An
+MCP tool error reaches the model as text; here it is a JSON object with
+`error` and `suggestions`.
 
 There are no Home Assistant tools, so the config must be in the final answer.
 Only the case's regex graders are scored, compiled with node as the harness
@@ -31,7 +34,7 @@ Usage:
   python scripts/local_model_eval.py --model <model> --out <dir> \
       --case <case> [--case <case> ...] [--runs 3] [--label <label>] \
       [--skill-dir <dir>] [--base-url http://localhost:1234] \
-      [--tier2-skill-md] [--no-instructions] [--max-turns 10] [--ctx-limit 96000]
+      [--tool legacy|single-file] [--no-instructions] [--max-turns 10] [--ctx-limit 96000]
   --all-regex instead of --case runs every case that has a regex grader.
 """
 import argparse
@@ -51,7 +54,7 @@ REPO = Path(__file__).resolve().parent.parent
 TOOL = "ha_get_skill_guide"
 SKILL = "home-assistant-best-practices"
 
-# Texts from ha-mcp server.py at af9b054a.
+# Texts from ha-mcp server.py, shared by both tool shapes.
 USE_BEFORE = (
     "Use BEFORE: creating or editing automations, scripts, scenes, "
     "helpers, or dashboards; writing triggers, conditions, actions, "
@@ -79,13 +82,23 @@ def frontmatter_description(skill_dir: Path) -> str:
     return yaml.safe_load(text.split("---", 2)[1])["description"].strip()
 
 
-def server_instructions(desc: str) -> str:
+def server_instructions(desc: str, shape: str) -> str:
+    if shape == "legacy":
+        fallback = (
+            f"If for any reason you cannot access MCP resources, use the {TOOL} "
+            "tool as a fallback."
+        )
+    else:
+        fallback = (
+            f"If for any reason you cannot access MCP resources, call {TOOL}() with no "
+            "arguments as a fallback: it returns SKILL.md, then pass file='<path>' for a "
+            "reference file."
+        )
     access = (
         "Read the skill via MCP resources (resources/read with the "
         "skill:// URI) — if you can read these instructions, you "
-        "should be able to access resources as well. If for any "
-        f"reason you cannot access MCP resources, use the {TOOL} "
-        "tool as a fallback. If you can access resources normally, do "
+        f"should be able to access resources as well. {fallback} "
+        "If you can access resources normally, do "
         "not waste time or tokens on that tool."
     )
     header = (
@@ -102,27 +115,62 @@ def server_instructions(desc: str) -> str:
     return header + f"\n### Skill: {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}"
 
 
-def tool_schema(desc: str) -> dict:
-    description = (
-        "Get bundled Home Assistant best-practice skill guides. "
-        "CALL THIS FIRST before performing matching actions.\n\n"
-        "Three modes (progressive disclosure):\n"
-        "- No args: list bundled skills with their trigger conditions.\n"
-        "- skill arg: list reference files for that skill.\n"
-        "- skill + file args: read the file content.\n\n"
-        "Bundled skills:\n\n"
-        f"### {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}"
-        f"\n\n{USE_BEFORE}\n\n{ALIASES}"
-    )
-    return {"type": "function", "function": {
-        "name": TOOL, "description": description,
-        "parameters": {"type": "object", "properties": {
+def tool_schema(desc: str, shape: str) -> dict:
+    block = f"### {SKILL} (skill://{SKILL}/SKILL.md)\n{desc}\n\n{USE_BEFORE}\n\n{ALIASES}"
+    if shape == "legacy":
+        description = (
+            "Get bundled Home Assistant best-practice skill guides. "
+            "CALL THIS FIRST before performing matching actions.\n\n"
+            "Three modes (progressive disclosure):\n"
+            "- No args: list bundled skills with their trigger conditions.\n"
+            "- skill arg: list reference files for that skill.\n"
+            "- skill + file args: read the file content.\n\n"
+            "Bundled skills:\n\n" + block
+        )
+        params = {"type": "object", "properties": {
             "skill": {"type": "string", "description": "Skill name from the no-args listing (e.g., 'home-assistant-best-practices')."},
             "file": {"type": "string", "description": "Reference file path within the skill, relative to the skill directory (e.g., 'SKILL.md' or 'references/automation-patterns.md'). Requires skill to be set."},
-        }}}}
+        }}
+    else:
+        description = (
+            "Get the bundled Home Assistant best-practices skill. "
+            "CALL THIS FIRST before performing matching actions.\n\n"
+            "Call with no arguments to read SKILL.md: the workflow, the common mistakes, "
+            "and a table that says which reference file to read for each task. Then call "
+            "again with file='<path>' (e.g. 'references/automation-patterns.md') for only "
+            "the files that table points to.\n\n" + block
+        )
+        params = {"type": "object", "additionalProperties": False, "properties": {
+            "file": {"type": "string", "default": "SKILL.md",
+                     "description": "Path of the file to read, exactly as SKILL.md links it (e.g. 'references/automation-patterns.md'). Omit to read SKILL.md."},
+        }}
+    return {"type": "function", "function": {"name": TOOL, "description": description, "parameters": params}}
 
 
-def run_tool(skill_dir: Path, desc: str, args: dict, tier2_skill_md: bool) -> dict:
+def skill_files(skill_dir: Path) -> list:
+    return sorted(f.relative_to(skill_dir).as_posix() for f in skill_dir.rglob("*") if f.is_file())
+
+
+def run_tool(skill_dir: Path, desc: str, args: dict, shape: str) -> dict:
+    if shape == "single-file":
+        extra = set(args) - {"file"}
+        if extra:
+            return {"error": f"Unexpected argument(s): {', '.join(sorted(extra))}."}
+        file = args.get("file") or "SKILL.md"
+        files = skill_files(skill_dir)
+        if file not in files:
+            return {"error": f"Unknown file {file!r} in skill {SKILL!r}.",
+                    "suggestions": [f"Pass one of these paths exactly as written: {', '.join(files)}",
+                                    f"Call {TOOL}() with no arguments to read SKILL.md, whose table says which file to read."]}
+        content = (skill_dir / file).read_text(encoding="utf-8")
+        uri = f"skill://{SKILL}/{file}"
+        if file == "SKILL.md":
+            return {"success": True, "file": file, "uri": uri, "content": content,
+                    "how_to_use": (f"Call {TOOL}(file='<path>') for the reference files the table above "
+                                   "points to for your task, using the path exactly as linked (e.g. "
+                                   "'references/automation-patterns.md'). Read only those; do not load every file.")}
+        return {"skill_content_hint": BPS_HINT, "success": True, "file": file, "uri": uri, "content": content}
+
     skill, file = args.get("skill"), args.get("file")
     if not skill:
         return {"success": True,
@@ -133,19 +181,10 @@ def run_tool(skill_dir: Path, desc: str, args: dict, tier2_skill_md: bool) -> di
     if skill != SKILL:
         return {"success": False, "error": f"Unknown skill {skill!r}."}
     if not file:
-        files = sorted(str(f.relative_to(skill_dir)) for f in skill_dir.rglob("*") if f.is_file())
-        out = {"success": True, "skill": skill, "uri": f"skill://{skill}/SKILL.md",
-               "files": [{"name": n, "uri": f"skill://{skill}/{n}"} for n in files],
-               "how_to_use": (f"Call {TOOL}(skill={skill!r}, file='<name>') to read a specific file. "
-                              "Start with SKILL.md for the decision workflow.")}
-        if tier2_skill_md:
-            # SKILL.md rides along and leaves the file list, so nothing invites a second read.
-            out["files"] = [x for x in out["files"] if x["name"] != "SKILL.md"]
-            out["how_to_use"] = (f"SKILL.md is included below as skill_md; do not fetch it again. "
-                                 f"Call {TOOL}(skill={skill!r}, file='<name>') to read the reference "
-                                 "files its table points to.")
-            out["skill_md"] = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
-        return out
+        return {"success": True, "skill": skill, "uri": f"skill://{skill}/SKILL.md",
+                "files": [{"name": n, "uri": f"skill://{skill}/{n}"} for n in skill_files(skill_dir)],
+                "how_to_use": (f"Call {TOOL}(skill={skill!r}, file='<name>') to read a specific file. "
+                               "Start with SKILL.md for the decision workflow.")}
     target = (skill_dir / file).resolve()
     if not target.is_relative_to(skill_dir.resolve()) or not target.is_file():
         return {"success": False, "error": f"File {file!r} not found in skill {skill!r}."}
@@ -172,8 +211,8 @@ def grade(case: dict, text: str) -> dict:
 
 
 def one_run(a, case: dict, desc: str) -> dict:
-    tools = [tool_schema(desc)]
-    messages = [] if a.no_instructions else [{"role": "system", "content": server_instructions(desc)}]
+    tools = [tool_schema(desc, a.tool)]
+    messages = [] if a.no_instructions else [{"role": "system", "content": server_instructions(desc, a.tool)}]
     messages.append({"role": "user", "content": case["execution"]["prompt"]})
     calls, reads, ratio, error, final = [], [], 4.0, None, ""
     t0 = time.time()
@@ -208,9 +247,10 @@ def one_run(a, case: dict, desc: str) -> dict:
                 args = {"_raw": tc["function"].get("arguments")}
             calls.append({"name": fn, "args": args})
             if fn == TOOL and isinstance(args, dict) and "_raw" not in args:
-                out = run_tool(a.skill_dir, desc, args, a.tier2_skill_md)
-                if args.get("file"):
-                    reads.append(args["file"])
+                out = run_tool(a.skill_dir, desc, args, a.tool)
+                read = args.get("file") or ("SKILL.md" if a.tool == "single-file" else None)
+                if read and "error" not in out:
+                    reads.append(read)
             else:
                 out = {"success": False, "error": f"Unknown tool {fn!r} or bad arguments."}
             messages.append({"role": "tool", "tool_call_id": tc.get("id", ""), "content": json.dumps(out)})
@@ -232,7 +272,8 @@ def main() -> int:
     p.add_argument("--label", default="run")
     p.add_argument("--skill-dir", type=Path, default=REPO / "skills" / SKILL)
     p.add_argument("--base-url", default=os.environ.get("LOCAL_MODEL_BASE_URL", "http://localhost:1234"))
-    p.add_argument("--tier2-skill-md", action="store_true")
+    p.add_argument("--tool", choices=["legacy", "single-file"], default="legacy",
+                   help="ha_get_skill_guide shape: legacy (af9b054a) or single-file")
     p.add_argument("--no-instructions", action="store_true")
     p.add_argument("--max-turns", type=int, default=10)
     p.add_argument("--ctx-limit", type=int, default=96000, help="tokens; set just under the loaded context")
@@ -255,7 +296,7 @@ def main() -> int:
             case = yaml.safe_load((REPO / "evals" / name / "case.yaml").read_text())
             r = one_run(a, case, desc)
             r.update({"case": name, "label": a.label, "run": n, "model": a.model,
-                      "instructions": not a.no_instructions, "tier2_skill_md": a.tier2_skill_md})
+                      "instructions": not a.no_instructions, "tool": a.tool})
             if r["error"] and r["error"].startswith("api error"):
                 print(f"{time.strftime('%T')} FAILED {path.name}: {r['error'][:160]}", flush=True)
                 continue
