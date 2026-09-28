@@ -32,11 +32,14 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  # Free and exact: 1,000,000 / 250 = 4000. Accepts 3950-4050 for rounding; the
-  # mireds value 250 copied under the new key does not pass.
+  # Free and exact: 1,000,000 / 250 = 4000, accepting 3950-4050 for rounding, on a
+  # line indented under a `light.turn_on` item that has no `color_temp:` key left.
+  # A value named only in prose, a copied 250, or the old key kept beside the new
+  # one does not pass; the old key named in the explanation does not fail it.
   - type: regex
     name: converts-to-kelvin
-    pattern: '\bcolor_temp_kelvin"?\s*:\s*"?(?:39[5-9]\d|40[0-4]\d|4050)\b'
+    pattern: '^([ \t]*)-[ \t]*(?:action|service):[ \t]*light\.turn_on\b[^\n]*(?!(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+"?color_temp"?[ \t]*:)(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n]*?\bcolor_temp_kelvin"?[ \t]*:[ \t]*"?(?:39[5-9]\d|40[0-4]\d|4050)\b'
+    flags: m
     match: contains
 
 expected_outcome: >-
