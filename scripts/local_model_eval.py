@@ -12,7 +12,11 @@ with --no-instructions: not every client forwards them) and one tool,
 ha_get_skill_guide: no arguments returns SKILL.md, `file` returns that file,
 any other path is refused with the list of valid paths. The texts are copied
 from ha-mcp src/ha_mcp/server.py at commit efaf72a4 (homeassistant-ai/ha-mcp
-PR #2556, merged); re-copy them when that file changes. Two texts are this script's
+PR #2556, merged); re-copy them when that file changes. The example path in
+FILE_PARAM and HOW_TO_USE differs: that commit names
+references/automation-patterns.md, which this skill split into
+references/triggers-and-conditions.md and references/automation-actions.md,
+so the example here names the first. Two texts are this script's
 own: an MCP tool error reaches the model as text, sent here as a JSON object
 with `error` and `suggestions`, and ha-mcp rejects an unexpected argument
 through its schema validation, whose exact message is not copied.
