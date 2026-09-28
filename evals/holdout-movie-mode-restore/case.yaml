@@ -1,0 +1,48 @@
+schema_version: "1.1"
+name: holdout-movie-mode-restore
+description: >
+  Held out: never used to tune the skill. "Put them back the way they were"
+  after a temporary change is the scene snapshot pattern, here with a cover
+  beside the lights and the restore in a second trigger rather than at the end
+  of one sequence. `scene.create` with `snapshot_entities` captures each
+  entity's own state (cover and light both have reproduce_state in core
+  2026.9.3); restoring fixed values or variables loses it.
+tags: [automations, scenes, holdout]
+
+execution:
+  prompt: >-
+    in Home Assistant, when media_player.den_tv starts playing, dim
+    light.den_lamp and light.den_ceiling to 10% and close cover.den_blinds.
+    when it stops playing, put the two lights and the blinds back the way they
+    were before
+  allowed_tools: [Read, Glob, Grep]
+  model: sonnet
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # All three entities listed under one `snapshot_entities` key, in any order.
+  # `[^:]*` stops at the next key, so an entity named elsewhere does not count.
+  - type: regex
+    name: snapshots-all-three
+    pattern: '\bsnapshot_entities"?\s*:(?=[^:]*\blight\.den_lamp\b)(?=[^:]*\blight\.den_ceiling\b)(?=[^:]*\bcover\.den_blinds\b)'
+    match: contains
+
+  # The `scene_id` given to `scene.create`, then `scene.turn_on` on that same
+  # `scene.<id>`: restoring any other scene loses the snapshot.
+  - type: regex
+    name: restores-the-created-scene
+    pattern: '\bscene_id"?\s*:\s*"?([a-z0-9_]+)[\s\S]*?\bscene\.turn_on\b[\s\S]*?\bscene\.\1\b'
+    match: contains
+
+expected_outcome: >-
+  When the TV starts playing, `scene.create` with `snapshot_entities` for both
+  lights and the blinds, then the dim and close. When it stops, `scene.turn_on`
+  on the created scene.
