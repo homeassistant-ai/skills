@@ -183,7 +183,7 @@ Do NOT use templates when a native alternative exists:
 | Template binary sensor with threshold | `threshold` helper |
 | Template sensor averaging over time | `statistics` helper |
 
-See [automation-patterns](automation-patterns.md) and [helper-selection](helper-selection.md) for comprehensive alternatives.
+See [triggers-and-conditions](triggers-and-conditions.md), [automation-actions](automation-actions.md) and [helper-selection](helper-selection.md) for comprehensive alternatives.
 
 ---
 

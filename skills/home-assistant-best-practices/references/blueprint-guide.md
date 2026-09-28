@@ -170,9 +170,9 @@ actions:
       brightness_pct: "{{ brightness_pct }}"   # use the variable, never !input
 ```
 
-For **templated triggers**, bind inputs through `trigger_variables:` (a separate top-level key evaluated before triggers fire). It supports **limited templates only** — no `states()`/`state_attr()` — and exists mainly to pass a blueprint `!input` into trigger options (see [automation-patterns #trigger-types](automation-patterns.md#trigger-types)). Don't put state-based templates there.
+For **templated triggers**, bind inputs through `trigger_variables:` (a separate top-level key evaluated before triggers fire). It supports **limited templates only** — no `states()`/`state_attr()` — and exists mainly to pass a blueprint `!input` into trigger options (see [triggers-and-conditions #trigger-types](triggers-and-conditions.md#trigger-types)). Don't put state-based templates there.
 
-`enabled:` on an individual trigger/condition/action also accepts a blueprint `!input` (evaluated once at load) — handy for optional behavior toggled by a `boolean` input (see [automation-patterns #enabled-on-individual-triggers-conditions-and-actions](automation-patterns.md#enabled-on-individual-triggers-conditions-and-actions)).
+`enabled:` on an individual trigger/condition/action also accepts a blueprint `!input` (evaluated once at load) — handy for optional behavior toggled by a `boolean` input (see [automation-actions #enabled-on-individual-triggers-conditions-and-actions](automation-actions.md#enabled-on-individual-triggers-conditions-and-actions)).
 
 ## Versioning and Updates
 

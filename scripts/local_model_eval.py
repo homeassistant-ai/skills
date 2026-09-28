@@ -102,12 +102,12 @@ only the files that table points to.
 
 FILE_PARAM = """\
 Path of the file to read, exactly as SKILL.md links it \
-(e.g. 'references/automation-patterns.md'). Omit to read SKILL.md."""
+(e.g. 'references/triggers-and-conditions.md'). Omit to read SKILL.md."""
 
 HOW_TO_USE = f"""\
 Call {TOOL}(file='<path>') for the reference files the table above points to \
 for your task, using the path exactly as linked (e.g. \
-'references/automation-patterns.md'). Read only those; do not load every file."""
+'references/triggers-and-conditions.md'). Read only those; do not load every file."""
 
 # Runs each [pattern, flags, text] as a JavaScript RegExp, as the eval harness does.
 NODE_GRADER = ("const q=JSON.parse(require('fs').readFileSync(0,'utf8'));"

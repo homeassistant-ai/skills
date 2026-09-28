@@ -10,7 +10,7 @@ Best practices for controlling devices, triggering from buttons and remotes, and
 > area, floor, or label instead of a list of entity IDs. The generic `state` patterns in this
 > file remain correct and are the right answer when no purpose-specific block matches, but
 > check for one before reaching for them; see
-> [automation-patterns #purpose-specific-triggers--conditions-default-since-20267](automation-patterns.md#purpose-specific-triggers--conditions-default-since-20267).
+> [triggers-and-conditions #purpose-specific-triggers--conditions-default-since-20267](triggers-and-conditions.md#purpose-specific-triggers--conditions-default-since-20267).
 >
 > This does not soften the entity-over-device rule below — it strengthens it. A
 > purpose-specific `target:` takes `entity_id` / `area_id` / `floor_id` / `label_id` (and
