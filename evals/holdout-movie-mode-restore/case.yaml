@@ -28,18 +28,21 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  # All three entities listed under one `snapshot_entities` key, in any order.
+  # All three entities listed under one `snapshot_entities` key, in any order,
+  # followed by the dim: a snapshot taken after it captures the dimmed state.
   # `[^:]*` stops at the next key, so an entity named elsewhere does not count.
+  # The dim, not the cover step, marks the change: answers misname cover actions.
   - type: regex
     name: snapshots-all-three
-    pattern: '\bsnapshot_entities"?\s*:(?=[^:]*\blight\.den_lamp\b)(?=[^:]*\blight\.den_ceiling\b)(?=[^:]*\bcover\.den_blinds\b)'
+    pattern: '\bsnapshot_entities"?\s*:(?=[^:]*\blight\.den_lamp\b)(?=[^:]*\blight\.den_ceiling\b)(?=[^:]*\bcover\.den_blinds\b)[\s\S]*?\bbrightness(?:_pct)?"?\s*:'
     match: contains
 
-  # The `scene_id` given to `scene.create`, then `scene.turn_on` on that same
-  # `scene.<id>`: restoring any other scene loses the snapshot.
+  # The `scene_id` given to `scene.create`, the dim, then `scene.turn_on` on
+  # that same `scene.<id>`: restoring any other scene loses the snapshot, and a
+  # restore before the dim undoes nothing.
   - type: regex
     name: restores-the-created-scene
-    pattern: '\bscene_id"?\s*:\s*"?([a-z0-9_]+)[\s\S]*?\bscene\.turn_on\b[\s\S]*?\bscene\.\1\b'
+    pattern: '\bscene_id"?\s*:\s*"?([a-z0-9_]+)[\s\S]*?\bbrightness(?:_pct)?"?\s*:[\s\S]*?\bscene\.turn_on\b[\s\S]*?\bscene\.\1\b'
     match: contains
 
 expected_outcome: >-
