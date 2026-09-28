@@ -186,3 +186,14 @@ uv run --no-project --with pyyaml python scripts/local_model_eval.py --model <mo
 - Community PRs come from forks: base-repo `?ref=<pr-branch>` 404s; get the fork with `gh pr view <pr> --json headRepository` and fetch files from there
 - Helper claims need **both** `config_flow.py` (flow submission) and the platform file's `PLATFORM_SCHEMA` (YAML) — they diverge in key names, value types, and which keys exist. Traps: `vol.Required(` usually puts the `CONF_*` on the *next* line, so grep drops fields and mis-attributes Required/Optional; resolve `CONF_*` to its string (`CONF_ROUND_DIGITS` is `"round"` in derivative, `"round_digits"` in min_max); `options_flow`-only fields are rejected at creation
 - Verifying a claim confirms what it says, not whether it over-generalizes. Add a pass that tries to disprove ("which helpers does this NOT hold for?"), mechanically where possible — e.g. diff the two schemas' key sets in a script
+
+## Code Review Rules
+
+Codex posts only high-priority findings (P0 and P1) on GitHub. Report each problem below as P1, so it is not dropped:
+- An example (action, trigger, condition, field, YAML key) that Home Assistant would reject or that uses a removed key. Agents copy examples over what they would otherwise get right.
+- A changed claim about Home Assistant behavior or a version ("since 2026.7", "removed in 2026.5") with no source: core code at a release tag, or the release blog post.
+- A reference file that no SKILL.md row routes to, or a SKILL.md or README table row whose description no longer matches its file.
+- An MCP tool name (e.g. `ha_rename_entity`) in skill content. Skills name HA APIs and concepts, not tools.
+- A renamed HA term used without its old name and the version it changed ("named Developer Tools before 2026.8").
+- An eval case outside `evals/<case>/case.yaml`, a regex grader that no longer checks what its name and comment say, or a changed grader in a `holdout` case without source evidence that it was wrong.
+- A manual edit to `metadata.version`.

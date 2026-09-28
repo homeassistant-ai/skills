@@ -40,5 +40,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: Number(process.env.ISSUE_NUMBER),
-              body: '@codex review. Apply the review criteria in the "Reviewing Skill PRs" section of CLAUDE.md.',
+              body: '@codex review',
             });
