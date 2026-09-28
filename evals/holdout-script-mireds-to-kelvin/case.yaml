@@ -34,11 +34,12 @@ graders:
 
   # Free and exact: 1,000,000 / 250 = 4000, accepting 3950-4050 for rounding, on a
   # line indented under a `light.turn_on` item that has no `color_temp:` key left.
-  # A value named only in prose, a copied 250, or the old key kept beside the new
-  # one does not pass; the old key named in the explanation does not fail it.
+  # A value named only in prose or in a YAML comment, a copied 250, or the old key
+  # kept beside the new one does not pass; the old key named in the explanation
+  # does not fail it.
   - type: regex
     name: converts-to-kelvin
-    pattern: '^([ \t]*)-[ \t]*(?:action|service):[ \t]*light\.turn_on\b[^\n]*(?!(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+"?color_temp"?[ \t]*:)(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n]*?\bcolor_temp_kelvin"?[ \t]*:[ \t]*"?(?:39[5-9]\d|40[0-4]\d|4050)\b'
+    pattern: '^([ \t]*)-[ \t]*(?:action|service):[ \t]*light\.turn_on\b[^\n]*(?!(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+"?color_temp"?[ \t]*:)(?:\n\1[ \t]+[^\n]*)*?\n\1[ \t]+[^\n#]*?\bcolor_temp_kelvin"?[ \t]*:[ \t]*"?(?:39[5-9]\d|40[0-4]\d|4050)\b'
     flags: m
     match: contains
 
