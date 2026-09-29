@@ -92,7 +92,10 @@ jobs:
               run => Date.parse(run.created_at) >= oneHourAgo
             );
 
-            if (recentRuns.some(run => run.display_title === runTitle)) {
+            // A failed or cancelled run posted nothing, so it does not block a retry.
+            const requested = run => run.display_title === runTitle &&
+              (run.status !== 'completed' || run.conclusion === 'success');
+            if (recentRuns.some(requested)) {
               core.info(`A Codex review of ${headSha} was already requested; skipping duplicate request.`);
               return;
             }
