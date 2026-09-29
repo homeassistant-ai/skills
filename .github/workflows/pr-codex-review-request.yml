@@ -120,7 +120,7 @@ jobs:
             // next admission counts it.
             for (let attempt = 0; attempt < 12; attempt++) {
               await new Promise(resolve => setTimeout(resolve, 5000));
-              if ((await listRuns()).some(run => run.display_title === runTitle)) {
+              if ((await listRuns()).some(requested)) {
                 return;
               }
             }
