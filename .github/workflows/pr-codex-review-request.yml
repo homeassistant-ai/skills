@@ -29,7 +29,10 @@ jobs:
           )) ||
         (github.event_name == 'issue_comment' &&
           github.event.issue.pull_request &&
-          github.event.issue.user.login != 'dependabot[bot]' &&
+          !contains(
+            fromJSON('["dependabot[bot]", "github-actions[bot]"]'),
+            github.event.issue.user.login
+          ) &&
           github.event.comment.body == '/review' &&
           contains(
             fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'),
@@ -74,19 +77,27 @@ jobs:
               return;
             }
 
+            // The delivery run's name carries the PR and head commit, so a request
+            // for the same commit is found even before Codex has answered it.
             const deliveryWorkflow = 'pr-codex-review-delivery.yml';
-            const recentRuns = await github.rest.actions.listWorkflowRuns({
+            const runTitle = `Send Codex PR review for #${issueNumber} at ${headSha}`;
+            const listRuns = async () => (await github.rest.actions.listWorkflowRuns({
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: deliveryWorkflow,
               per_page: 100,
-            });
+            })).data.workflow_runs;
             const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            const hourlyRequestCount = recentRuns.data.workflow_runs.filter(
+            const recentRuns = (await listRuns()).filter(
               run => Date.parse(run.created_at) >= oneHourAgo
-            ).length;
+            );
 
-            if (hourlyRequestCount >= 20) {
+            if (recentRuns.some(run => run.display_title === runTitle)) {
+              core.info(`A Codex review of ${headSha} was already requested; skipping duplicate request.`);
+              return;
+            }
+
+            if (recentRuns.length >= 20) {
               core.warning('Global Codex review limit of 20 requests per hour reached; skipping request.');
               return;
             }
@@ -98,5 +109,16 @@ jobs:
               ref: context.payload.repository.default_branch,
               inputs: {
                 issue_number: String(issueNumber),
+                head_sha: headSha,
               },
             });
+
+            // Admission runs one at a time; wait until the new run is listed, so the
+            // next admission counts it.
+            for (let attempt = 0; attempt < 12; attempt++) {
+              await new Promise(resolve => setTimeout(resolve, 5000));
+              if ((await listRuns()).some(run => run.display_title === runTitle)) {
+                return;
+              }
+            }
+            core.warning('The dispatched review run is not listed after 60 seconds; a repeated request may not be detected.');

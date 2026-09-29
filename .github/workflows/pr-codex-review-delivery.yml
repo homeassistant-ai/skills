@@ -1,5 +1,5 @@
 name: Send Codex PR Review
-run-name: Send Codex PR review for #${{ inputs.issue_number }}
+run-name: Send Codex PR review for #${{ inputs.issue_number }} at ${{ inputs.head_sha }}
 
 # This workflow is deliberately separate from admission. One run equals one
 # actual Codex request, so its run history is the global rate-limit ledger.
@@ -9,6 +9,11 @@ on:
       issue_number:
         description: Pull request number to review
         required: true
+        type: string
+      head_sha:
+        description: Head commit the review is requested for; admission uses it to skip duplicates
+        required: false
+        default: ""
         type: string
 
 permissions:
@@ -36,9 +41,20 @@ jobs:
         with:
           github-token: ${{ secrets.GH_TOKEN_CODEX_COMMENT }}
           script: |
+            const issueNumber = Number(process.env.ISSUE_NUMBER);
+            try {
+              await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: issueNumber,
+              });
+            } catch (error) {
+              core.setFailed(`#${process.env.ISSUE_NUMBER} is not a pull request in this repository.`);
+              return;
+            }
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: Number(process.env.ISSUE_NUMBER),
+              issue_number: issueNumber,
               body: '@codex review',
             });
