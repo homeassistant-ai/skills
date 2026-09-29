@@ -88,7 +88,8 @@ jobs:
               per_page: 100,
             })).data.workflow_runs;
             const oneHourAgo = Date.now() - 60 * 60 * 1000;
-            const recentRuns = (await listRuns()).filter(
+            const runsBefore = await listRuns();
+            const recentRuns = runsBefore.filter(
               run => Date.parse(run.created_at) >= oneHourAgo
             );
 
@@ -105,6 +106,7 @@ jobs:
               return;
             }
 
+            const idsBefore = new Set(runsBefore.map(run => run.id));
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -117,10 +119,10 @@ jobs:
             });
 
             // Admission runs one at a time; wait until the new run is listed, so the
-            // next admission counts it.
+            // next admission counts it. A run listed before the dispatch is not the new one.
             for (let attempt = 0; attempt < 12; attempt++) {
               await new Promise(resolve => setTimeout(resolve, 5000));
-              if ((await listRuns()).some(requested)) {
+              if ((await listRuns()).some(run => !idsBefore.has(run.id) && run.display_title === runTitle)) {
                 return;
               }
             }
