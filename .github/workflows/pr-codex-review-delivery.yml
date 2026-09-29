@@ -1,5 +1,5 @@
 name: Send Codex PR Review
-run-name: Send Codex PR review for #${{ inputs.issue_number }} at ${{ inputs.head_sha }}
+run-name: "Send Codex PR review for #${{ inputs.issue_number }} at ${{ inputs.head_sha }}"
 
 # This workflow is deliberately separate from admission. One run equals one
 # actual Codex request, so its run history is the global rate-limit ledger.
