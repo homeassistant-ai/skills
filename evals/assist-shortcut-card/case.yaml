@@ -24,12 +24,14 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  # A shortcut card whose tap_action is assist, in YAML or JSON, before the
-  # next `type:`. The card requires tap_action: a top-level `action: assist`
-  # does nothing.
+  # A shortcut card whose tap_action is assist: `action` inside the braces
+  # of tap_action, or on a line indented under it. The scan stops at the next
+  # `type:` or code fence, so a later card or sample cannot satisfy it. A
+  # top-level or unindented `action: assist` leaves tap_action empty.
   - type: regex
     name: shortcut-card-taps-assist
-    pattern: '\btype"?\s*:\s*"?shortcut\b"?(?:(?!\btype"?\s*:)[\s\S]){0,300}?\btap_action"?\s*:\s*\{?\s*"?action"?\s*:\s*"?assist\b'
+    pattern: '\btype"?\s*:\s*"?shortcut\b"?(?:(?!\btype"?\s*:|\x60\x60\x60)[\s\S]){0,300}?(?:\btap_action"?\s*:\s*\{[^{}]*?\baction"?\s*:\s*"?assist\b|^([ \t]*)(?:-[ \t]+)?tap_action:[ \t]*\n(?:\1[ \t]+[^\n]*\n)*?\1[ \t]+action:[ \t]*"?assist\b)'
+    flags: m
     match: contains
 
   - type: llm

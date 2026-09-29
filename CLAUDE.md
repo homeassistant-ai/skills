@@ -101,7 +101,8 @@ Haiku: unpinned, a case runs on the session's model, and Opus costs more and can
 skill adds. Run a second pass with `--model haiku`, which overrides the pin; the skill has to
 work on small models too, and a larger model can cover a gap in the skill that Haiku shows.
 When the `haiku` alias points to a model older than current small models, check a failure only
-Haiku shows on a current one (`scripts/local_model_eval.py`) before it drives a skill change.
+Haiku shows on a current one before it drives a skill change. `scripts/local_model_eval.py` runs
+only cases with a regex grader, so an llm-only case needs one added first.
 Sessions run one at a time by default; `-j 4` runs four at once on the same rate limit. The
 default Haiku judge fails correct answers often enough to swamp run-to-run noise. A full run is
 every case x 3 runs x 2 arms (with and without the skill), so start with `--tag smoke --runs 1
