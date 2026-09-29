@@ -32,6 +32,8 @@ metadata:
 
 **No tool reaches the HA API?** Do not stop to ask for access. If you can drive a browser on the HA web UI, make the change there, but first show the user the exact change and wait for their OK before you save: approving a click does not show them what it writes. Otherwise give the user the complete config to create in the UI (for an automation, the YAML for the editor's **Edit in YAML** mode; for a helper, its form fields), and name the entity IDs you assumed. Config that can only be written in YAML is edited with the File editor app (or in the config folder on a Container install): keep a copy of the file first, then check the configuration and run the matching reload in the **YAML** tab of **Tools** (named **Developer Tools** before 2026.8; restart if it isn't listed).
 
+**A feature marked with a release (2026.5+) depends on the instance's version.** Read it before choosing: `version` in `GET /api/config`, or **Settings → About** in the UI. On that release or later, use the feature and do not offer the older way as an equal choice. If you cannot read the version, assume a current release and name the older fallback with the version it needs.
+
 **Read the matching reference before you answer.** This page only summarizes the files in [Reference Files](#reference-files); the exact keys, fields and working examples are in them. Read every file whose row matches the task, and only those: do not load all reference files upfront.
 
 ## Decision Workflow

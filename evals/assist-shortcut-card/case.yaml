@@ -6,8 +6,11 @@ description: >
 tags: [dashboards]
 
 execution:
+  # The version stands in for what an agent with access reads from the
+  # instance; the eval has none.
   prompt: >-
-    add a card to my Home Assistant dashboard to quickly launch Assist
+    add a card to my Home Assistant dashboard to quickly launch Assist. I'm on
+    2026.9.
   allowed_tools: [Read, Glob, Grep]
   model: sonnet
   max_turns: 10
@@ -20,6 +23,12 @@ graders:
     tool: Skill
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
+
+  # The card config names the type in one line, in YAML or JSON.
+  - type: regex
+    name: shortcut-card-yaml
+    pattern: '\btype"?\s*:\s*"?shortcut\b'
+    match: contains
 
   - type: llm
     name: recommends-shortcut-card

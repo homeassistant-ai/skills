@@ -145,7 +145,7 @@ views: []
 
 | Category | Cards |
 |----------|-------|
-| **Modern Primary** | tile, area, button, grid |
+| **Modern Primary** | tile, area, shortcut, button, grid |
 | **Container** | vertical-stack, horizontal-stack, grid |
 | **Logic** | conditional, entity-filter |
 | **Display** | sensor, history-graph, statistics-graph, gauge, energy, calendar, distribution |
@@ -219,6 +219,19 @@ The only built-in card that renders Jinja2 templates — the go-to for computed/
 ```
 
 The card auto-detects entities referenced in the template; `entity_id` (a list) is an optional fallback for when that analysis misses some, forcing a re-render on those. `text_only: true` strips the card chrome for inline labels.
+
+### Shortcut Card
+
+One tap to navigate, open a URL, launch Assist or run an action (2026.5). Left out, the label and icon come from the action. The text key is `label`, not `name`.
+
+```json
+{
+  "type": "shortcut",
+  "tap_action": {"action": "assist"}
+}
+```
+
+Use it instead of a `button` card with a `tap_action`. A `button` card is the fallback only before 2026.5.
 
 ### Per-Entity Graph Colors
 
