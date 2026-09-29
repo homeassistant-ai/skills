@@ -24,10 +24,12 @@ graders:
     input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
     min: 1
 
-  # The card config names the type in one line, in YAML or JSON.
+  # A shortcut card whose tap_action is assist, in YAML or JSON, before the
+  # next `type:`. The card requires tap_action: a top-level `action: assist`
+  # does nothing.
   - type: regex
-    name: shortcut-card-yaml
-    pattern: '\btype"?\s*:\s*"?shortcut\b'
+    name: shortcut-card-taps-assist
+    pattern: '\btype"?\s*:\s*"?shortcut\b"?(?:(?!\btype"?\s*:)[\s\S]){0,300}?\btap_action"?\s*:\s*\{?\s*"?action"?\s*:\s*"?assist\b'
     match: contains
 
   - type: llm
