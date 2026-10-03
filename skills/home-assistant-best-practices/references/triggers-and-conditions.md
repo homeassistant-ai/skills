@@ -42,6 +42,25 @@ for:
   minutes: 5
 ```
 
+**`for` needs one literal state (2026.10+).** A state condition that combines `for` with `attribute`, with a list of two or more states, or with an `input_*` entity ID as `state` fails validation. Before 2026.10 HA accepted these, but `for` is measured from the entity's `last_changed`, which follows neither an attribute nor a set of states.
+
+```yaml
+# WRONG — fails validation since 2026.10: `for` with `attribute`
+condition: state
+entity_id: climate.thermostat
+attribute: hvac_action
+state: "heating"
+for:
+  minutes: 10
+
+# RIGHT — a template binary sensor holds the duration, the condition reads it
+condition: state
+entity_id: binary_sensor.heating_for_10_minutes
+state: "on"
+```
+
+The binary sensor is a `template` helper with `state: "{{ is_state_attr('climate.thermostat', 'hvac_action', 'heating') }}"` and `delay_on` set to 10 minutes (see [helper-selection](helper-selection.md#template-helpers)).
+
 ### Numeric State Condition
 
 For numeric comparisons. Always prefer over template conditions with `| float`.
@@ -780,3 +799,9 @@ automation:
 ```
 
 Access trigger info in templates with `trigger.id`, `trigger.entity_id`, `trigger.to_state`, etc.
+
+**Generated IDs in UI-made automations (2026.10+).** The automation editor no longer has a trigger ID field. Ticking a trigger in a **Triggered by** condition (`condition: trigger`) writes `id: generated-<4 characters>` on that trigger, and the editor removes a `generated-` ID once no trigger condition lists it.
+
+- Editing such an automation: keep each `generated-` ID and the conditions that list it.
+- IDs without the prefix are kept as written, so descriptive IDs set in YAML (as above) still work.
+- The editor does not count `trigger.id` in a template as a reference. Branch on a `generated-` ID with `condition: trigger`, not a template.

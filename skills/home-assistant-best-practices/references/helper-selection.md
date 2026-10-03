@@ -34,7 +34,7 @@ Several helper integrations — most prominently **`template`**, **`group`**, an
 
 | Helper | Sub-types (pick one first) |
 |--------|---------------------------|
-| `template` | `sensor`, `binary_sensor`, `button`, `switch`, `light`, `cover`, `fan`, `lock`, `select`, `number`, `image`, `vacuum`, `weather`, `alarm_control_panel`, `event`, `update`, `device_tracker` |
+| `template` | `sensor`, `binary_sensor`, `button`, `switch`, `light`, `cover`, `fan`, `lock`, `select`, `number`, `image`, `vacuum`, `weather`, `alarm_control_panel`, `event`, `update`, `device_tracker`, `climate` (2026.10+) |
 | `group` | `binary_sensor`, `button`, `cover`, `event`, `fan`, `light`, `lock`, `media_player`, `notify`, `sensor`, `switch`, `valve` |
 | `random` | `sensor`, `binary_sensor` |
 
@@ -1051,6 +1051,8 @@ is not UI-editable. There is no reason to prefer YAML for this helper.
 
 **Use for:** Turning a switch (or fan) into a thermostat that follows a temperature sensor.
 
+Development is frozen since 2026.10: it gets no new features, but it is not deprecated. For a device exposed as separate switches, sensors and numbers, use [`template` → `climate`](#template) instead.
+
 ```yaml
 # generic_thermostat helper (config-flow submission, TWO steps)
 # --- step 1 (user) ---
@@ -1192,7 +1194,13 @@ sets the entry up, which is why the YAML platform shape shows the key at the top
 
 **template → binary_sensor**
 - Required: `name`, `state` (Jinja template returning truthy/falsy)
-- Optional: `device_class`, `device_id`; `availability` inside `additional_options`
+- Optional: `device_class`, `device_id`; `availability`, `delay_on` and `delay_off` inside `additional_options` (the two delays are durations; in the flow since 2026.10, YAML-only before)
+
+**template → climate** (2026.10+; a thermostat built from other entities)
+- Required: `name`, `hvac_modes` (template returning the list of available modes), `set_hvac_mode` (actions; receive `hvac_mode`)
+- Optional: `hvac_mode`, `hvac_action`, `current_temperature`, `target_temperature` (templates), `set_temperature` (actions), `temperature_unit`, `device_id`; `availability`, `min_temperature` and `max_temperature` inside `additional_options`
+- No `state` field. `target_temperature` without `set_temperature` fails validation
+- **YAML-only:** fan, preset and swing modes, and humidity
 
 **template → device_tracker** (the native replacement for the legacy `device_tracker.see` action)
 - Required: `name`, and **either** `in_zones` (a list of zone entity_ids the device is considered in) **or** both `latitude` and `longitude` (templates)
@@ -1239,7 +1247,7 @@ template:
         device_class: presence
 ```
 
-**YAML-only for template entities** (flow fields verified at 2026.8.3; the 2026.9 notes against core 2026.9.0):
+**YAML-only for template entities** (flow fields verified at 2026.8.3; the 2026.9 notes against core 2026.9.0; `climate` and the binary sensor delays against 2026.10.0b0):
 
 | YAML-only | Why the flow cannot do it |
 |---|---|
@@ -1284,6 +1292,7 @@ See the [Decision Matrix](#decision-matrix) for when the Template Helper is the 
 | Throttle update rate | `filter` (`throttle`/`time_throttle`) | Custom automation with delays |
 | Reject out-of-range values | `filter` (`range`) | Template with bounds check |
 | Thermostat from switch + temp sensor | `generic_thermostat` | Automation with hysteresis logic |
+| Thermostat from a device's separate switches, sensors and numbers (2026.10+) | `template` helper → `climate` | Scripts and input helpers kept in sync by automations |
 | Humidifier from switch + humidity sensor | `generic_hygrostat` | Automation with hysteresis logic |
 | Mold/condensation risk from temp + humidity | `mold_indicator` | Dew-point template |
 | Infer an unmeasurable state from several signals | `bayesian` | Template with stacked and/or logic |

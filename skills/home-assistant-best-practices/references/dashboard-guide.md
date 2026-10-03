@@ -357,6 +357,19 @@ Cards, sections, and badges all accept `visibility` (a list of conditions, impli
 
 `screen` is the canonical way to show/hide cards by viewport (desktop vs. mobile).
 
+**Automation conditions (2026.10+).** `visibility` also accepts `template`, `sun`, `zone`, `device` and integration-provided conditions, written as in an automation. `trigger` is not accepted. They mix with the types above, also inside `and`/`or`/`not`.
+
+```json
+{
+  "visibility": [
+    {"condition": "sun", "after": "sunset"},
+    {"condition": "screen", "media_query": "(max-width: 767px)"}
+  ]
+}
+```
+
+`state` and `numeric_state` have two shapes since 2026.10: the dashboard one with `entity` (shown above; works on every version) and the automation one with `entity_id`, which the 2026.10 editor writes when a condition is edited. Keep whichever shape a config already has; write `entity` unless the instance runs 2026.10 or later.
+
 ---
 
 ## Custom Cards
