@@ -21,7 +21,7 @@ This document covers the `actions:` block of automations and scripts, plus `mode
 
 ### wait_for_trigger (Preferred)
 
-Event-driven wait. More efficient than polling.
+Waits for a trigger to fire after the wait starts.
 
 ```yaml
 # Wait for door to close
@@ -46,7 +46,7 @@ Event-driven wait. More efficient than polling.
 
 ### wait_template (Use Sparingly)
 
-Polls until template is true. **Immediately continues if already true.**
+Waits until the template is true. HA re-renders it when a referenced entity changes state, and at the start of every minute if it uses `now()`. **Immediately continues if already true.**
 
 ```yaml
 # Only use when wait_for_trigger cannot express the condition
