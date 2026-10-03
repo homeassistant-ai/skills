@@ -1200,7 +1200,7 @@ sets the entry up, which is why the YAML platform shape shows the key at the top
 - Required: `name`, `hvac_modes` (template returning the list of available modes), `set_hvac_mode` (actions; receive `hvac_mode`)
 - Optional: `hvac_mode`, `hvac_action`, `current_temperature`, `target_temperature` (templates), `set_temperature` (actions), `temperature_unit`, `device_id`; `availability`, `min_temperature` and `max_temperature` inside `additional_options`
 - No `state` field. `target_temperature` without `set_temperature` fails validation
-- **YAML-only:** fan, preset and swing modes, and humidity
+- **YAML-only:** a dual setpoint (`target_temperature_high` and `target_temperature_low`, set together), `target_temperature_step`, `precision`, and fan, preset and swing modes and humidity
 
 **template → device_tracker** (the native replacement for the legacy `device_tracker.see` action)
 - Required: `name`, and **either** `in_zones` (a list of zone entity_ids the device is considered in) **or** both `latitude` and `longitude` (templates)
