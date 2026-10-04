@@ -178,7 +178,6 @@ Do NOT use templates when a native alternative exists:
 | `{{ states('x') \| float > 25 }}` | `condition: numeric_state` with `above: 25` |
 | `{{ now().hour >= 9 }}` | `condition: time` with `after: "09:00:00"` |
 | `{{ is_state('sun.sun', 'below_horizon') }}` | `condition: sun` with `after: sunset` |
-| `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger |
 | Template sensor summing values | `min_max` helper with `type: sum` |
 | Template binary sensor with threshold | `threshold` helper |
 | Template sensor averaging over time | `statistics` helper |

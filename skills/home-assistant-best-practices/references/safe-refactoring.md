@@ -128,7 +128,7 @@ Verify the new helper produces the same values as the old template sensor. Check
 When converting `device_id` triggers to `entity_id` triggers, or replacing `wait_template` with `wait_for_trigger`:
 
 **Behavioral equivalence (Step 1):**
-`wait_for_trigger` waits for a state *change*; `wait_template` checks the *current state* and re-renders when a referenced entity changes. These differ when the target state is already true at wait start: `wait_for_trigger` waits for the next change or the timeout, `wait_template` returns immediately.
+`wait_for_trigger` waits for a state *change*; `wait_template` checks the *current state* and re-renders when a referenced entity changes. These differ when the target state is already true at wait start: `wait_for_trigger` waits for the next matching trigger (the entity must leave the state and re-enter it), or for the timeout if one is set; `wait_template` returns immediately.
 
 **Automation callers (Step 2):**
 Search for scripts or other automations that call the automation you are restructuring via `automation.trigger` or `automation.turn_on`. Renaming or splitting an automation changes its entity_id and breaks these callers.

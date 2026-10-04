@@ -19,9 +19,9 @@ This document covers the `actions:` block of automations and scripts, plus `mode
 
 ## Wait Actions
 
-### wait_for_trigger (Preferred)
+### wait_for_trigger
 
-Waits for a trigger to fire after the wait starts.
+Waits for a trigger to fire after the wait starts. Use it to wait for an event or a transition. If the entity is already in the target state, a state trigger fires only after the entity leaves that state and re-enters it.
 
 ```yaml
 # Wait for door to close
@@ -44,12 +44,14 @@ Waits for a trigger to fire after the wait starts.
         action: "CLOSE_DOOR"
 ```
 
-### wait_template (Use Sparingly)
+### wait_template
 
-Waits until the template is true. HA re-renders it when a referenced entity changes state, and at the start of every minute if it uses `now()`. **Immediately continues if already true.**
+Waits until the template is true. HA re-renders it when a referenced entity changes state, and at the start of every minute if it uses `now()`. **Immediately continues if already true.** Use it to wait for a condition that may already hold.
+
+Entities the template names directly re-render it on every change. A template that iterates a domain, such as `states.light`, re-renders at most once per second, and one that iterates all states at most once per minute, so it can react late.
 
 ```yaml
-# Only use when wait_for_trigger cannot express the condition
+# Continues at once if the temperature is already above 25
 - wait_template: "{{ states('sensor.temperature') | float > 25 }}"
   timeout:
     minutes: 10

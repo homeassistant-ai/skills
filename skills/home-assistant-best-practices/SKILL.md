@@ -58,7 +58,6 @@ A purpose-specific trigger takes `entity_id` in its `target:` as well, so one kn
 - `{{ states('x') | float > 25 }}` → `numeric_state` condition with `above: 25`
 - `{{ is_state('x', 'on') and is_state('y', 'on') }}` → `condition: and` with state conditions
 - `{{ now().hour >= 9 }}` → `condition: time` with `after: "09:00:00"`
-- `wait_template: "{{ is_state(...) }}"` → `wait_for_trigger` with state trigger (caveat: different behavior when state is already true — see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring))
 
 ### 2. Check for built-in helper or Template Helper
 Read [helper-selection](references/helper-selection.md) before creating a template sensor.
@@ -108,7 +107,7 @@ Read [device-control #buttonremote-patterns](references/device-control.md#button
 | Anti-pattern | Use instead | Why | Reference |
 |--------------|-------------|-----|-----------|
 | `condition: template` with `float > 25` | `condition: numeric_state` | Validated at load, not runtime | [triggers-and-conditions #native-conditions](references/triggers-and-conditions.md#native-conditions) |
-| `wait_template: "{{ is_state(...) }}"` | `wait_for_trigger` with state trigger | Waits for a *change*; `wait_template` continues at once if the template is already true (see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring) for semantic differences) | [automation-actions #wait-actions](references/automation-actions.md#wait-actions) |
+| `wait_for_trigger` with a state trigger for a condition that may already hold | `wait_template` | A state trigger fires only on a transition, so the wait lasts until the entity leaves the state and re-enters it, or forever without a `timeout` (see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring)) | [automation-actions #wait-actions](references/automation-actions.md#wait-actions) |
 | `device_id` in triggers | `entity_id` (or `device_ieee` for ZHA) | device_id breaks on re-add | [device-control #entity-id-vs-device-id](references/device-control.md#entity-id-vs-device-id) |
 | `event` trigger on an integration's bus event (e.g. `hue_event`) for a button that has an `event.*` entity | `event.received` targeting that entity, with values read from its `event_types` attribute | The entity can be renamed and survives a re-add when the integration keeps a stable unique ID; bus event data differs per integration | [device-control #buttonremote-patterns](references/device-control.md#buttonremote-patterns) |
 | `numeric_state` trigger driving a costly action, unguarded | Condition rejecting `unavailable`/`unknown` in `trigger.from_state` | A restart or blip re-arms the trigger, so an unchanged value fires with no crossing (the guard also drops real crossings) | [triggers-and-conditions #unavailable-arms-a-numeric-state-trigger](references/triggers-and-conditions.md#unavailable-arms-a-numeric-state-trigger) |
