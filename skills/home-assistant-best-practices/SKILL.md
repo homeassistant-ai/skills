@@ -1,7 +1,7 @@
 ---
 name: home-assistant-best-practices
 description: >
-  Best practices for HA automations, helpers, scripts, and dashboards.
+  Home Assistant (HA) best practices. Load first, before answering or exploring, on any HA request.
 
   TRIGGER THIS SKILL WHEN:
   - Creating or editing automations, scripts, scenes, dashboards, blueprints
