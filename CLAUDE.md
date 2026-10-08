@@ -17,7 +17,7 @@ a single routing row, not in the always-loaded table.
 
 Every skill is a `SKILL.md` with `name`/`description` frontmatter. Full authoring constraints: `CONTRIBUTING.md`. Two rules to check when editing a skill:
 - `metadata.version` must be `"0"` on new skills — do not edit manually; CI assigns the real version on merge and syncs it into `.claude-plugin/plugin.json` (`.version`) and `.claude-plugin/marketplace.json` (`.metadata.version`) — three files, one source of truth
-- `description` is capped at 1024 chars and runs close to it — measure the parsed length before adding trigger/symptom bullets: `uvx --from skills-ref agentskills read-properties skills/<skill-name> | jq '.description | length'`
+- `description` is capped at 1024 chars and runs close to it — measure the parsed length before adding trigger/symptom bullets: `uvx --from skills-ref agentskills read-properties skills/<skill-name> | jq '.description | length'`. Its first line tells agents to load the skill before answering or exploring; keep that line when trimming, because small models skip the skill without it (`CONTRIBUTING.md` has the numbers)
 
 ## Skill Authoring Principles
 
