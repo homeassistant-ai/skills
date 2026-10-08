@@ -12,7 +12,7 @@ execution:
     add a card to my Home Assistant dashboard to quickly launch Assist. I'm on
     2026.9.
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

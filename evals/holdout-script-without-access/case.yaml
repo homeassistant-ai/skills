@@ -11,7 +11,7 @@ execution:
     make a Home Assistant script that turns off every light on the upstairs
     floor and then locks lock.front_door
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

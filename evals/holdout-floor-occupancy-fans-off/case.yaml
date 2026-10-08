@@ -14,7 +14,7 @@ execution:
     occupancy sensors on that floor has detected anyone for 20 minutes. the
     floor is called ground_floor
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

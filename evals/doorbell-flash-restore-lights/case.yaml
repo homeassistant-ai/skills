@@ -15,7 +15,7 @@ execution:
     binary_sensor.doorbell and the lights are light.living_room_ceiling and
     light.living_room_lamp
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

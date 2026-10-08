@@ -16,7 +16,7 @@ execution:
     when it stops playing, put the two lights and the blinds back the way they
     were before
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

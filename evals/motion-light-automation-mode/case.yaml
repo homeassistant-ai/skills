@@ -12,7 +12,7 @@ execution:
     Home Assistant automation: when binary_sensor.hallway_motion trips, turn on
     light.hallway and switch it off 5 minutes after motion stops
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

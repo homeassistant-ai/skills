@@ -14,7 +14,7 @@ execution:
     (sensor.house_average_temperature) and a Threshold helper
     (binary_sensor.lounge_too_hot)
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

@@ -10,7 +10,7 @@ execution:
     in Home Assistant, I want a sensor showing the current song title on
     media_player.living_room
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

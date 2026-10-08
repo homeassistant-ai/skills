@@ -13,7 +13,7 @@ execution:
     Assistant. its off button is event.bedroom_dimmer_off_button. when I
     triple-press it, turn off every light on the upstairs floor
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

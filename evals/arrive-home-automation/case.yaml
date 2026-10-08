@@ -10,7 +10,7 @@ execution:
     create a Home Assistant automation that turns on light.living_room when I
     get home. I'm person.alex
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

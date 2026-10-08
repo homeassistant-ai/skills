@@ -12,7 +12,7 @@ execution:
     event entity is event.hallway_i4_input_1. when I double-press that button,
     toggle light.hallway
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3

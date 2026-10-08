@@ -20,7 +20,7 @@ execution:
           brightness_pct: 90
           color_temp: 250
   allowed_tools: [Read, Glob, Grep]
-  model: sonnet
+  model: haiku
   max_turns: 10
   timeout_seconds: 300
 runs: 3
