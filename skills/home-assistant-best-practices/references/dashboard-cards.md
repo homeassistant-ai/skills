@@ -1,14 +1,14 @@
 # Dashboard Card Types
 
-A card's visual editor in the running instance is its definition: the form lists the fields and options that instance accepts. Custom cards supply their own editors the same way. The lists below are the cards the card picker offers as of 2026.10.
+A card's visual editor in the running instance shows fields that instance accepts, at its installed version. It is not the full list: a card can accept YAML-only options its editor omits, and a custom card may have no editor at all. A field missing from the editor is not proof that it is invalid. The lists below are the cards the card picker offers as of 2026.10.
 
 ## Where Card Definitions Come From
 
-Pick the row that matches the access you already have. Do not search for, install or ask for a tool to reach a higher row.
+Pick the row that matches the access you have. Do not install anything, or ask the user to, to reach a higher row.
 
 | You have | Read the card's fields from |
 |----------|-----------------------------|
-| A tool, already in your tool list, that describes card types or card fields from the instance | That tool. It covers built-in and installed custom cards at the installed version |
+| A tool that describes card types or card fields from the instance: in your tool list, or found with one query if your tools are behind a tool search | That tool, for built-in and installed custom cards |
 | A browser on the HA UI | The card's visual editor (edit the dashboard, add or edit the card) |
 | Neither | The card's docs page (see [Fetching Card Documentation](#fetching-card-documentation)). It describes the latest release and no custom cards |
 
@@ -33,7 +33,7 @@ https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/cu
 | Card | `{page}` |
 |------|----------|
 | Core or legacy card | the card type (e.g., `tile`, `grid`, `button`) |
-| Any energy card | `energy` (one page for all of them) |
+| Any energy card | `energy` (one page for all of them). Its example writes `energy-compare-card`; the type is `energy-compare` |
 
 ## Quick Card Selection Guide
 
