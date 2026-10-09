@@ -1,24 +1,37 @@
 # Dashboard Card Types
 
-Home Assistant provides 39 built-in card types. For card-specific documentation, fetch from GitHub on demand.
+A card's visual editor in the running instance is its definition: the form lists the fields and options that instance accepts. Custom cards supply their own editors the same way. The lists below are the cards the card picker offers as of 2026.10.
+
+## Where Card Definitions Come From
+
+Use the first source available:
+
+1. Tooling that reads card editor definitions from the instance. It covers built-in and installed custom cards at the installed version.
+2. The card's visual editor in the HA UI (edit the dashboard, add or edit the card).
+3. The card's docs page (see [Fetching Card Documentation](#fetching-card-documentation)). It describes the latest release and no custom cards.
 
 ## Available Card Types
 
-alarm-panel, area, button, calendar, clock, conditional, distribution, energy, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, media-control, picture-elements, picture-entity, picture-glance, picture, plant-status, sensor, shopping-list, shortcut, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
+**Core:** alarm-panel, area, button, calendar, clock, conditional, distribution, entities, entity-filter, entity, gauge, glance, grid, heading, history-graph, horizontal-stack, humidifier, iframe, light, logbook, map, markdown, media-control, picture-elements, picture-entity, picture-glance, picture, plant-status, sensor, shortcut, statistic, statistics-graph, thermostat, tile, todo-list, vertical-stack, weather-forecast
 
-**Note:** The HA docs URL pattern also covers 4 view types (`masonry`, `panel`, `sections`, `sidebar`) — these are set at the view level via `"type"` in view config, NOT inside card arrays. See [dashboard-guide #view-types](dashboard-guide.md#view-types).
+**Energy:** energy-carbon-consumed-gauge, energy-compare, energy-date-selection, energy-devices-detail-graph, energy-devices-graph, energy-distribution, energy-gas-graph, energy-grid-balance, energy-grid-neutrality-gauge, energy-sankey, energy-self-sufficiency-gauge, energy-solar-consumed-gauge, energy-solar-graph, energy-sources-table, energy-usage-graph, energy-water-graph, power-sankey, power-sources-graph, water-flow-sankey, water-sankey
+
+`energy` is not a card type; it is the docs page for the energy cards.
+
+**Legacy:** `shopping-list` still renders but cannot be added from the UI. Use `todo-list`.
+
+**Note:** The view types (`masonry`, `panel`, `sections`, `sidebar`) share the docs URL pattern. They are set at the view level via `"type"` in view config, NOT inside card arrays. See [dashboard-guide #view-types](dashboard-guide.md#view-types).
 
 ## Fetching Card Documentation
 
-To get detailed documentation for a specific card type, fetch from the Home Assistant docs:
-
 ```
-https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/current/source/_dashboards/{card_type}.markdown
+https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/current/source/_dashboards/{page}.markdown
 ```
 
-Replace `{card_type}` with the card name from the list above (e.g., `tile`, `grid`, `button`).
-
-If the MCP server registers resource URI templates for card docs, prefer those over raw GitHub fetches.
+| Card | `{page}` |
+|------|----------|
+| Core or legacy card | the card type (e.g., `tile`, `grid`, `button`) |
+| Any energy card | `energy` (one page for all of them) |
 
 ## Quick Card Selection Guide
 

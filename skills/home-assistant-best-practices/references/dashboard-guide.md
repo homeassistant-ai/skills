@@ -148,10 +148,10 @@ views: []
 | **Modern Primary** | tile, area, shortcut, button, grid |
 | **Container** | vertical-stack, horizontal-stack, grid |
 | **Logic** | conditional, entity-filter |
-| **Display** | sensor, history-graph, statistics-graph, gauge, energy, calendar, distribution |
+| **Display** | sensor, history-graph, statistics-graph, gauge, calendar, distribution, the energy cards |
 | **Legacy Control** | entity, entities, light, thermostat (use tile instead) |
 
-**Default:** Use `tile` card for most entities. Use [dashboard-cards](dashboard-cards.md) to look up all card types or fetch card-specific docs.
+**Default:** Use `tile` card for most entities. Use [dashboard-cards](dashboard-cards.md) to look up all card types and where to read a card's fields.
 
 ### Tile Card
 
