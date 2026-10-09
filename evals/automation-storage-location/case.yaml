@@ -1,0 +1,54 @@
+schema_version: "1.1"
+name: automation-storage-location
+description: >
+  Asks where an automation created in the visual editor is saved, to catch the
+  hallucination of UI automations living inside a Home Assistant `.storage/` JSON file —
+  e.g. asserting they persist to `.storage/core.automations.json`. That conflates
+  storage-mode domains (helpers, areas, devices) with automations, which the UI saves
+  to `automations.yaml` in YAML. The correct answer names `automations.yaml`; it never
+  places an automation inside a `.storage/...json` file.
+tags: [automations]
+
+execution:
+  prompt: >-
+    Home Assistant: I just created an automation in the visual editor (Settings →
+    Automations & scenes). Where is it saved on disk, and which file do I open to
+    edit that UI-created automation later?
+  allowed_tools: [Read, Glob, Grep]
+  model: haiku
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # Free and exact: the YAML automation file is one concrete token. A model that
+  # still asserts a `.storage/` path never names it, so this separates the two arms.
+  - type: regex
+    name: names-automations-yaml
+    pattern: '\bautomations\.yaml\b'
+    match: contains
+
+  # Free and specific: flags exactly the hallucination this row targets — an answer that
+  # places automation config inside a `.storage/` path. The pattern matches only when the
+  # named file is automation-related (e.g. `.storage/core.automations.json`,
+  # `core.automation.json`, bare `automation.json`, `automations.yaml`), so it does NOT fail
+  # a correct answer that merely references `.storage/core.entity_registry.json` (the entity
+  # registry, not automation config) or warns "not in any `.storage/` file". The char class
+  # excludes whitespace and quotes, so a backtick-wrapped denial terminates the match. This
+  # narrows the previous `\.storage\/[^\s"`]{1,80}` (which failed every `.storage/<file>`
+  # mention) to automation-named files only, per PR #117 review #5431639599.
+  - type: regex
+    name: no-storage-json-hallucination
+    pattern: '\.storage\/[^\s"`]*automation'
+    match: not_contains
+
+expected_outcome: >-
+  Saved by the UI editor to `automations.yaml` in YAML — not to any `.storage/` JSON
+  file such as `.storage/core.automations.json`. Confirm the configured `automation:`
+  source includes that file before writing it.

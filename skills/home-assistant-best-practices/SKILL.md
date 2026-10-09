@@ -17,7 +17,7 @@ description: >
   - Entity IDs changed without checking consumers
   - Wrong automation mode chosen
   - Raw sensor or hard-coded value used where a helper belongs
-  - Direct .storage edits, or generated YAML snippets
+   - Direct .storage edits or generated YAML; automations are not stored there
   - User told to edit configuration.yaml for UI integrations
   - Hardcoded Blueprint entities or skipped selectors
   - Existing state changed with no recovery path
@@ -120,6 +120,7 @@ Read [device-control #buttonremote-patterns](references/device-control.md#button
 | Renaming entities used by Min/Max helpers or custom Config-Entry integrations (e.g. Better Thermostat) without checking their Config-Entry data | Scan the config entries' `data`+`options`; re-select the renamed entity in the Min/Max Options Flow. An integration that keeps it in `data` (Better Thermostat) has no API fix: tell the user and take a full backup before the rename | They store entity_ids in the Config Entry, and a registry rename does not update them; single-source helpers such as Threshold (since 2025.6) and Generic Thermostat update themselves | [safe-refactoring #config-entry-data--blind-spots-for-entity-registry-renames](references/safe-refactoring.md#config-entry-data--blind-spots-for-entity-registry-renames) |
 | `template:` sensor/binary sensor in YAML | Template Helper via the config flow | A flow helper reloads in place and stays UI-editable; a `template:` entry needs a config reload and does not. Exceptions are real — trigger-based templates and `attributes:` have no flow field | [helper-selection #template-helpers](references/helper-selection.md#template-helpers) |
 | Editing `.storage/` files or other HA internal state directly | Use the HA REST/WebSocket API to manage state and config entries | `.storage/` files are HA's internal state database; direct edits bypass validation, risk corruption, and can be silently overwritten by HA | — |
+| Looking for automation config in `.storage/` | Read and write automations through the HA config API. UI-created ones are saved to `automations.yaml` | No `.storage/` file holds automation config, in any config mode. `.storage/` holds only the automations' entity registry entries | — |
 | Writing raw YAML to `configuration.yaml` by hand for YAML-only integrations | Use managed YAML config editing with backup and validation | Unmanaged writes risk syntax errors, have no backup, and skip `check_config` — managed editing provides all three | [yaml-only-integrations](references/yaml-only-integrations.md) |
 | Generating YAML snippets for automations/scripts/scenes | Use the HA config API to create automations/scripts programmatically; with no API access, give the config for the UI editor instead | API calls validate config, avoid syntax errors, and don't require manual file edits or restarts | [triggers-and-conditions](references/triggers-and-conditions.md), [automation-actions](references/automation-actions.md), [examples.yaml](references/examples.yaml) |
 | Telling user to edit `configuration.yaml` for integrations | Direct user to Settings > Devices & Services in the HA UI | Most integrations are UI-configured; YAML integration config is rare and integration-specific | — |
