@@ -42,6 +42,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -123,8 +124,12 @@ class EndpointError(Exception):
 
 
 def skill_description(skill_dir: Path) -> str:
-    text = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
-    return yaml.safe_load(text.split("---", 2)[1])["description"].strip()
+    path = skill_dir / "SKILL.md"
+    # The frontmatter ends at a line that is only `---`; the description itself may contain `---`.
+    frontmatter = re.match(r"---\n(.*?)\n---[ \t]*\n", path.read_text(encoding="utf-8"), re.S)
+    if not frontmatter:
+        sys.exit(f"{path} has no frontmatter")
+    return yaml.safe_load(frontmatter[1])["description"].strip()
 
 
 def system_prompt(desc: str) -> str:
