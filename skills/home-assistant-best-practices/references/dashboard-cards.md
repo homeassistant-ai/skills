@@ -4,11 +4,13 @@ A card's visual editor in the running instance is its definition: the form lists
 
 ## Where Card Definitions Come From
 
-Use the first source available:
+Pick the row that matches the access you already have. Do not search for, install or ask for a tool to reach a higher row.
 
-1. Tooling that reads card editor definitions from the instance. It covers built-in and installed custom cards at the installed version.
-2. The card's visual editor in the HA UI (edit the dashboard, add or edit the card).
-3. The card's docs page (see [Fetching Card Documentation](#fetching-card-documentation)). It describes the latest release and no custom cards.
+| You have | Read the card's fields from |
+|----------|-----------------------------|
+| A tool, already in your tool list, that describes card types or card fields from the instance | That tool. It covers built-in and installed custom cards at the installed version |
+| A browser on the HA UI | The card's visual editor (edit the dashboard, add or edit the card) |
+| Neither | The card's docs page (see [Fetching Card Documentation](#fetching-card-documentation)). It describes the latest release and no custom cards |
 
 ## Available Card Types
 
