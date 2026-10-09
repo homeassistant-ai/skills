@@ -18,8 +18,6 @@ Pick the row that matches the access you have. Do not install anything, or ask t
 
 **Energy:** energy-carbon-consumed-gauge, energy-compare, energy-date-selection, energy-devices-detail-graph, energy-devices-graph, energy-distribution, energy-gas-graph, energy-grid-balance, energy-grid-neutrality-gauge, energy-sankey, energy-self-sufficiency-gauge, energy-solar-consumed-gauge, energy-solar-graph, energy-sources-table, energy-usage-graph, energy-water-graph, power-sankey, power-sources-graph, water-flow-sankey, water-sankey
 
-`energy` is not a card type; it is the docs page for the energy cards.
-
 **Legacy:** `shopping-list` still renders but cannot be added from the UI. Use `todo-list`.
 
 **Note:** The view types (`masonry`, `panel`, `sections`, `sidebar`) share the docs URL pattern. They are set at the view level via `"type"` in view config, NOT inside card arrays. See [dashboard-guide #view-types](dashboard-guide.md#view-types).
