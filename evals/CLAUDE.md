@@ -1,6 +1,7 @@
 # Evals
 
-Run every command here from the repo root.
+Run the commands here from the repo root, except the trigger check, which runs from an empty
+directory.
 
 ## Running the suite
 
