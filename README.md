@@ -100,7 +100,7 @@ The `home-assistant-best-practices` skill includes:
 | [`references/device-control.md`](skills/home-assistant-best-practices/references/device-control.md) | Actions and targeting, entity_id vs device_id, buttons and remotes, domain-specific patterns |
 | [`references/scenes.md`](skills/home-assistant-best-practices/references/scenes.md) | Scene authoring: config shape, snapshot/restore, snapshot-vs-script distinction |
 | [`references/dashboard-guide.md`](skills/home-assistant-best-practices/references/dashboard-guide.md) | Dashboard layout, view types, strategies, sections, cards, badges, custom cards, CSS styling, HACS |
-| [`references/dashboard-cards.md`](skills/home-assistant-best-practices/references/dashboard-cards.md) | Card type lookup (core, energy, legacy) and where to read a card's fields: instance card editor, then docs |
+| [`references/dashboard-cards.md`](skills/home-assistant-best-practices/references/dashboard-cards.md) | Built-in card type lookup (core, energy, legacy) and where to read a card's fields |
 | [`references/domain-docs.md`](skills/home-assistant-best-practices/references/domain-docs.md) | Integration and domain documentation (actions, entity attributes); doc pages for specific triggers, conditions, and actions |
 | [`references/examples.yaml`](skills/home-assistant-best-practices/references/examples.yaml) | Compound examples combining multiple best practices |
 | [`references/appdaemon.md`](skills/home-assistant-best-practices/references/appdaemon.md) | AppDaemon apps: when to use vs. native HA, app structure, actions, scheduling, error handling, safe refactoring impact |

@@ -1,6 +1,6 @@
 # Dashboard Card Types
 
-A card's visual editor in the running instance shows fields that instance accepts, at its installed version. It is not the full list: a card can accept YAML-only options its editor omits, and a custom card may have no editor at all. A field missing from the editor is not proof that it is invalid. The lists below are the cards the card picker offers as of 2026.10.
+A card's visual editor in the running instance shows fields that instance accepts, at its installed version. It is not the full list: a card can accept YAML-only options its editor omits, and a custom card may have no editor at all. A field missing from the editor is not proof that it is invalid. The lists below are the built-in cards the card picker offers as of 2026.10. Custom cards have a `custom:` type and depend on what the instance has installed.
 
 ## Where to Read a Card's Fields
 
@@ -8,7 +8,7 @@ Pick the row that matches the access you have. Do not install anything, or ask t
 
 | You have | Read the card's fields from |
 |----------|-----------------------------|
-| A tool that describes card types or card fields from the instance: in your tool list, or found with one query if your tools are behind a tool search | That tool, for built-in and installed custom cards |
+| A tool that returns a card's fields from the instance: in your tool list, or found with one query if your tools are behind a tool search | That tool, for built-in and installed custom cards |
 | A browser on the HA UI | The card's visual editor (edit the dashboard, add or edit the card) |
 | Neither | The card's docs page (see [Fetching Card Documentation](#fetching-card-documentation)). It describes the latest release and no custom cards |
 

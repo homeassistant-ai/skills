@@ -154,7 +154,7 @@ Read each file whose row matches the task before you answer:
 | [device-control](references/device-control.md) | Writing actions, button/remote automations, or using target: |
 | [scenes](references/scenes.md) | Authoring or activating scenes; snapshot/restore patterns, including putting devices back the way they were after a temporary change; snapshot-vs-script distinction |
 | [dashboard-guide](references/dashboard-guide.md) | Designing or modifying Lovelace dashboards — layout, view types, strategies, sections, cards, badges, CSS styling, HACS |
-| [dashboard-cards](references/dashboard-cards.md) | Looking up available card types (core, energy, legacy) or where to read a card's fields: instance card editor, then docs |
+| [dashboard-cards](references/dashboard-cards.md) | Looking up built-in card types (core, energy, legacy) or where to read a card's fields |
 | [domain-docs](references/domain-docs.md) | Looking up integration/domain documentation, or the dedicated doc page for a specific trigger, condition, or action |
 | [examples.yaml](references/examples.yaml) | Need compound examples combining multiple best practices |
 | [appdaemon](references/appdaemon.md) | AppDaemon apps: when to use vs. native HA, app structure, actions, scheduling, error handling, safe refactoring impact |
