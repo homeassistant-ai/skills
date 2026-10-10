@@ -21,8 +21,10 @@ Usage: python scripts/summarise_runs.py [--case <case> ...] [--out DIR] \
 
 DIR defaults to `evals/results`; pass the producer's own --out directory here
 (e.g. `--out evals/results/<name>`) so the summarizer finds the runs it wrote.
-With no --case it summarises every case found in DIR. Exits non-zero when a
-requested case has no runs or a requested label is missing, so CI fails too.
+With no --case it summarises every case found in DIR. It prints every arm it can
+find and only then returns an exit code: 0 when every requested label is present,
+1 when a case has no runs at all (couldn't run), or 3 when a requested label is
+missing (it still prints the arms that are there); argparse usage errors exit 2.
 """
 import argparse
 import glob
@@ -55,7 +57,9 @@ def _emit(case, label, runs):
 
 
 def summarise(case, out, labels, model_filter) -> int:
-    """Group the case's runs by label, print per-label stats, return exit status."""
+    """Group the case's runs by label, print every arm present plus any that are
+    missing, and return a severity code: 0 ok, 1 no runs at all, 3 a requested
+    label was absent (the arms that exist are still printed)."""
     found = {}
     for file_path in sorted(glob.glob(os.path.join(out, f"{case}-*-r*.json"))):
         try:
@@ -74,14 +78,13 @@ def summarise(case, out, labels, model_filter) -> int:
         found.setdefault(run_label, []).append(record)
 
     if not found:
+        if labels:
+            print(f"case {case!r}: missing requested labels: {', '.join(labels)}")
+            return 3
         print(f"no runs for case {case!r} in {out}")
         return 1
 
     missing = [label for label in (labels or []) if label not in found]
-    if missing:
-        print(f"case {case!r}: missing requested labels: {', '.join(missing)}")
-        return 1
-
     for run_label in sorted(found):
         runs = found[run_label]
         group_models = sorted({(run.get("model") or "<no-model>") for run in runs})
@@ -92,6 +95,10 @@ def summarise(case, out, labels, model_filter) -> int:
             for model_name in group_models:
                 subset = [run for run in runs if (run.get("model") or "<no-model>") == model_name]
                 _emit(case, model_name, subset)
+
+    if missing:
+        print(f"case {case!r}: missing requested labels: {', '.join(missing)}")
+        return 3
     return 0
 
 
@@ -109,7 +116,9 @@ def discover_cases(out):
 
 
 def main() -> int:
-    """Parse argv into cases + optional filters and summarise each case."""
+    """Parse argv into cases + optional filters, print every arm across all cases,
+    and return a severity code: 0 ok, 1 no case had any runs, 3 a requested label
+    was missing somewhere (argparse usage errors exit 2)."""
     parser = argparse.ArgumentParser(
         description="Summarise local_model_eval runs by label (reads rate, mean score, per-grader pass).",
         epilog="Run one invocation with --label baseline,post to print both arms together.",
@@ -136,10 +145,20 @@ def main() -> int:
         print(f"no cases with runs in {args.out}")
         return 1
 
-    status = 0
+    fatal = False
+    missing_arm = False
     for case in cases:
-        status |= summarise(case, args.out, labels, args.model)
-    return status
+        code = summarise(case, args.out, labels, args.model)
+        if code == 1:
+            fatal = True
+        elif code == 3:
+            missing_arm = True
+
+    if fatal:
+        return 1
+    if missing_arm:
+        return 3
+    return 0
 
 
 if __name__ == "__main__":
