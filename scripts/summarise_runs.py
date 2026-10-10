@@ -32,8 +32,8 @@ import sys
 from collections import defaultdict
 
 
-def _emit(label, runs):
-    """Print one label/arm's ingestion and score stats."""
+def _emit(case, label, runs):
+    """Print one case's label/arm's ingestion and score stats."""
     run_count = len(runs)
     loaded = sum(1 for run in runs if "SKILL.md" in (run.get("reads") or []))
     reads_rate = loaded / run_count if run_count else float("nan")
@@ -45,7 +45,7 @@ def _emit(label, runs):
             grades[grader_name][1] += 1
     errors = sorted({run.get("error") for run in runs if run.get("error")})
     model_seen = next((run.get("model") for run in runs if run.get("model")), "?")
-    print(f"=== {label}   runs={run_count}   model={model_seen}")
+    print(f"=== {case} / {label}   runs={run_count}   model={model_seen}")
     print(f"   reads_rate(SKILL loaded) = {loaded}/{run_count} = {reads_rate:.3f}" if run_count else "   (no runs)")
     print(f"   mean score = {mean_score:.3f}   scores={[round(run.get('score', 0), 2) for run in runs]}" if run_count else "")
     for grader_name, (pass_count, total_count) in sorted(grades.items()):
@@ -79,19 +79,19 @@ def summarise(case, out, labels, model_filter) -> int:
 
     missing = [label for label in (labels or []) if label not in found]
     if missing:
-        print("missing requested labels:", ", ".join(missing))
+        print(f"case {case!r}: missing requested labels: {', '.join(missing)}")
         return 1
 
     for run_label in sorted(found):
         runs = found[run_label]
         group_models = sorted({(run.get("model") or "<no-model>") for run in runs})
         if len(group_models) == 1:
-            _emit(run_label, runs)
+            _emit(case, run_label, runs)
         else:
-            print(f"=== {run_label}   {len(group_models)} models present:")
+            print(f"=== {case} / {run_label}   {len(group_models)} models present:")
             for model_name in group_models:
                 subset = [run for run in runs if (run.get("model") or "<no-model>") == model_name]
-                _emit(model_name, subset)
+                _emit(case, model_name, subset)
     return 0
 
 
