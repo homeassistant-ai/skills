@@ -1,0 +1,42 @@
+schema_version: "1.1"
+name: card-docs-without-fetch
+description: >
+  The agent is asked for a card's documentation but has no tool that opens URLs,
+  no instance access and no browser. Checks it gives the user a docs link they
+  can open and still writes the card.
+tags: [dashboards]
+
+execution:
+  # The prompt says the user pastes the config, so the agent has no reason to
+  # ask for dashboard access.
+  prompt: >-
+    find the documentation for the history-graph card, then give me a card that
+    shows sensor.living_room_temperature over the last 24 hours. I'll paste the
+    config into my dashboard myself.
+  allowed_tools: [Read, Glob, Grep]
+  model: haiku
+  max_turns: 10
+  timeout_seconds: 300
+runs: 3
+
+graders:
+  - type: tool_used
+    name: skill-fired
+    tool: Skill
+    input_match: '"skill"\s*:\s*"(?:[\w-]+:)?home-assistant-best-practices"'
+    min: 1
+
+  # The card is still written: a history-graph card that names the entity.
+  - type: regex
+    name: history-graph-card-for-entity
+    pattern: '\btype"?\s*:\s*"?history-graph\b[\s\S]{0,400}?sensor\.living_room_temperature'
+    match: contains
+
+  # The user gets the rendered docs page, which opens in a browser.
+  - type: regex
+    name: rendered-docs-link
+    pattern: 'home-assistant\.io/dashboards/history-graph'
+    match: contains
+
+expected_outcome: >-
+  Gives a history-graph card for the entity and the rendered docs link.

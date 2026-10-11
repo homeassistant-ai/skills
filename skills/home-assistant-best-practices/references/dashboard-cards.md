@@ -4,13 +4,14 @@ A card's visual editor in the running instance shows fields that instance accept
 
 ## Where to Read a Card's Fields
 
-Pick the row that matches the access you have. Do not install anything, or ask the user to, to reach a higher row.
+Pick the first row that matches what you have. If your tools are behind a tool search, one query decides whether a row matches; do not repeat it. A tool that returns an error does not match. Do not install anything, or ask the user to, to reach a higher row.
 
 | You have | Read the card's fields from |
 |----------|-----------------------------|
-| A tool that returns a card's fields from the instance: in your tool list, or found with one query if your tools are behind a tool search | That tool, for built-in and installed custom cards |
+| A tool that returns a card's fields from the instance | That tool, for built-in and installed custom cards |
 | A browser on the HA UI | The card's visual editor (edit the dashboard, add or edit the card) |
-| Neither | The card's docs page (see [Fetching Card Documentation](#fetching-card-documentation)). It describes the latest release and no custom cards |
+| A tool that opens URLs | The card's docs page (see [Card Docs Pages](#card-docs-pages)). It describes the latest release and no custom cards |
+| None of these | The fields in [dashboard-guide](dashboard-guide.md) if it covers the card, otherwise the fields you know. Tell the user they are not checked against the instance, and give the card's docs link (see [Card Docs Pages](#card-docs-pages)) |
 
 ## Available Card Types
 
@@ -20,11 +21,12 @@ Pick the row that matches the access you have. Do not install anything, or ask t
 
 **Legacy:** `shopping-list` still renders but cannot be added from the UI. Use `todo-list`.
 
-## Fetching Card Documentation
+## Card Docs Pages
 
-```
-https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/current/source/_dashboards/{page}.markdown
-```
+| Use | URL |
+|-----|-----|
+| To read with a tool that opens URLs | `https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/current/source/_dashboards/{page}.markdown` |
+| To give the user as a link | `https://www.home-assistant.io/dashboards/{page}/` |
 
 | Card | `{page}` |
 |------|----------|
