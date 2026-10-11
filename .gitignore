@@ -6,3 +6,7 @@
 
 # claude plugin eval writes run output next to the cases
 /evals/results/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
