@@ -17,7 +17,7 @@ description: >
   - Entity IDs changed without checking consumers
   - Wrong automation mode chosen
   - Raw sensor or hard-coded value used where a helper belongs
-   - Direct .storage edits or generated YAML; automations are not stored there
+  - Direct .storage edits or automation lookups there; generated YAML
   - User told to edit configuration.yaml for UI integrations
   - Hardcoded Blueprint entities or skipped selectors
   - Existing state changed with no recovery path
