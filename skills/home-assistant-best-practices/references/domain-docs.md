@@ -10,8 +10,6 @@ https://raw.githubusercontent.com/home-assistant/home-assistant.io/refs/heads/cu
 
 Replace `{domain}` with the integration name (e.g., `light`, `climate`, `mqtt`).
 
-If the MCP server registers resource URI templates for domain docs, prefer those over raw GitHub fetches.
-
 ## Fetching Trigger, Condition, and Action Docs
 
 Since 2026.7, every purpose-specific trigger and condition — and every action — has a dedicated doc page covering what it does, when to use it, its config shape, options, and worked examples. Fetch the page instead of guessing keys or options:
