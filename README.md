@@ -17,11 +17,11 @@ An **Agent Skill** is a portable Markdown knowledge pack that teaches AI coding 
 Agents make a predictable set of mistakes with Home Assistant config — Jinja templates where a native trigger, condition, or helper exists, `device_id` where `entity_id` belongs, `mode: single` on a motion light, renames that silently break dashboards and scripts — and the anti-pattern table names each one with its fix. A typical entry:
 
 ```yaml
-# Without the skill — template condition: a typo or wrong entity ID surfaces only when it runs
+# Without the skill: a template condition. HA checks only the Jinja syntax when the automation loads
 condition: template
 value_template: "{{ states('sensor.living_room_temperature') | float > 25 }}"
 
-# With the skill — native condition: config validated when the automation loads
+# With the skill: a native condition. HA checks every key, the entity ID format and the threshold when it loads
 condition: numeric_state
 entity_id: sensor.living_room_temperature
 above: 25
@@ -39,7 +39,7 @@ Requires [Node.js 22.20+](https://nodejs.org/).
 npx skills add homeassistant-ai/skills
 ```
 
-Works with AI coding agents that support the [Agent Skills standard](https://agentskills.io): Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, and 70+ others. To update: `npx skills update`
+Works with AI coding agents that support the [Agent Skills standard](https://agentskills.io): Claude Code, Codex, Cursor, GitHub Copilot, Gemini CLI, and 70+ others. It installs into the current project; add `-g` to install it for all projects. To update: `npx skills update`
 
 ### Claude Code plugin
 
@@ -56,7 +56,12 @@ Run each command separately inside Claude Code:
 
 Run `/reload-plugins` or restart Claude Code for the skill to take effect.
 
-Auto-update is off by default for third-party marketplaces. To turn it on, run `/plugin`, open **Marketplaces**, choose `home-assistant-skills`, and select **Enable auto-update**. To update by hand instead, run `claude plugin update home-assistant-skills` from a shell, then `/reload-plugins`.
+Auto-update is off by default for third-party marketplaces. To turn it on, run `/plugin`, open **Marketplaces**, choose `home-assistant-skills`, and select **Enable auto-update**. To update by hand instead, run `/plugin`, open **Marketplaces**, choose `home-assistant-skills`, and select **Update marketplace**, then run `/reload-plugins`. From a shell, run these, then `/reload-plugins` or restart Claude Code:
+
+```bash
+claude plugin marketplace update home-assistant-skills
+claude plugin update home-assistant-skills
+```
 
 ### Claude Desktop / claude.ai
 
@@ -66,7 +71,7 @@ Both apps share the same Customize UI, reached via the left sidebar (Claude Desk
 2. Customize → Plugins → Add → Add marketplace → Add from a repository
 3. Select or enter `homeassistant-ai/skills` (or the full URL, `https://github.com/homeassistant-ai/skills`) → Sync
 
-This installs the skill as a plugin synced from this repo — no download or zip needed. **Sync automatically** is on by default, so later updates arrive on their own.
+This installs the skill as a plugin synced from this repo — no download or zip needed. **Sync automatically** is on by default, so later updates arrive on their own. To pull an update at once, open **Add → Manage marketplaces**, then the marketplace's menu → **Check for updates**.
 
 <details>
 <summary>Alternative: upload the skill manually as a zip</summary>
@@ -74,7 +79,7 @@ This installs the skill as a plugin synced from this repo — no download or zip
 1. Enable code execution: Settings → Capabilities → turn on **Cloud code execution and file creation** (required for skills)
 2. Download or clone this repository
 3. Zip the skill folder: `cd skills && zip -r home-assistant-best-practices.zip home-assistant-best-practices/`
-4. Customize → Skills → Add → Upload a skill
+4. Customize → Skills → Add → Upload skill
 
 </details>
 
