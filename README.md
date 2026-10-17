@@ -60,7 +60,7 @@ Auto-update is off by default for third-party marketplaces. To turn it on, run `
 
 ```bash
 claude plugin marketplace update home-assistant-skills
-claude plugin update home-assistant-skills
+claude plugin update home-assistant-skills@home-assistant-skills
 ```
 
 ### Claude Desktop / claude.ai
