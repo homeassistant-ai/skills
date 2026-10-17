@@ -106,7 +106,7 @@ Read [device-control #buttonremote-patterns](references/device-control.md#button
 
 | Anti-pattern | Use instead | Why | Reference |
 |--------------|-------------|-----|-----------|
-| `condition: template` with `float > 25` | `condition: numeric_state` | Validated at load, not runtime | [triggers-and-conditions #native-conditions](references/triggers-and-conditions.md#native-conditions) |
+| `condition: template` with `float > 25` | `condition: numeric_state` | Keys and threshold are checked at load; an `unavailable` or `unknown` state is false, where `float` with no default raises an error | [triggers-and-conditions #native-conditions](references/triggers-and-conditions.md#native-conditions) |
 | `wait_for_trigger` with a state trigger for a condition that may already hold | `wait_template` | A state trigger fires only on a transition, so the wait lasts until the entity leaves the state and re-enters it, or forever without a `timeout` (see [safe-refactoring #trigger-restructuring](references/safe-refactoring.md#trigger-restructuring)) | [automation-actions #wait-actions](references/automation-actions.md#wait-actions) |
 | `device_id` in triggers | `entity_id` (or `device_ieee` for ZHA) | device_id breaks on re-add | [device-control #entity-id-vs-device-id](references/device-control.md#entity-id-vs-device-id) |
 | `event` trigger on an integration's bus event (e.g. `hue_event`) for a button that has an `event.*` entity | `event.received` targeting that entity, with values read from its `event_types` attribute | The entity can be renamed and survives a re-add when the integration keeps a stable unique ID; bus event data differs per integration | [device-control #buttonremote-patterns](references/device-control.md#buttonremote-patterns) |
