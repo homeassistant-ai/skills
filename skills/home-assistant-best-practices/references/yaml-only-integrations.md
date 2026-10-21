@@ -35,3 +35,5 @@ A YAML edit changes nothing until the integration re-reads the file. Which actio
 - **`homeassistant.restart`** — the fallback for platform-style YAML, which has no reload action. **Confirm with the user first:** it briefly interrupts every automation and integration, not just the one you edited.
 
 Run `homeassistant.check_config` first. `homeassistant.restart` validates the config itself and refuses to restart when it fails, so the risk isn't a broken instance — it's that a reload silently leaves the old config running, or that you spend the user's restart to discover a typo.
+
+`template.reload` does not reload `custom_templates` macros; call `homeassistant.reload_custom_templates` (see [template-guidelines](template-guidelines.md)).
