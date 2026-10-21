@@ -697,7 +697,7 @@ restore: true            # default true
 actions:
   - delay:
       minutes: 5
-  - action: notify.mobile_app
+  - action: notify.mobile_app_phone
     data:
       message: "Timer done!"
 ```

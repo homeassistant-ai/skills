@@ -14,6 +14,8 @@ This document covers the `actions:` block of automations and scripts, plus `mode
 9. [Parallel Actions](#parallel-actions)
 10. [Documenting Automations & Scripts](#documenting-automations--scripts)
 11. [Disabling Automations](#disabling-automations)
+12. [Measuring Elapsed Time Across Automations](#measuring-elapsed-time-across-automations)
+13. [Notify: Entity vs Action Namespace](#notify-entity-vs-action-namespace)
 
 ---
 
@@ -76,7 +78,7 @@ Both waits set `wait.completed` and `wait.remaining`:
 - if:
     - "{{ not wait.completed }}"
   then:
-    - action: notify.mobile_app
+    - action: notify.mobile_app_phone
       data:
         message: "Door still open after 5 minutes!"
 ```
@@ -112,7 +114,7 @@ automation:
         entity_id: binary_sensor.doorbell
         to: "on"
     actions:
-      - action: notify.mobile_app
+      - action: notify.mobile_app_phone
         data:
           message: "Someone at the door!"
 ```
@@ -173,7 +175,7 @@ automation:
         for:
           minutes: 30
     actions:
-      - action: notify.mobile_app
+      - action: notify.mobile_app_phone
         data:
           message: "{{ trigger.to_state.name }} has been open for 30 minutes"
 ```
@@ -201,7 +203,7 @@ actions:
     target:
       entity_id: light.patio
     continue_on_error: true  # Automation proceeds even if this fails
-  - action: notify.mobile_app
+  - action: notify.mobile_app_phone
     data:
       message: "Light action attempted"
 ```
@@ -302,7 +304,7 @@ When an automation declares both `trigger_variables:` and `variables:`, the two 
   data:
     type: daily
   response_variable: forecast
-- action: notify.mobile_app
+- action: notify.mobile_app_phone
   data:
     message: "High today: {{ forecast['weather.home'].forecast[0].temperature }}°"
 ```
@@ -329,7 +331,7 @@ Four repeat variants are available:
         entity_id: binary_sensor.door
         state: "on"
     sequence:
-      - action: notify.mobile_app
+      - action: notify.mobile_app_phone
         data:
           message: "Door still open"
       - delay:
@@ -536,3 +538,72 @@ actions:
   - action: notify.notify
     enabled: false
 ```
+
+---
+
+## Measuring Elapsed Time Across Automations
+
+`this.attributes.last_triggered` is captured at trigger time, before the run stamps `last_triggered`
+([automation/__init__.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/automation/__init__.py),
+[script.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/helpers/script.py)) —
+so it holds the **previous** run and is the right source for a cooldown condition. A live read instead,
+`state_attr(this.entity_id, 'last_triggered')` during the run, returns "now" (this run's start), so its
+elapsed time is always ~0.
+
+`trigger.from_state.last_changed` is correct except when HA restarted while the entity held that old
+state — a restart re-stamps `last_changed` to startup (see
+[triggers-and-conditions #for-duration-resets-on-restart-and-on-unavailable](triggers-and-conditions.md#for-duration-resets-on-restart-and-on-unavailable)),
+so do not rely on it for a duration that must survive a restart.
+
+For a duration across automations — how long since a *different* automation ran — read that
+automation's `last_triggered`, or stamp a persistent `input_datetime` when the condition begins (the
+restart-proof idiom that same section documents):
+
+```yaml
+# RIGHT — duration since the companion automation last ran, not this one
+- action: notify.mobile_app_phone
+  data:
+    message: >
+      {{ state_attr('automation.fridge_door_opened', 'last_triggered') is not none
+         and ((now() - state_attr('automation.fridge_door_opened', 'last_triggered')).total_seconds() | int) ~ ' s ago'
+         or 'never triggered' }}
+```
+
+---
+
+## Notify: Entity vs Action Namespace
+
+Mobile App exposes each device twice, both under `notify.*`, and the two do not track each other:
+
+- **Per-device action** `notify.mobile_app_<device_name>` — registered dynamically from the *slugified*
+  device name, callable directly, and unaffected by entity renames.
+- **Renameable entity** `notify.<entity_id>` — callable only via the `notify.send_message` **action**
+  (named **service** before 2024.8) with `target:`.
+
+Renaming the entity moves its id but not the device-derived action, so a renamed id looks like an
+action name but is not one — "action not found" means an entity id was written where the action name
+belongs:
+
+```yaml
+# WRONG — notify.my_phone is the renamed entity id, not an action
+- action: notify.my_phone
+  data:
+    message: "door open"
+
+# RIGHT — the device-derived action keeps its name after the rename
+- action: notify.mobile_app_iphone
+  data:
+    message: "door open"
+
+# RIGHT — the renamed entity is reached via notify.send_message
+- action: notify.send_message
+  target:
+    entity_id: notify.my_phone
+  data:
+    message: "door open"
+```
+
+([notify/legacy.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/notify/legacy.py),
+[mobile_app/notify.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/mobile_app/notify.py),
+[mobile_app/__init__.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/mobile_app/__init__.py),
+[notify/services.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/notify/services.py))
