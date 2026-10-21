@@ -344,6 +344,29 @@ triggers:
     to: "on"
 ```
 
+### Recovery state trigger fires between `unavailable` and `unknown`
+
+A recovery trigger — `from: [unavailable, unknown]` with no `to:` — fires on **every** transition
+away from those two states, including `unavailable` → `unknown` and back, so it reports a false
+recovery while the entity is still down. Add `not_to: [unavailable, unknown]` to fire only on a
+return to a real state
+([state.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/homeassistant/triggers/state.py)):
+
+```yaml
+# WRONG — fires on unavailable → unknown and back, before the entity actually recovers
+triggers:
+  - trigger: state
+    entity_id: sensor.link_quality
+    from: [unavailable, unknown]
+
+# RIGHT — fires only when the entity reaches a real state
+triggers:
+  - trigger: state
+    entity_id: sensor.link_quality
+    from: [unavailable, unknown]
+    not_to: [unavailable, unknown]
+```
+
 ### Numeric State Trigger
 
 Fires when crossing a threshold.
