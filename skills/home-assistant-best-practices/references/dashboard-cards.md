@@ -49,3 +49,25 @@ Pick the first row that matches what you have. If your tools are behind a tool s
 | Embed external page | `iframe` |
 | Rich text / instructions | `markdown` |
 | Camera or image with overlays | `picture-elements` |
+
+## Entities Card: Attribute Rows Need `type: attribute`
+
+In an `entities` card, a row carrying `attribute:` must also carry `type: attribute`. Without the
+`type`, the card renders the entity's state and silently ignores the `attribute` key — no error, the
+attribute simply never shows
+([create-element-base.ts @ 20260930.4](https://github.com/home-assistant/frontend/blob/20260930.4/src/panels/lovelace/create-element/create-element-base.ts)).
+
+```yaml
+# WRONG — `attribute` is ignored, the row shows the state
+type: entities
+entities:
+  - entity: climate.thermostat
+    attribute: current_temperature
+
+# RIGHT — `type: attribute` makes the row render the attribute
+type: entities
+entities:
+  - entity: climate.thermostat
+    type: attribute
+    attribute: current_temperature
+```
