@@ -546,14 +546,16 @@ actions:
 `this.attributes.last_triggered` is captured at trigger time, before the run stamps `last_triggered`
 ([automation/__init__.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/automation/__init__.py),
 [script.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/helpers/script.py)) —
-so it holds the **previous** run and is the right source for a cooldown condition. A live read instead,
-`state_attr(this.entity_id, 'last_triggered')` during the run, returns "now" (this run's start), so its
-elapsed time is always ~0.
+so it holds the **previous** run and is the right source for a cooldown condition. A live read
+(`state_attr(this.entity_id, 'last_triggered')`) still sees the previous run while the automation-level
+`variables:` and `conditions:` evaluate (they run before the action script), but "now" inside the
+actions, where the script has stamped `last_triggered` as it started: there it measures the elapsed time
+since *this* run started, not the interval since the previous run.
 
-`trigger.from_state.last_changed` is correct except when HA restarted while the entity held that old
-state — a restart re-stamps `last_changed` to startup (see
-[triggers-and-conditions #for-duration-resets-on-restart-and-on-unavailable](triggers-and-conditions.md#for-duration-resets-on-restart-and-on-unavailable)),
-so do not rely on it for a duration that must survive a restart.
+`trigger.from_state.last_changed` is the timestamp of the entity's most recent state entry, so it is
+correct for a normal intended transition; it does not measure a logical interval across a restart or a
+momentary `unavailable`/`unknown` blip, both of which re-stamp it (see
+[triggers-and-conditions #for-duration-resets-on-restart-and-on-unavailable](triggers-and-conditions.md#for-duration-resets-on-restart-and-on-unavailable)).
 
 For a duration across automations — how long since a *different* automation ran — read that
 automation's `last_triggered`, or stamp a persistent `input_datetime` when the condition begins (the
@@ -573,32 +575,34 @@ restart-proof idiom that same section documents):
 
 ## Notify: Entity vs Action Namespace
 
-Mobile App exposes each device twice, both under `notify.*`, and the two do not track each other:
+Mobile App exposes each device twice, under two different `notify.*` names, and the two do not track
+each other:
 
+- **Entity** `notify.<device_name>` — the default entity id is the slugified device name (e.g.
+  `notify.iphone`), renameable, and callable only via the `notify.send_message` **action** (named
+  **service** before 2024.8) with `target:`.
 - **Per-device action** `notify.mobile_app_<device_name>` — registered dynamically from the *slugified*
-  device name, callable directly, and unaffected by entity renames.
-- **Renameable entity** `notify.<entity_id>` — callable only via the `notify.send_message` **action**
-  (named **service** before 2024.8) with `target:`.
+  device name (e.g. `notify.mobile_app_iphone`), callable directly.
 
-Renaming the entity moves its id but not the device-derived action, so a renamed id looks like an
-action name but is not one — "action not found" means an entity id was written where the action name
-belongs:
+The entity id and the action name are different strings even at the defaults, so `notify.iphone` is not
+an action: `action: notify.iphone` fails with "action not found" regardless of any rename. Renaming the
+entity moves its id further, but the rule does not depend on it.
 
 ```yaml
-# WRONG — notify.my_phone is the renamed entity id, not an action
-- action: notify.my_phone
+# WRONG — notify.iphone is the entity, not an action
+- action: notify.iphone
   data:
     message: "door open"
 
-# RIGHT — the device-derived action keeps its name after the rename
+# RIGHT — the slugified device-named action
 - action: notify.mobile_app_iphone
   data:
     message: "door open"
 
-# RIGHT — the renamed entity is reached via notify.send_message
+# RIGHT — the entity, via notify.send_message
 - action: notify.send_message
   target:
-    entity_id: notify.my_phone
+    entity_id: notify.iphone
   data:
     message: "door open"
 ```
