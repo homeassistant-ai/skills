@@ -55,7 +55,7 @@ Pick the first row that matches what you have. If your tools are behind a tool s
 In an `entities` card, a row carrying `attribute:` must also carry `type: attribute`. Without the
 `type`, the card renders the entity's state and silently ignores the `attribute` key — no error, the
 attribute simply never shows
-([create-element-base.ts @ 20260930.4](https://github.com/home-assistant/frontend/blob/20260930.4/src/panels/lovelace/create-element/create-element-base.ts)).
+([create-row-element.ts @ 20260930.4](https://github.com/home-assistant/frontend/blob/20260930.4/src/panels/lovelace/create-element/create-row-element.ts)).
 
 ```yaml
 # WRONG — `attribute` is ignored, the row shows the state
