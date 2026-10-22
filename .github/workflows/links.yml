@@ -1,13 +1,11 @@
 name: Links
 
 on:
+  # No path filter on pull requests: `internal-links` is a required status
+  # check on main, and a workflow that path filtering skips reports nothing, so
+  # the check stays "expected" forever. The job is offline and takes seconds,
+  # and a rename of any linked file can break a link, so it runs on every PR.
   pull_request:
-    paths:
-      - '**/*.md'
-      # SKILL.md links to references/examples.yaml; without this a rename of a
-      # linked .yaml touches no markdown, the workflow never runs, and the
-      # broken link merges unchecked.
-      - '**/*.yaml'
   schedule:
     # External links rot on their own schedule, not ours — check weekly.
     - cron: '0 6 * * 1'
@@ -32,6 +30,7 @@ jobs:
   internal:
     # Local file paths and #anchors only. No network, so it is deterministic and
     # safe to block a merge on.
+    name: internal-links
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
