@@ -697,7 +697,7 @@ The `.jinja` file requires filesystem access to the config directory — there i
 | Create `config/custom_templates/` | HA does not create it; a missing directory is not an error, it just yields no macros |
 | Add a `*.jinja` file | Subdirectories are scanned too; only the `.jinja` extension is loaded |
 | Import by path relative to `custom_templates/` | `battery.jinja`, or `sensors/battery.jinja` for a file in a subdirectory |
-| Call `homeassistant.reload_custom_templates` | Admin action, no restart. Required after every edit — it swaps in the new sources but re-renders nothing; each entity shows the change at its next render. `homeassistant.reload_all` includes it |
+| Call `homeassistant.reload_custom_templates` | Admin action, no restart. Required after every edit — it swaps in the new sources but re-renders nothing; each consumer shows the change at its next render (template entity) or execution (automation/script). `homeassistant.reload_all` includes it |
 
 
 ```jinja
@@ -732,9 +732,10 @@ The import goes inside every template that uses the macro — imports are per-te
 - `template.reload` does **not** reload `custom_templates` — it reloads the `template:` YAML entities
   only
   ([template component @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/template/__init__.py)).
-- Reload swaps the sources but re-renders nothing — any entity using the macro shows the new one at
-  its next render. Check its `last_reported`, not `last_changed`: the latter moves only when the state
-  value changes, so a same-value re-render looks like a failed reload
+- Reload swaps the sources but re-renders nothing — any consumer (a template entity, an automation, or
+  a script) shows the new macro at its next render or execution. For a template entity, check its
+  `last_reported`, not `last_changed`: the latter moves only when the state value changes, so a
+  same-value re-render looks like a failed reload
   ([core.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/core.py)).
 
 ### Imports Do Not Carry the Caller's Context
@@ -790,7 +791,7 @@ For a real return value, give the macro a `returns` argument and convert it with
 | Symptom | Cause |
 |---------|-------|
 | `TemplateNotFound` | File is not under `config/custom_templates/`, does not end in `.jinja`, or `reload_custom_templates` has not run since it was added |
-| Edits have no effect | Call `homeassistant.reload_custom_templates`; the entity shows the change at its next render (check `last_reported`) |
+| Edits have no effect | Call `homeassistant.reload_custom_templates`; the consumer shows the change at its next render/execution |
 | Empty output where a caller variable should be, or `'trigger' is undefined` in the log | Context does not cross an import — pass it as a macro argument |
 
 ---
