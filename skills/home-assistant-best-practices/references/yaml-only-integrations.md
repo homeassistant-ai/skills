@@ -36,4 +36,4 @@ A YAML edit changes nothing until the integration re-reads the file. Which actio
 
 Run `homeassistant.check_config` first. `homeassistant.restart` validates the config itself and refuses to restart when it fails, so the risk isn't a broken instance — it's that a reload silently leaves the old config running, or that you spend the user's restart to discover a typo.
 
-`template.reload` does not reload `custom_templates` macros; call `homeassistant.reload_custom_templates` (see [template-guidelines](template-guidelines.md)).
+`template.reload` does not reload `custom_templates` macros; call `homeassistant.reload_custom_templates` (see [Reloading Custom Templates Macros](template-guidelines.md#reloading-custom-templates-macros)).
