@@ -43,7 +43,8 @@ Four more checks gate a merge. The required status checks on `main` are `validat
 (`validate-skills.yml`: skills-ref, the eval-case checker, agnix and the version check),
 `internal-links` (lychee), `plugin-manifests` and `ha-examples` (below). A required check whose
 workflow a path filter skips never reports and blocks the PR, so none of these workflows has a
-`pull_request` path filter; each skips its work inside the job when its inputs did not change.
+`pull_request` path filter. `internal-links` runs in full on every PR; the other three skip
+their work inside the job when their inputs did not change.
 CI installs `agnix` from PyPI unpinned, so
 it and `uvx agnix@latest` both run the latest release; a new agnix rule can fail a PR that did
 not cause it. `lychee` runs as a release binary pinned in `links.yml`; install that version (its release

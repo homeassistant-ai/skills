@@ -41,12 +41,12 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Not piped into grep -q: grep exits on the first match, git diff
-          # then dies of SIGPIPE, and pipefail turns the match into a skip.
-          files=$(git diff --name-only "$PR_BASE_SHA" HEAD)
-          if grep -qE \
-              '^(skills/|scripts/check_ha_examples\.py$|scripts/ha_examples_allowlist\.yaml$|\.github/workflows/ha-examples\.yml$)' \
-              <<< "$files"; then
+          # Git matches the paths itself: a pattern on --name-only output
+          # misses a path git prints quoted (one with a non-ASCII character).
+          files=$(git diff --name-only "$PR_BASE_SHA" HEAD -- skills/ \
+            scripts/check_ha_examples.py scripts/ha_examples_allowlist.yaml \
+            .github/workflows/ha-examples.yml)
+          if [ -n "$files" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"

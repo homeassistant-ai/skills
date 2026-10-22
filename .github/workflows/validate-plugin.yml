@@ -36,10 +36,10 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # Not piped into grep -q: grep exits on the first match, git diff
-          # then dies of SIGPIPE, and pipefail turns the match into a skip.
-          files=$(git diff --name-only "$PR_BASE_SHA" HEAD)
-          if grep -q '^\.claude-plugin/' <<< "$files"; then
+          # Git matches the paths itself: a pattern on --name-only output
+          # misses a path git prints quoted (one with a non-ASCII character).
+          files=$(git diff --name-only "$PR_BASE_SHA" HEAD -- .claude-plugin/)
+          if [ -n "$files" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
