@@ -39,8 +39,14 @@ jobs:
           set -euo pipefail
           if [ "$EVENT_NAME" != "pull_request" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
-          elif git diff --name-only "$PR_BASE_SHA" HEAD | grep -qE \
-              '^(skills/|scripts/check_ha_examples\.py$|scripts/ha_examples_allowlist\.yaml$|\.github/workflows/ha-examples\.yml$)'; then
+            exit 0
+          fi
+          # Not piped into grep -q: grep exits on the first match, git diff
+          # then dies of SIGPIPE, and pipefail turns the match into a skip.
+          files=$(git diff --name-only "$PR_BASE_SHA" HEAD)
+          if grep -qE \
+              '^(skills/|scripts/check_ha_examples\.py$|scripts/ha_examples_allowlist\.yaml$|\.github/workflows/ha-examples\.yml$)' \
+              <<< "$files"; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
