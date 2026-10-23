@@ -1,8 +1,12 @@
 name: Validate Plugin Manifests
 
 on:
+  # No path filter on pull requests: `plugin-manifests` is a required status
+  # check on main, and a workflow that path filtering skips reports nothing, so
+  # the check stays "expected" forever. The job runs on every PR and its "Check
+  # for manifest changes" step skips the real work when .claude-plugin/ did not
+  # change.
   pull_request:
-    paths: [".claude-plugin/**"]
   push:
     branches: [main]
     paths: [".claude-plugin/**"]
@@ -12,16 +16,48 @@ permissions:
 
 jobs:
   validate:
+    # Named apart from validate-skills.yml's `validate` job: two check runs
+    # with one name make that required check ambiguous.
+    name: plugin-manifests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check for manifest changes
+        id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Git matches the paths itself: a pattern on --name-only output
+          # misses a path git prints quoted (one with a non-ASCII character).
+          files=$(git diff --name-only "$PR_BASE_SHA" HEAD -- .claude-plugin/)
+          if [ -n "$files" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - uses: actions/setup-node@v7
+        if: steps.changes.outputs.changed == 'true'
         with:
           node-version: "22"
 
       - name: Install Claude Code CLI
+        if: steps.changes.outputs.changed == 'true'
         run: npm install -g @anthropic-ai/claude-code
 
       - name: Validate plugin manifests
+        if: steps.changes.outputs.changed == 'true'
         run: claude plugin validate .
+
+      - name: No manifest changes
+        if: steps.changes.outputs.changed == 'false'
+        run: echo "No changes in .claude-plugin/, skipping validation."

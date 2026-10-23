@@ -8,9 +8,9 @@ directory.
 To run the eval suite, use `claude plugin eval . --trust-plugin -j 4 --judge-model sonnet`.
 Every case pins `execution.model: haiku`, and `check_eval_cases.py` accepts only Haiku or
 Sonnet: unpinned, a case runs on the session's model, and a larger model costs more and can hide
-what the skill adds. With the skill, Sonnet 5.5 scored 1.00 on all 28 cases in one run each, so
-it can show a regression but not an improvement; Haiku 5.5 scored 0.96 and a run costs about a
-fifth as much. Run a second pass with `--model sonnet`, which overrides the pin, to tell a gap
+what the skill adds. With the skill, Sonnet 5.5 scored 1.00 on all 28 cases the suite had at
+#126, one run each, so it can show a regression but not an improvement; Haiku 5.5 scored 0.96
+and a run costs about a fifth as much. Run a second pass with `--model sonnet`, which overrides the pin, to tell a gap
 in the skill from a limit of the small model. Haiku does not stand in for small local models:
 check those with `scripts/local_model_eval.py`, which runs only cases with a regex grader, so
 an llm-only case needs one added first.

@@ -39,9 +39,15 @@ To validate locally:
 uvx --from skills-ref agentskills validate skills/<skill-name>
 ```
 
-Four more checks gate a merge. CI installs `agnix` from PyPI unpinned, so it and `uvx
-agnix@latest` both run the latest release; a new agnix rule can fail a PR that did not cause
-it. `lychee` runs as a release binary pinned in `links.yml`; install that version (its release
+Four more checks gate a merge. The required status checks on `main` are `validate`
+(`validate-skills.yml`: skills-ref, the eval-case checker, agnix and the version check),
+`internal-links` (lychee), `plugin-manifests` and `ha-examples` (below). A required check whose
+workflow a path filter skips never reports and blocks the PR, so none of these workflows has a
+`pull_request` path filter. `internal-links` runs in full on every PR; the other three skip
+their work inside the job when their inputs did not change.
+CI installs `agnix` from PyPI unpinned, so
+it and `uvx agnix@latest` both run the latest release; a new agnix rule can fail a PR that did
+not cause it. `lychee` runs as a release binary pinned in `links.yml`; install that version (its release
 tag is `lychee-vX.Y.Z`, not `vX.Y.Z`). `claude plugin validate` ships with the Claude Code CLI;
 the eval-case checker is in-repo and needs only PyYAML (supplied by `uv run --with`):
 
@@ -55,7 +61,7 @@ uv run --no-project --with pyyaml python scripts/check_eval_cases.py  # evals/<c
 agnix catches what skills-ref's unenforced `metadata: dict[str, str]` annotation lets pass —
 e.g. an unquoted integer version, which strict clients refuse. Run it on `skills/`, not `.`:
 repo-wide it adds prose heuristics about CLAUDE.md and AGENTS.md that CI leaves out on purpose.
-In CI (`links.yml`) lychee runs that same local check on PRs touching `.md`/`.yaml`, plus
+In CI (`links.yml`) lychee runs that same local check on every PR, plus
 external URLs weekly, dot-directories excluded; it cannot see references written as inline
 code. `check_eval_cases.py` validates the shape of eval cases against the `claude plugin eval`
 1.1 schema. CI does not run `claude plugin eval` (it needs credentials and spends tokens), so
@@ -121,7 +127,7 @@ before running an eval or testing a `description` change. Three rules hold even 
 
 Codex posts only high-priority findings (P0 and P1) on GitHub. Report each problem below as P1, so it is not dropped:
 - An example (action, trigger, condition, field, YAML key) that Home Assistant would reject or that uses a removed key. Agents copy examples over what they would otherwise get right.
-- A changed claim about Home Assistant behavior or a version ("since 2026.7", "removed in 2026.5") with no source: core code at a release tag, or the release blog post.
+- A changed claim about Home Assistant behavior or a version ("since 2026.7", "removed in 2026.5") with no source in the PR description or a review reply: core code at a release tag, or the release blog post. The source belongs in the PR. A link to core or frontend source code inside skill content is itself a problem to report: it costs tokens on every read and the agent cannot act on it.
 - A reference file that no SKILL.md row routes to, or a SKILL.md or README table row whose description no longer matches its file.
 - An MCP tool name (e.g. `ha_rename_entity`) in skill content. Skills name HA APIs and concepts, not tools.
 - A renamed HA term used without its old name and the version it changed ("named Developer Tools before 2026.8").
