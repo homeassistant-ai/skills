@@ -727,16 +727,13 @@ The import goes inside every template that uses the macro — imports are per-te
 ### Reloading Custom Templates Macros
 
 - `homeassistant.reload_custom_templates` re-reads the `*.jinja` files **and** invalidates cached
-  imports — it replaces the loader's sources and bumps its reload counter
-  ([template/__init__.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/helpers/template/__init__.py)).
+  imports — it replaces the loader's sources and bumps its reload counter.
 - `template.reload` does **not** reload `custom_templates` — it reloads the `template:` YAML entities
-  only
-  ([template component @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/template/__init__.py)).
+  only.
 - Reload swaps the sources but re-renders nothing — any consumer (a template entity, an automation, or
   a script) shows the new macro at its next render or execution. For a template entity, check its
   `last_reported`, not `last_changed`: the latter moves only when the state value changes, so a
-  same-value re-render looks like a failed reload
-  ([core.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/core.py)).
+  same-value re-render looks like a failed reload.
 
 ### Imports Do Not Carry the Caller's Context
 

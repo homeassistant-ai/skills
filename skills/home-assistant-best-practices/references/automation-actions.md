@@ -543,9 +543,7 @@ actions:
 
 ## Measuring Elapsed Time Across Automations
 
-`this.attributes.last_triggered` is captured at trigger time, before the run stamps `last_triggered`
-([automation/__init__.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/automation/__init__.py),
-[script.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/helpers/script.py)) —
+`this.attributes.last_triggered` is captured at trigger time, before the run stamps `last_triggered` —
 so it holds the **previous** run and is the right source for a cooldown condition. A live read
 (`state_attr(this.entity_id, 'last_triggered')`) still sees the previous run while the automation-level
 `variables:` and `conditions:` evaluate (they run before the action script), but "now" inside the
@@ -606,8 +604,3 @@ entity moves its id further, but the rule does not depend on it.
   data:
     message: "door open"
 ```
-
-([notify/legacy.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/notify/legacy.py),
-[mobile_app/notify.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/mobile_app/notify.py),
-[mobile_app/__init__.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/mobile_app/__init__.py),
-[notify/services.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/notify/services.py))

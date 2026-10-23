@@ -349,8 +349,7 @@ triggers:
 A recovery trigger — `from: [unavailable, unknown]` with no `to:` — fires on **every** transition
 away from those two states, including `unavailable` → `unknown` and back, so it reports a false
 recovery while the entity is still down. Add `not_to: [unavailable, unknown]` to fire only on a
-return to a real state
-([state.py @ 2026.10.2](https://github.com/home-assistant/core/blob/2026.10.2/homeassistant/components/homeassistant/triggers/state.py)):
+return to a real state:
 
 ```yaml
 # WRONG — fires on unavailable → unknown and back, before the entity actually recovers
