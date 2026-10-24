@@ -260,7 +260,7 @@ conditions:
 **Prefer these over the generic triggers below when one matches the intent:**
 
 - **Targets, not entity lists.** Target an area/floor/label ("motion in the living room") and the automation follows area membership as sensors are added, swapped, or removed — no entity list to maintain. This also replaces most remaining legitimate uses of device triggers.
-- **No `unavailable`/`unknown` traps.** Each block handles unavailable states and event-entity re-fire quirks internally.
+- **`unavailable`/`unknown` handled internally.** Each block handles unavailable states and event-entity re-fire quirks internally: a purpose-specific trigger on an entity's state skips a change that starts from `unavailable` (from `unknown` too, except on stateless entities such as buttons and events), which also means an edge through them is missed (see [`from:` misses a change that passes through `unavailable`](#from-misses-a-change-that-passes-through-unavailable)).
 - **Cross-entity-type.** "Door opened" fires whether the door is a contact sensor or a motorized cover.
 - **Integration-extensible.** Integrations register their own (e.g. `zwave_js.*`), so the catalog grows over time.
 
@@ -365,6 +365,36 @@ triggers:
     from: [unavailable, unknown]
     not_to: [unavailable, unknown]
 ```
+
+### `from:` misses a change that passes through `unavailable`
+
+`from:` is compared with the state immediately before the change. When the entity drops out between
+the two states you name (`on` → `unavailable` → `off`, a routine Wi-Fi or Zigbee blip), the second
+step starts from `unavailable`, so a `from: "on"` / `to: "off"` trigger never fires and the
+automation misses the edge. When missing it matters (switching something off once a sensor clears),
+name only `to:`:
+
+```yaml
+# WRONG — misses on → unavailable → off
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.motion_input
+    from: "on"
+    to: "off"
+
+# RIGHT — fires on every change into off, including the return from unavailable
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.motion_input
+    to: "off"
+```
+
+The `to:`-only form also fires when the entity comes back from `unavailable` already in the target
+state, so guard the action with a state condition when a repeat run would do harm.
+
+The state-based purpose-specific triggers `motion.cleared` and `occupancy.cleared` skip every change
+that starts from `unavailable` or `unknown`, so they miss the same edge. Where it must not be missed, use
+the `to:`-only state trigger in their place.
 
 ### Numeric State Trigger
 

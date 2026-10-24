@@ -16,6 +16,7 @@ This document covers the `actions:` block of automations and scripts, plus `mode
 11. [Disabling Automations](#disabling-automations)
 12. [Measuring Elapsed Time Across Automations](#measuring-elapsed-time-across-automations)
 13. [Notify: Entity vs Action Namespace](#notify-entity-vs-action-namespace)
+14. [Trace Retention](#trace-retention)
 
 ---
 
@@ -604,3 +605,24 @@ entity moves its id further, but the rule does not depend on it.
   data:
     message: "door open"
 ```
+
+---
+
+## Trace Retention
+
+Home Assistant keeps the last 5 traces of each automation; a YAML automation without an `id` keeps
+none. Every run uses one, including a run that stops at a condition or takes no `choose` branch, so a
+frequent trigger pushes out the run you need to debug: a `time_pattern` with `minutes: "/5"` replaces
+all five within 25 minutes. Raise the limit on such an automation:
+
+```yaml
+trace:
+  stored_traces: 20
+```
+
+When the poll only backstops a state change that a trigger could miss, cover that change with
+change-driven triggers instead (`homeassistant` `start`, a state trigger with only `to:`). A check
+that has to run on a schedule keeps its `time_pattern`.
+
+"Did not trigger" traces (a trigger noticed a change but did not start the automation) are kept
+separately and never replace the traces of real runs.
