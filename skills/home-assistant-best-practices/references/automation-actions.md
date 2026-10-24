@@ -613,16 +613,16 @@ entity moves its id further, but the rule does not depend on it.
 Home Assistant keeps the last 5 traces of each automation; a YAML automation without an `id` keeps
 none. Every run uses one, including a run that stops at a condition or takes no `choose` branch, so a
 frequent trigger pushes out the run you need to debug: a `time_pattern` with `minutes: "/5"` replaces
-all five within 25 minutes. Raise the limit on such an automation:
+all five within 25 minutes.
+
+If the poll only backs up a state change that a trigger could miss, replace it with change-driven
+triggers (`homeassistant` `start`, a state trigger with only `to:`). Raise the limit only if the
+poll has to stay on a schedule:
 
 ```yaml
 trace:
   stored_traces: 20
 ```
-
-When the poll only backstops a state change that a trigger could miss, cover that change with
-change-driven triggers instead (`homeassistant` `start`, a state trigger with only `to:`). A check
-that has to run on a schedule keeps its `time_pattern`.
 
 "Did not trigger" traces (a trigger noticed a change but did not start the automation) are kept
 separately and never replace the traces of real runs.
