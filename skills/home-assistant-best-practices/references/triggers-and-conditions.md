@@ -260,7 +260,7 @@ conditions:
 **Prefer these over the generic triggers below when one matches the intent:**
 
 - **Targets, not entity lists.** Target an area/floor/label ("motion in the living room") and the automation follows area membership as sensors are added, swapped, or removed — no entity list to maintain. This also replaces most remaining legitimate uses of device triggers.
-- **`unavailable`/`unknown` handled internally.** Each block handles unavailable states and event-entity re-fire quirks internally: an entity-state trigger skips a change that starts from `unavailable` (from `unknown` too, except on stateless entities such as buttons and events), which also means an edge through them is missed (see [`from:` misses a change that passes through `unavailable`](#from-misses-a-change-that-passes-through-unavailable)).
+- **`unavailable`/`unknown` handled internally.** Each block handles unavailable states and event-entity re-fire quirks internally: a purpose-specific trigger on an entity's state skips a change that starts from `unavailable` (from `unknown` too, except on stateless entities such as buttons and events), which also means an edge through them is missed (see [`from:` misses a change that passes through `unavailable`](#from-misses-a-change-that-passes-through-unavailable)).
 - **Cross-entity-type.** "Door opened" fires whether the door is a contact sensor or a motorized cover.
 - **Integration-extensible.** Integrations register their own (e.g. `zwave_js.*`), so the catalog grows over time.
 
