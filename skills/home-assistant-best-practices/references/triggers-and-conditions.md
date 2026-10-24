@@ -392,8 +392,8 @@ triggers:
 The `to:`-only form also fires when the entity comes back from `unavailable` already in the target
 state, so guard the action with a state condition when a repeat run would do harm.
 
-Purpose-specific triggers such as `motion.cleared` and `occupancy.cleared` skip every change that
-starts from `unavailable` or `unknown`, so they miss the same edge. Where it must not be missed, use
+The state-based purpose-specific triggers `motion.cleared` and `occupancy.cleared` skip every change
+that starts from `unavailable` or `unknown`, so they miss the same edge. Where it must not be missed, use
 the `to:`-only state trigger in their place.
 
 ### Numeric State Trigger
