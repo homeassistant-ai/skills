@@ -169,10 +169,11 @@ Two Zigbee stacks are exceptions:
 
 ### ZHA (Zigbee Home Automation)
 
-ZHA buttons fire `zha_event` events. Use **event triggers** with `device_ieee` (the device's IEEE address), which is **persistent** across re-adds.
+ZHA buttons fire `zha_event` events. When the device has no `event.*` entity, use **event triggers** with `device_ieee` (the device's IEEE address), which is **persistent** across re-adds.
 
 ```yaml
 # RIGHT — device_ieee is persistent across re-adds
+#    (fallback — use event.received if the device has an event.* entity)
 triggers:
   - trigger: event
     event_type: zha_event
