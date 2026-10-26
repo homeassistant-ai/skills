@@ -44,9 +44,9 @@ Prefer the narrowest path that can fix the fault. Object rollback is scoped to o
 
 ## When a Full Backup Earns Its Cost
 
-The test is reversibility, not how risky something feels: **back up before an operation you cannot undo by writing the old value back.**
+The test is reversibility, not how risky something feels: **offer a backup before an operation you cannot undo by writing the old value back.** Whether to make one is the user's call.
 
-**Irreversible — take the backup first, and confirm the operation with the user:**
+**Irreversible — offer the user a backup first, and confirm the operation with them:**
 - Deleting a device, entity, or area from the registry.
 - Removing an integration or config entry.
 - Removing an App, or a major App version jump.
