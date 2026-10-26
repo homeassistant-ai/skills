@@ -95,7 +95,7 @@ Default `single` mode is often wrong. See [automation-actions #automation-modes]
 
 ### 5. For buttons and remotes
 - **Any integration exposing an `event.*` entity:** Use `event.received` targeting that entity (see the anti-pattern row below)
-- **ZHA:** No event entities — use an `event` trigger with `device_ieee` (persistent)
+- **ZHA:** `event.received` if the device has an `event.*` entity (2026.10+; none do in 2026.10), otherwise an `event` trigger with `device_ieee` (persistent)
 - **Z2M:** Event entities are experimental and off by default — use a `device` trigger (autodiscovered) or `mqtt` trigger
 
 Read [device-control #buttonremote-patterns](references/device-control.md#buttonremote-patterns) before writing the trigger.
