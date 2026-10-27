@@ -10,7 +10,7 @@
 
 - **Restoring a backup** — *irreversible*: it discards every change made since that archive and restarts HA. The only way back is another backup taken before the restore.
 - **Deleting a backup** — *irreversible*: the archive is gone, and with it any recovery point it was the last copy of.
-- **Upgrading Core or the OS** — *high-impact rather than strictly irreversible*: it can break integrations and custom components, and the recovery path is restoring the pre-upgrade backup, which is why one has to exist first.
+- **Upgrading Core or the OS** — *high-impact rather than strictly irreversible*: it can break integrations and custom components, and the recovery path is restoring a pre-upgrade backup, so offer one first; if the user declines, tell them no backup will then hold the state from just before the upgrade.
 
 A backup lowers recovery risk; it does not authorize the action.
 
@@ -70,7 +70,7 @@ The test is reversibility, not how risky something feels: **offer a backup befor
 
 Three things this test depends on:
 
-- **Timing is the whole point.** A backup taken *after* the destructive step captures the damage. It must precede the operation.
+- **Timing is the whole point.** A backup taken *after* the destructive step captures the damage. If the user wants one, it must precede the operation.
 - **An existing schedule does not substitute.** On an instance with nightly automatic backups, the newest one can be almost a day stale — fine for reversible edits, not for an irreversible operation about to run now.
 - **A git config repo does not substitute.** A `/config` directory tracked in git conventionally excludes the recorder database, along with `.storage` and `secrets.yaml`, which carry credentials and long-lived tokens in cleartext. Such a repo holds tracked files only, and the irreversible operations above destroy registry, config-entry, or install state that it does not hold. A repo that does track `.storage` carries those credentials into every clone, so it must not go anywhere the user has not chosen, and writing `.storage` back over a running instance is a direct edit of HA's internal state rather than a restore.
 
