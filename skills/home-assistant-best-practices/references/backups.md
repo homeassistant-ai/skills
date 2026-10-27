@@ -10,7 +10,7 @@
 
 - **Restoring a backup** — *irreversible*: it discards every change made since that archive and restarts HA. The only way back is another backup taken before the restore.
 - **Deleting a backup** — *irreversible*: the archive is gone, and with it any recovery point it was the last copy of.
-- **Upgrading Core or the OS** — *high-impact rather than strictly irreversible*: it can break integrations and custom components, and a recovery path is restoring a pre-upgrade backup, so offer one first; if the user declines, tell them no backup will hold the pre-upgrade state.
+- **Upgrading Core or the OS** — *high-impact rather than strictly irreversible*: it can break integrations and custom components, and a recovery path is restoring a pre-upgrade backup, so offer one first; if the user declines, tell them the newest backup they already have, if any, lacks the changes made since it was taken.
 
 A backup lowers recovery risk; it does not authorize the action.
 
