@@ -159,7 +159,9 @@ so, and offer to count two presses within a short window instead of inventing a 
 
 Two Zigbee stacks are exceptions:
 
-- **ZHA has no event platform**, so ZHA remotes use the `zha_event` pattern below.
+- **ZHA added an event platform in 2026.10, but no ZHA device or quirk in that release
+  creates an `event.*` entity.** Check the device's entities first: use `event.received` if
+  one is there, otherwise the `zha_event` pattern below.
 - **Zigbee2MQTT's event entities are experimental and off by default** — they need
   `homeassistant: {experimental_event_entities: true}`, and Z2M documents both the feature
   and its event-type names as subject to change. Prefer its autodiscovered `device` trigger
@@ -167,10 +169,11 @@ Two Zigbee stacks are exceptions:
 
 ### ZHA (Zigbee Home Automation)
 
-ZHA buttons fire `zha_event` events. Use **event triggers** with `device_ieee` (the device's IEEE address), which is **persistent** across re-adds.
+ZHA buttons fire `zha_event` events. When the device has no `event.*` entity, use **event triggers** with `device_ieee` (the device's IEEE address), which is **persistent** across re-adds.
 
 ```yaml
 # RIGHT — device_ieee is persistent across re-adds
+#    (fallback — use event.received if the device has an event.* entity)
 triggers:
   - trigger: event
     event_type: zha_event
@@ -178,6 +181,13 @@ triggers:
       device_ieee: "00:15:8d:00:07:26:f2:8a"
       command: "toggle"
 ```
+
+This trigger does not link the automation to the device, so the device page does not list it:
+HA links an `event` trigger to a device only through a `device_id` in its `event_data`. HA turns a ZHA `device` trigger
+(`domain: zha`, `type: remote_button_short_press`, ...) into this same `zha_event` +
+`device_ieee` match, and that one is listed, but it is keyed on the `device_id` (see
+[Entity ID vs Device ID](#entity-id-vs-device-id)). The missing entry is expected and is not a
+reason to switch.
 
 For a complete multi-button remote with trigger_id + choose, see [examples.yaml](examples.yaml) Example 2.
 
@@ -218,6 +228,7 @@ triggers:
 
 | Aspect | ZHA | Zigbee2MQTT |
 |--------|-----|-------------|
+| `event.*` entities | Platform since 2026.10; none created by any device in 2026.10 | Experimental, off by default |
 | Trigger type | `event` trigger | `device` trigger or `mqtt` trigger |
 | Identifier | `device_ieee` (persistent) | `device_id` (autodiscovered) |
 | Event name | `zha_event` | MQTT device trigger |
@@ -509,7 +520,7 @@ Read left to right and stop at the first column that applies.
 
 | Device type | Purpose-specific (check first) | Generic fallback | Zigbee specifics |
 |-------------|-------------------------------|------------------|------------------|
-| Button/Remote | `event.received` on the `event.*` entity, when one exists | `state` on the `event.*` entity (fires on any event type) | ZHA: `event` trigger on `zha_event` + `device_ieee`. Z2M: `device` or `mqtt` trigger |
+| Button/Remote | `event.received` on the `event.*` entity, when one exists | `state` on the `event.*` entity (fires on any event type) | ZHA without an `event.*` entity: `event` trigger on `zha_event` + `device_ieee`. Z2M: `device` or `mqtt` trigger |
 | Motion sensor | `motion.detected` / `motion.cleared` | `state` | — |
 | Door/Window | `door.opened` / `door.closed`, `window.opened` / `window.closed` | `state` | — |
 | Temperature | `temperature.crossed_threshold` / `temperature.changed` | `numeric_state` or `state` | — |
