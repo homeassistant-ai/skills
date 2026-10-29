@@ -483,10 +483,10 @@ Since 2026.11 the built-in Marketplace replaces HACS. It is under **Settings** >
 
 Search for community cards by name/category, review repository details, then install. Install operations are destructive, so clients will ask for user confirmation.
 
-The Marketplace (2026.11 and later) has two gates an agent cannot pass alone:
+The Marketplace (2026.11 and later) has two gates that are the user's decision. An agent can reach both through the UI or the API; it still must not clear them for the user:
 
-- **First-run notice:** install and update fail with `warning_not_accepted` until the user the agent connects as has accepted the notice in **Settings** > **Marketplace**. Browsing works before that. The notice is for the user to read: ask them to open the Marketplace and accept it.
-- **GitHub account:** adding a custom repository (**Add from link**) fails with `github_not_connected` until the user connects a GitHub account in the Marketplace. Without one, the Marketplace does not check installed custom repositories for updates on its own. Catalog projects install and update without it.
+- **First-run notice:** install and update fail with `warning_not_accepted` until the user the agent connects as has accepted the notice in **Settings** > **Marketplace**. Browsing works before that. The notice says community projects are not tested or audited by the Home Assistant project and run inside it. Ask the user to read and accept it themselves.
+- **GitHub account:** adding a custom repository (**Add from link**) fails with `github_not_connected` until a GitHub account is connected in the Marketplace. Connecting links the user's own GitHub account, so ask the user to do it. Without one, the Marketplace does not check installed custom repositories for updates on its own. Catalog projects install and update without it.
 
 ### Popular Community Cards
 
