@@ -154,7 +154,7 @@ Read each file whose row matches the task before you answer:
 | [yaml-only-integrations](references/yaml-only-integrations.md) | Creating or editing YAML-only integrations that have no config flow (e.g. `command_line`, platform-based `mqtt`, `rest`) |
 | [device-control](references/device-control.md) | Writing actions, button/remote automations, or using target: |
 | [scenes](references/scenes.md) | Authoring or activating scenes; snapshot/restore patterns, including putting devices back the way they were after a temporary change; snapshot-vs-script distinction |
-| [dashboard-guide](references/dashboard-guide.md) | Designing or modifying Lovelace dashboards — layout, view types, strategies, sections, cards, badges, CSS styling, HACS |
+| [dashboard-guide](references/dashboard-guide.md) | Designing or modifying Lovelace dashboards — layout, view types, strategies, sections, cards, badges, CSS styling, HACS / Marketplace |
 | [dashboard-cards](references/dashboard-cards.md) | Looking up built-in card types (core, energy, legacy) or where to read a card's fields; [entities-card attribute rows](references/dashboard-cards.md#entities-card-attribute-rows-need-type-attribute) — a row with `attribute:` but no `type: attribute` shows the entity state, not the attribute |
 | [domain-docs](references/domain-docs.md) | Looking up integration/domain documentation, or the dedicated doc page for a specific trigger, condition, or action |
 | [examples.yaml](references/examples.yaml) | Need compound examples combining multiple best practices |
