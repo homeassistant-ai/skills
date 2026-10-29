@@ -16,7 +16,7 @@ Patterns and decisions for designing Home Assistant Lovelace dashboards.
 - [Actions](#actions)
 - [Custom Cards](#custom-cards)
 - [CSS Styling](#css-styling)
-- [HACS Integration](#hacs-integration)
+- [HACS and the Marketplace](#hacs-and-the-marketplace)
 - [Complete Example: Multi-View Dashboard](#complete-example-multi-view-dashboard)
 - [Common Pitfalls](#common-pitfalls)
 - [Modern Best Practices](#modern-best-practices)
@@ -425,7 +425,7 @@ Use the HA dashboard resource API to convert inline code to a hosted URL, then r
 
 **Resource caching:** `/local/` is served with `public, max-age=2678400`, a 31-day cache, in desktop browsers as well as the Companion app. Editing a registered `.js` file in place leaves clients on the old copy until it expires or the client clears its cache.
 
-- HACS versions the plugin resource URLs it manages in storage (`?hacstag=<installed version>`), so a card installed through HACS is re-fetched on update. With YAML-mode resources HACS cannot update the URL, so that version string is yours to bump.
+- HACS and the Marketplace register a card's resource on install and version its URL in storage mode: HACS (2026.10 and older) as `?hacstag=<installed version>`, the Marketplace (2026.11 and later) as `?v=<repository id>-<version>`. A card installed through either is re-fetched on update. Do not add its resource again through the resource API; that creates a duplicate. With YAML-mode resources neither can update the URL, so that version string is yours to bump.
 - A resource registered by hand needs the same: bump a version query string on the resource `url`, `/local/quick-status-card.js?v=2.0.0`. Only a changed URL forces every client to re-fetch, so renaming the element tag does not help; the cached module still registers the old tag name.
 - A client already holding a stale copy needs a client-side fix: hard refresh, clear site data for the HA origin, or **Settings** > **Reset frontend cache** in the Companion app.
 
@@ -435,7 +435,7 @@ Use the HA dashboard resource API to convert inline code to a hosted URL, then r
 
 ### Themes
 
-Global styling is done with HA **themes** (YAML maps of CSS variables), not raw CSS. Themes are defined under `frontend: themes:` in YAML or installed via HACS, and selected per user (profile) or per view/card with the `theme` option. Define both modes so OS dark/light switching applies cleanly to both:
+Global styling is done with HA **themes** (YAML maps of CSS variables), not raw CSS. Themes are defined under `frontend: themes:` in YAML or installed from HACS or the Marketplace, and selected per user (profile) or per view/card with the `theme` option. Define both modes so OS dark/light switching applies cleanly to both:
 
 ```yaml
 frontend:
@@ -452,7 +452,7 @@ frontend:
 
 ### Card-mod (Per-Card Styling)
 
-Requires the `card-mod` HACS component. Use sparingly: it patches frontend internals via shadow-DOM selectors, which makes it a frequent source of breakage after HA upgrades — prefer native options and theme variables where they exist, and re-test card-mod styling after every HA update:
+Requires the `card-mod` card from HACS or the Marketplace. Use sparingly: it patches frontend internals via shadow-DOM selectors, which makes it a frequent source of breakage after HA upgrades — prefer native options and theme variables where they exist, and re-test card-mod styling after every HA update:
 
 ```yaml
 type: entities
@@ -468,20 +468,27 @@ entities:
 
 ---
 
-## HACS Integration
+## HACS and the Marketplace
+
+Since 2026.11 the built-in Marketplace replaces HACS. It is under **Settings** > **Marketplace**, not in the sidebar. HACS installs migrate on the first start after the upgrade. On 2026.10 and older, community cards come from HACS, a custom integration. Check the HA version before naming either.
 
 | Use case | Solution |
 |----------|----------|
-| Popular community card | HACS — search and install via HACS API |
+| Popular community card | HACS / Marketplace — search and install via its API |
 | Small custom styling | Inline CSS — register via HA dashboard resource API |
 | One-off custom card | Inline module — register via HA dashboard resource API |
-| Large/complex card | HACS or filesystem (`/config/www/`) |
+| Large/complex card | HACS / Marketplace or filesystem (`/config/www/`) |
 
 ### Finding and Installing Cards
 
-Search HACS for community cards by name/category, review repository details, then install. HACS install operations are destructive — clients will ask for user confirmation.
+Search for community cards by name/category, review repository details, then install. Install operations are destructive, so clients will ask for user confirmation.
 
-### Popular HACS Cards
+The Marketplace (2026.11 and later) has two gates an agent cannot pass alone:
+
+- **First-run notice:** install and update fail with `warning_not_accepted` until the user the agent connects as has accepted the notice in **Settings** > **Marketplace**. Browsing works before that. The notice is for the user to read: ask them to open the Marketplace and accept it.
+- **GitHub account:** adding a custom repository (**Add from link**) fails with `github_not_connected` until the user connects a GitHub account in the Marketplace. Without one, the Marketplace does not check installed custom repositories for updates on its own. Catalog projects install and update without it.
+
+### Popular Community Cards
 
 - **mushroom** — Modern, clean card collection (v5+ aligns with the native tile card; its template card covers Jinja-driven icon/color/content)
 - **button-card** — Highly customizable buttons with JS templating
@@ -567,7 +574,7 @@ Custom cards predating sections views (early 2024) that haven't updated since ar
 | Entity not found | Use full entity ID: `light.living_room` not `living_room` |
 | Features not working | Match feature type to entity domain (e.g., `light-brightness` only works on `light.*`) |
 | Custom card not loading | Check resource type is `module` and verify URL is accessible |
-| Card too large for inline | Use HACS or filesystem instead |
+| Card too large for inline | Use HACS / Marketplace or filesystem instead |
 | Section title ignored/flagged | Section `title` is deprecated — use a `heading` card as the section's first card |
 | Cards sized with `layout_options` | Deprecated — use `grid_options` (`columns`/`rows`) |
 | Map card markers show entity-name initials instead of values | `label_mode` is a **per-entity** option, not card-level: `"entities": [{"entity": "sensor.x", "label_mode": "state"}]` |
