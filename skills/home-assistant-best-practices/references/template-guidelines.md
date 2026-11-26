@@ -457,6 +457,8 @@ Always use `states()` function, not `states.sensor.x.state`:
 {{ states('sensor.temperature') | float }}
 ```
 
+States are text even when they look numeric, so `selectattr('state', 'lt', '20')`, `max` and `sort` over states compare them as text (`'100' < '20'`); over a list, filter with `is_number` and convert first: `{{ states.sensor | selectattr('state', 'is_number') | map(attribute='state') | map('float') | select('lt', 20) | list }}`.
+
 ### Check for Valid State
 
 ```yaml
