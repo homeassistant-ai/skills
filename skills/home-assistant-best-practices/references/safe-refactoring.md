@@ -323,6 +323,6 @@ Before removing a restored entity, read its `config_entry_id` (`config/entity_re
 
 | Owning config entry `state` | Meaning | Action |
 |---|---|---|
-| `loaded` | The integration runs and no longer provides this entity | Remove it (`config/entity_registry/remove`) after the consumer search in [Step 2](#universal-workflow) |
-| `setup_retry`, `setup_error`, `not_loaded`, `migration_error` | The integration is not running | Keep it and fix the integration (device power, network, credentials). Removing it does nothing useful: when the integration loads again, the entity comes back with its name, area and labels, and its old entity ID if no other entity has taken it |
-| No `config_entry_id` | A YAML platform entity | Check the log for the platform's setup error before removing it |
+| `loaded` | The integration runs, but the entity may still come back: one platform can fail or retry on its own while the entry stays `loaded`, and MQTT entities stay unavailable until their discovery message arrives | Keep it if the log shows `Error while setting up <platform> platform` or `Platform <name> not ready yet`, or if its MQTT device has not reported since the restart. Otherwise run the consumer search in [Step 2](#universal-workflow), and remove it (`config/entity_registry/remove`) only once its references are fixed or the user accepts losing them |
+| `setup_retry`, `setup_error`, `not_loaded`, `migration_error` | The integration is not running | Keep it and fix the integration (device power, network, credentials). Removing it does nothing useful: since 2025.7, when the integration loads again, the entity comes back with its name, area and labels, and its old entity ID if no other entity has taken it |
+| No `config_entry_id` | A YAML platform entity | Check the log for the platform's setup error. If there is one, keep the entity and fix the platform, as for `setup_error` above |
