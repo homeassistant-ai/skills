@@ -1,6 +1,6 @@
 # Safe Refactoring Workflow
 
-Follow this workflow whenever you modify existing Home Assistant configuration: renaming entities, replacing template sensors with helpers, converting device triggers, or restructuring automations.
+Follow this workflow whenever you modify existing Home Assistant configuration: renaming entities, replacing template sensors with helpers, converting device triggers, restructuring automations, or removing unavailable entities.
 
 **Core rule:** Search all consumers BEFORE changing anything. Verify zero stale references AFTER.
 
@@ -12,6 +12,7 @@ Follow this workflow whenever you modify existing Home Assistant configuration: 
 5. [Config-Entry-Groups](#config-entry-groups)
 6. [Config-Entry Data — Blind Spots for entity registry renames](#config-entry-data--blind-spots-for-entity-registry-renames)
 7. [Storage-Mode-Dashboards (`.storage/lovelace.*`)](#storage-mode-dashboards-storagelovelace)
+8. [Removing Unavailable Entities](#removing-unavailable-entities)
 
 ---
 
@@ -311,3 +312,17 @@ Use the Lovelace WebSocket API (`lovelace/config` to read, `lovelace/config/save
 
 **List all storage dashboards:**
 WebSocket: `{"type": "lovelace/dashboards/list"}` → returns all dashboards with their url_path.
+
+---
+
+## Removing Unavailable Entities
+
+**`restored: true` does not mean orphaned.** HA gives a registry entity the state `unavailable` with `restored: true` whenever no running integration has added it: at startup, and when its config entry unloads. An integration that is retrying setup because its device is off looks exactly like one that dropped the entity. The UI says the same thing for both: status "Not provided" under Settings → Entities, and "This entity is no longer being provided by the ... integration" on the entity.
+
+Before removing a restored entity, read its `config_entry_id` (`config/entity_registry/get` over WebSocket) and that entry's `state` (`GET /api/config/config_entries/entry`). In the UI, an integration that is not running shows "Failed setup, will retry" or a setup error on its card under Settings → Devices & services.
+
+| Owning config entry `state` | Meaning | Action |
+|---|---|---|
+| `loaded` | The integration runs and no longer provides this entity | Remove it (`config/entity_registry/remove`) after the consumer search in [Step 2](#universal-workflow) |
+| `setup_retry`, `setup_error`, `not_loaded`, `migration_error` | The integration is not running | Keep it and fix the integration (device power, network, credentials). Removing it does nothing useful: when the integration loads again, the entity comes back with its name, area and labels, and its old entity ID if no other entity has taken it |
+| No `config_entry_id` | A YAML platform entity | Check the log for the platform's setup error before removing it |
