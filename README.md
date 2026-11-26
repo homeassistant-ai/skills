@@ -96,7 +96,7 @@ The `home-assistant-best-practices` skill includes:
 | File | Purpose |
 |------|---------|
 | [`SKILL.md`](skills/home-assistant-best-practices/SKILL.md) | Decision workflow, anti-pattern table, and pointers to the reference files below |
-| [`references/safe-refactoring.md`](skills/home-assistant-best-practices/references/safe-refactoring.md) | Safe workflow for renaming entities and their display names, replacing helpers, restructuring automations; display-name override, config-entry, and storage-dashboard blind spots |
+| [`references/safe-refactoring.md`](skills/home-assistant-best-practices/references/safe-refactoring.md) | Safe workflow for renaming entities and their display names, replacing helpers, restructuring automations, removing unavailable entities; display-name override, config-entry, and storage-dashboard blind spots |
 | [`references/triggers-and-conditions.md`](skills/home-assistant-best-practices/references/triggers-and-conditions.md) | Purpose-specific and native triggers/conditions, `for:` durations, trigger IDs |
 | [`references/automation-actions.md`](skills/home-assistant-best-practices/references/automation-actions.md) | Waits, variables, automation modes, control flow (choose, repeat, parallel), error handling (`continue_on_error`, admin-only actions), disabling automations, measuring elapsed time via `last_triggered`, Mobile App `notify` action vs entity, trace retention |
 | [`references/helper-selection.md`](skills/home-assistant-best-practices/references/helper-selection.md) | Built-in helpers vs template sensors (with decision matrix) |
