@@ -97,10 +97,13 @@ jobs:
 
       - name: Enforce version not manually changed
         if: steps.changes.outputs.skills_changed == 'true' && github.event_name == 'pull_request'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           set -euo pipefail
+          # HEAD is the PR merged onto the current base branch, so its first
+          # parent is the base the merge contains. pull_request.base.sha keeps
+          # the base the PR was opened against; once main gets a version bump,
+          # comparing the merge to that SHA reports the bump as a manual edit.
+          BASE_SHA=$(git rev-parse HEAD^1)
           exit_code=0
           changed_skills=$(git diff --name-only "$BASE_SHA" HEAD -- 'skills/' | cut -d'/' -f1-2 | sort -u)
           for skill_dir in $changed_skills; do
